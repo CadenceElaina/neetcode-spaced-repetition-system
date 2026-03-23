@@ -1,8 +1,9 @@
 import { db } from "@/db";
-import { problems } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { problems, userProblemStates } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { AttemptForm } from "./attempt-form";
+import { auth } from "@/auth";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +18,22 @@ export default async function AttemptPage({ params }: { params: Promise<{ id: st
   const problem = rows[0];
   if (!problem) notFound();
 
+  const session = await auth();
+  let isReview = false;
+  if (session?.user?.id) {
+    const existing = await db
+      .select({ id: userProblemStates.id })
+      .from(userProblemStates)
+      .where(
+        and(
+          eq(userProblemStates.userId, session.user.id),
+          eq(userProblemStates.problemId, problem.id),
+        ),
+      )
+      .limit(1);
+    isReview = existing.length > 0;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,6 +46,7 @@ export default async function AttemptPage({ params }: { params: Promise<{ id: st
         problemId={problem.id}
         optimalTimeComplexity={problem.optimalTimeComplexity}
         optimalSpaceComplexity={problem.optimalSpaceComplexity}
+        isReview={isReview}
       />
     </div>
   );

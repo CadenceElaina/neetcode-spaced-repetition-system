@@ -113,24 +113,31 @@ Set a target date (e.g., "I'm applying in October 2026") and the app tells you:
 
 ```
 ├── README.md
+├── problems.json              # Seed data: 150 problems with metadata + complexity
 ├── docs/
 │   ├── PLAN.md                # Detailed design doc (features, architecture, edge cases)
+│   ├── STATUS.md              # Current implementation status vs. roadmap
 │   ├── STYLE_GUIDE.md         # Design system (colors, typography, components)
-│   └── thoughts.md            # Project planning notes
-├── problems.json              # Seed data: 150 problems with metadata + complexity
+│   └── ideas.md               # Feature ideas backlog
 ├── scripts/
 │   ├── fetch_problems.py      # Data pipeline: fetches + verifies NeetCode problem data
-│   └── seed.ts                # Seeds problems.json into Postgres
+│   └── seed.ts                # Seeds problems.json into Postgres (problem metadata only)
 └── src/
     ├── app/
-    │   ├── api/attempts/       # POST endpoint for logging attempts
+    │   ├── api/attempts/       # POST endpoint for logging attempts + SRS state update
     │   ├── api/auth/           # NextAuth route handler
-    │   ├── dashboard/          # Dashboard with stats + review queue
+    │   ├── api/notes/          # GET/PUT per-user problem notes
+    │   ├── api/review/         # Review queue + skip-with-reason endpoint
+    │   ├── dashboard/          # Unified dashboard (readiness, queue, stats)
+    │   ├── drill/              # Pattern-based drill mode
+    │   ├── mock-interview/     # Timed mock interview mode
     │   ├── problems/           # Problem list, detail, and attempt form
     │   ├── review/             # Focused review queue
-    │   └── stats/              # Statistics (Phase 2)
-    ├── components/             # Nav, theme toggle, badges
-    └── db/                     # Drizzle schema + connection
+    │   └── stats/              # Statistics and charts
+    ├── components/             # Nav, theme toggle, badges, video embed
+    ├── db/                     # Drizzle schema + connection
+    └── lib/
+        └── srs.ts              # Core SRS engine (stability, retrievability, readiness)
 ```
 
 ---
@@ -163,12 +170,21 @@ You'll need:
 - **AUTH_SECRET** — run `npx auth secret` to generate
 - **AUTH_GITHUB_ID / AUTH_GITHUB_SECRET** — [create a GitHub OAuth app](https://github.com/settings/developers) with callback URL `http://localhost:3000/api/auth/callback/github`
 
-Push the schema and seed the database:
+Push the schema and seed the problem database:
 
 ```bash
 npx drizzle-kit push
 npx tsx scripts/seed.ts
 ```
+
+> **Note on `drizzle-kit push`:** If it crashes on check constraints (a known Drizzle issue), generate the SQL instead and apply it directly:
+>
+> ```bash
+> npx drizzle-kit generate
+> # Then apply the generated SQL in drizzle/0000_*.sql via your Postgres client or Supabase SQL editor
+> ```
+
+`scripts/seed.ts` only inserts the 150 NeetCode problem rows (titles, categories, URLs, complexity data). **It contains no user-specific data.** Every fresh install starts with a completely empty attempts and review-state database — your activity belongs only to your account, tied to your OAuth identity.
 
 Start the dev server:
 
@@ -208,6 +224,22 @@ The `scripts/fetch_problems.py` pipeline:
 - Optimal time and space complexity
 
 **Verification:** The pipeline checks that the output matches expected totals (150 problems, 75 Blind 75, 28 Easy / 101 Medium / 21 Hard, 18 categories) and reports any problems with missing data.
+
+---
+
+## Personal Data & Fresh Installs
+
+The `scripts/seed.ts` script — the **only** script committed to this repository — inserts problem metadata only. It has no knowledge of any user's activity.
+
+There are no migrations, schema changes, or committed data tied to any individual's usage history. If you use LeetRepeat for your own prep and want to backfill historical activity from before you started using the app, you can create a local `scripts/seed-my-history.ts` script following the same pattern as `seed.ts`. Add it to `.gitignore` immediately — it should never be committed since it contains personal data.
+
+The `.gitignore` in this repo already excludes:
+
+- `.env.local` and all `*.local` env files — your credentials and database URL
+- `docs/context.md` — personal notes file
+- Any `seed-my-history.ts` script
+
+Fresh clones of this repo work with a clean slate.
 
 ---
 
