@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/drill", label: "Drill" },
   { href: "/mock-interview", label: "Mock" },
+  { href: "/import", label: "Import" },
 ];
 
 export function Nav() {
