@@ -32,3 +32,4 @@ npm-debug.log*
 
 # drizzle migrations (generated)
 drizzle/
+.vercel

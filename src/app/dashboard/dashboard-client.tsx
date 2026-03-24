@@ -33,6 +33,7 @@ type CompletedItem = {
   lastReviewedAt: string | null;
   daysUntilReview: number | null;
   isDue: boolean;
+  bestQuality: string | null;
 };
 
 type ListMode = "review" | "new" | "completed" | "import";
@@ -145,7 +146,8 @@ function retentionBarColor(r: number): string {
   return "bg-red-500";
 }
 
-function retentionLabel(r: number): string {
+function retentionLabel(r: number, bestQuality?: string | null): string {
+  if (bestQuality === "NONE") return "Unsolved";
   if (r >= 0.8) return "Strong";
   if (r >= 0.6) return "Good";
   if (r >= 0.4) return "Fading";
@@ -163,8 +165,11 @@ function formatMinutes(mins: number): string {
 
 function daysAgoLabel(date: string | null): string {
   if (!date) return "Never";
-  const d = new Date(date + "T12:00:00");
-  const days = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  const d = new Date(date);
+  const now = new Date();
+  const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const localNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((localNow.getTime() - localDate.getTime()) / (1000 * 60 * 60 * 24));
   if (days === 0) return "Today";
   if (days === 1) return "Yesterday";
   return `${days}d ago`;
@@ -541,7 +546,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                       key={item.problemId}
                       className="flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted transition-colors duration-150"
                     >
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${item.stability >= 30 ? "bg-green-500" : retentionBarColor(item.retrievability)}`} />
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${item.bestQuality === "NONE" ? "bg-red-500" : item.stability >= 30 ? "bg-green-500" : retentionBarColor(item.retrievability)}`} />
                       <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
                       <div className="min-w-0 flex-1">
                         <Link href={`/problems/${item.problemId}`} className="text-sm font-medium text-foreground hover:text-accent truncate block">
@@ -552,8 +557,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-xs font-medium tabular-nums ${retentionColor(item.retrievability)}`}>
-                          {retentionLabel(item.retrievability)}
+                        <span className={`text-xs font-medium tabular-nums ${retentionColor(item.bestQuality === "NONE" ? 0 : item.retrievability)}`}>
+                          {retentionLabel(item.retrievability, item.bestQuality)}
                         </span>
                         <DifficultyBadge difficulty={item.difficulty} />
                         {item.isDue ? (

@@ -116,9 +116,12 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
 
+  // Failed attempts (couldn't solve) should be immediately due for review
+  const isFailed = solvedIndependently === "NO";
+
   if (existing[0]) {
     const newStability = computeNewStability(existing[0].stability, signals);
-    const nextReview = computeNextReviewDate(newStability, now);
+    const nextReview = isFailed ? now : computeNextReviewDate(newStability, now);
 
     await db
       .update(userProblemStates)
@@ -136,7 +139,7 @@ export async function POST(req: NextRequest) {
       .where(eq(userProblemStates.id, existing[0].id));
   } else {
     const initialStability = computeInitialStability(signals);
-    const nextReview = computeNextReviewDate(initialStability, now);
+    const nextReview = isFailed ? now : computeNextReviewDate(initialStability, now);
 
     await db.insert(userProblemStates).values({
       userId: session.user.id,

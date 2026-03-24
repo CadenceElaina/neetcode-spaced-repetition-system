@@ -24,11 +24,13 @@ type ProblemState = {
   retention: number;
   totalAttempts: number;
   lastReviewed: string | null;
+  bestQuality: string | null;
 };
 
 const ALL = "All";
 
-function statusLabel(r: number): { label: string; className: string } {
+function statusLabel(r: number, bestQuality?: string | null): { label: string; className: string } {
+  if (bestQuality === "NONE") return { label: "Unsolved", className: "text-red-500" };
   if (r >= 0.8) return { label: "Strong", className: "text-green-500" };
   if (r >= 0.6) return { label: "Good", className: "text-emerald-400" };
   if (r >= 0.4) return { label: "Fading", className: "text-amber-500" };
@@ -140,7 +142,7 @@ export function ProblemsTable({
           <tbody>
             {filtered.map((p) => {
               const state = problemStates[p.id];
-              const status = state ? statusLabel(state.retention) : null;
+              const status = state ? statusLabel(state.retention, state.bestQuality) : null;
               return (
                 <tr key={p.id} className="border-b border-border transition-colors duration-150 hover:bg-muted">
                   <td className="px-4 py-3 text-muted-foreground">{p.leetcodeNumber}</td>
@@ -187,7 +189,7 @@ export function ProblemsTable({
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 

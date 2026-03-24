@@ -15,7 +15,7 @@ export default async function ProblemsPage() {
     .orderBy(asc(problems.id));
 
   const session = await auth();
-  let problemStates: Record<number, { retention: number; totalAttempts: number; lastReviewed: string | null }> = {};
+  let problemStates: Record<number, { retention: number; totalAttempts: number; lastReviewed: string | null; bestQuality: string | null }> = {};
 
   if (session?.user?.id) {
     const states = await db
@@ -31,7 +31,8 @@ export default async function ProblemsPage() {
       problemStates[s.problemId] = {
         retention: computeRetrievability(s.stability, daysSince),
         totalAttempts: s.totalAttempts,
-        lastReviewed: s.lastReviewedAt?.toISOString().slice(0, 10) ?? null,
+        lastReviewed: s.lastReviewedAt?.toISOString() ?? null,
+        bestQuality: s.bestSolutionQuality,
       };
     }
   }

@@ -83,7 +83,7 @@ export default async function DashboardPage() {
         totalAttempts: s.totalAttempts,
         daysOverdue,
         retrievability,
-        lastReviewedAt: s.lastReviewedAt ? s.lastReviewedAt.toISOString().slice(0, 10) : null,
+        lastReviewedAt: s.lastReviewedAt ? s.lastReviewedAt.toISOString() : null,
       };
     })
     .filter(Boolean) as {
@@ -134,9 +134,10 @@ export default async function DashboardPage() {
         totalAttempts: s.totalAttempts,
         retrievability,
         stability: s.stability,
-        lastReviewedAt: s.lastReviewedAt ? s.lastReviewedAt.toISOString().slice(0, 10) : null,
+        lastReviewedAt: s.lastReviewedAt ? s.lastReviewedAt.toISOString() : null,
         daysUntilReview,
         isDue: reviewIds.has(s.problemId),
+        bestQuality: s.bestSolutionQuality,
       };
     })
     .filter(Boolean) as {
@@ -151,6 +152,7 @@ export default async function DashboardPage() {
       lastReviewedAt: string | null;
       daysUntilReview: number | null;
       isDue: boolean;
+      bestQuality: string | null;
     }[];
 
   // Compute retrievability for each attempted problem
