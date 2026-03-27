@@ -462,6 +462,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                           label={prio === "critical" ? "Critical" : prio === "high" ? "Overdue" : prio === "medium" ? "Soon" : "Due"}
                           retrievability={item.retrievability}
                           daysOverdue={item.daysOverdue}
+                          priority={prio}
                         />
                         <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
                         <div className="min-w-0 flex-1">
@@ -751,16 +752,17 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             </div>
             <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
               {displayCategories.map((cat) => (
-                <div key={cat.category} className="flex items-center gap-2">
-                  <span className="text-[11px] w-24 shrink-0 truncate" title={cat.category}>{cat.category}</span>
-                  <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background">
+                <div key={cat.category} className="flex items-center gap-2 group/cat cursor-default">
+                  <span className="text-[11px] w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
+                  <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background group-hover/cat:h-2 transition-all duration-150">
                     <div
-                      className={`h-full rounded-full ${retentionBarColor(cat.avgRetention)}`}
+                      className={`h-full rounded-full transition-all duration-300 ${retentionBarColor(cat.avgRetention)}`}
                       style={{ width: `${cat.total > 0 ? Math.round((cat.attempted / cat.total) * 100) : 0}%` }}
                     />
                   </div>
-                  <span className={`text-[11px] w-10 text-right shrink-0 tabular-nums ${cat.attempted > 0 ? retentionColor(cat.avgRetention) : "text-muted-foreground"}`}>
-                    {cat.attempted}/{cat.total}
+                  <span className={`text-[11px] w-10 text-right shrink-0 tabular-nums transition-colors ${cat.attempted > 0 ? retentionColor(cat.avgRetention) : "text-muted-foreground"}`}>
+                    <span className="group-hover/cat:hidden">{cat.attempted}/{cat.total}</span>
+                    <span className="hidden group-hover/cat:inline">{cat.attempted > 0 ? `${Math.round(cat.avgRetention * 100)}%` : "—"}</span>
                   </span>
                 </div>
               ))}
@@ -774,12 +776,15 @@ export function DashboardClient({ data }: { data: DashboardData }) {
               {data.difficultyBreakdown.map((d) => {
                 const pct = d.count > 0 ? Math.round((d.attempted / d.count) * 100) : 0;
                 return (
-                  <div key={d.difficulty} className="flex items-center gap-2">
-                    <span className="text-[11px] w-12 shrink-0">{d.difficulty}</span>
-                    <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background">
-                      <div className={`h-full rounded-full ${DIFF_COLORS[d.difficulty]}`} style={{ width: `${pct}%` }} />
+                  <div key={d.difficulty} className="flex items-center gap-2 group/diff cursor-default">
+                    <span className="text-[11px] w-12 shrink-0 group-hover/diff:text-foreground transition-colors">{d.difficulty}</span>
+                    <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background group-hover/diff:h-2 transition-all duration-150">
+                      <div className={`h-full rounded-full transition-all duration-300 ${DIFF_COLORS[d.difficulty]}`} style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-[11px] text-muted-foreground w-10 text-right tabular-nums">{d.attempted}/{d.count}</span>
+                    <span className="text-[11px] text-muted-foreground w-10 text-right tabular-nums">
+                      <span className="group-hover/diff:hidden">{d.attempted}/{d.count}</span>
+                      <span className="hidden group-hover/diff:inline">{pct}%</span>
+                    </span>
                   </div>
                 );
               })}
@@ -810,22 +815,23 @@ function ActivityChart({ history }: { history: AttemptDay[] }) {
         const label = `${parseInt(m)}/${parseInt(dd)}`;
         const isToday = day.date === todayStr;
         return (
-          <div
+          <Link
             key={day.date}
-            className="flex flex-1 flex-col items-center justify-end gap-0.5"
+            href={`/activity?date=${day.date}`}
+            className="flex flex-1 flex-col items-center justify-end gap-0.5 cursor-pointer group"
             style={{ minHeight: MAX_BAR_PX + 28 }}
           >
             {day.count > 0 && (
-              <span className="text-[10px] text-muted-foreground leading-none tabular-nums">{day.count}</span>
+              <span className="text-[10px] text-muted-foreground leading-none tabular-nums group-hover:text-foreground transition-colors">{day.count}</span>
             )}
             <div
-              className={`w-full rounded-t-sm ${day.count > 0 ? "bg-accent" : "bg-border/40"}`}
+              className={`w-full rounded-t-sm transition-all duration-150 group-hover:scale-x-110 group-hover:brightness-125 ${day.count > 0 ? "bg-accent" : "bg-border/40 group-hover:bg-border/60"}`}
               style={{ height: `${barPx}px` }}
             />
-            <span className={`text-[9px] leading-none tabular-nums ${isToday ? "text-accent font-semibold" : "text-muted-foreground"}`}>
+            <span className={`text-[9px] leading-none tabular-nums transition-colors ${isToday ? "text-accent font-semibold" : "text-muted-foreground group-hover:text-foreground"}`}>
               {label}
             </span>
-          </div>
+          </Link>
         );
       })}
     </div>
@@ -835,15 +841,16 @@ function ActivityChart({ history }: { history: AttemptDay[] }) {
 /* ── Review Urgency Bar ── */
 
 function ReviewUrgencyBar({ queue }: { queue: ReviewItem[] }) {
+  const [hovered, setHovered] = useState<string | null>(null);
   const counts = { critical: 0, high: 0, medium: 0, due: 0 };
   queue.forEach(item => { counts[priorityLevel(item)]++; });
   const total = queue.length;
 
   const segments = [
-    { key: "critical", label: "Critical", color: "bg-red-500", count: counts.critical },
-    { key: "high", label: "Overdue", color: "bg-orange-500", count: counts.high },
-    { key: "medium", label: "Soon", color: "bg-amber-400", count: counts.medium },
-    { key: "due", label: "Due", color: "bg-sky-400", count: counts.due },
+    { key: "critical", label: "Critical", desc: "5+ days overdue or <25% retention", color: "bg-red-500", count: counts.critical },
+    { key: "high", label: "Overdue", desc: "1-5 days overdue or <45% retention", color: "bg-orange-500", count: counts.high },
+    { key: "medium", label: "Soon", desc: "Due within a day", color: "bg-amber-400", count: counts.medium },
+    { key: "due", label: "Due", desc: "Due today", color: "bg-sky-400", count: counts.due },
   ].filter(s => s.count > 0);
 
   return (
@@ -852,16 +859,26 @@ function ReviewUrgencyBar({ queue }: { queue: ReviewItem[] }) {
         {segments.map((s) => (
           <div
             key={s.key}
-            className={`${s.color} transition-all duration-300`}
+            className={`${s.color} transition-all duration-300 cursor-pointer ${hovered && hovered !== s.key ? "opacity-40" : ""}`}
             style={{ width: `${(s.count / total) * 100}%` }}
+            onMouseEnter={() => setHovered(s.key)}
+            onMouseLeave={() => setHovered(null)}
           />
         ))}
       </div>
       <div className="flex gap-3 mt-1.5">
         {segments.map((s) => (
-          <div key={s.key} className="flex items-center gap-1">
+          <div
+            key={s.key}
+            className={`flex items-center gap-1 transition-opacity duration-150 ${hovered && hovered !== s.key ? "opacity-40" : ""}`}
+            onMouseEnter={() => setHovered(s.key)}
+            onMouseLeave={() => setHovered(null)}
+          >
             <div className={`w-1.5 h-1.5 rounded-full ${s.color}`} />
-            <span className="text-[10px] text-muted-foreground">{s.count} {s.label}</span>
+            <span className="text-[10px] text-muted-foreground">
+              {s.count} {s.label}
+              {hovered === s.key && <span className="text-foreground/60"> — {s.desc}</span>}
+            </span>
           </div>
         ))}
       </div>
@@ -876,11 +893,13 @@ function StatusDot({
   label,
   retrievability,
   daysOverdue,
+  priority,
 }: {
   color: string;
   label: string;
   retrievability: number;
   daysOverdue: number;
+  priority: "critical" | "high" | "medium" | "due";
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -893,10 +912,14 @@ function StatusDot({
     }
   }, []);
 
+  const sizeClass = priority === "critical" ? "w-2.5 h-2.5" : "w-2 h-2";
+  const pulseClass = priority === "critical" ? "dot-critical" : "";
+  const ringClass = priority === "high" ? "ring-1 ring-orange-500/50" : "";
+
   return (
     <div
       ref={ref}
-      className={`w-2 h-2 rounded-full shrink-0 cursor-help ${color}`}
+      className={`${sizeClass} rounded-full shrink-0 cursor-help ${color} ${pulseClass} ${ringClass}`}
       onMouseEnter={() => { updatePos(); setOpen(true); }}
       onMouseLeave={() => setOpen(false)}
     >
@@ -1041,12 +1064,12 @@ function MasteryProgress({
   return (
     <div>
       {/* Stacked bar */}
-      <div className="flex h-2.5 overflow-hidden rounded-full bg-background">
+      <div className="flex h-2.5 overflow-hidden rounded-full bg-background group/mastery cursor-default">
         {masteredPct > 0 && (
-          <div className="bg-green-500 transition-all duration-300" style={{ width: `${masteredPct}%` }} />
+          <div className="bg-green-500 transition-all duration-300 group-hover/mastery:brightness-125" style={{ width: `${masteredPct}%` }} />
         )}
         {learningPct > 0 && (
-          <div className="bg-accent transition-all duration-300" style={{ width: `${learningPct}%` }} />
+          <div className="bg-accent transition-all duration-300 group-hover/mastery:brightness-125" style={{ width: `${learningPct}%` }} />
         )}
       </div>
 
@@ -1054,7 +1077,7 @@ function MasteryProgress({
       <div className="flex gap-3 mt-1.5">
         <div className="flex items-center gap-1">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          <span className="text-[10px] text-muted-foreground">{mastered} Mastered</span>
+          <span className="text-[10px] text-muted-foreground">{mastered} Mastered <span className="text-foreground/50">({masteredPct.toFixed(0)}%)</span></span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-1.5 h-1.5 rounded-full bg-accent" />

@@ -47,11 +47,11 @@ $$S_{\text{new}} = S_{\text{old}} \times \text{multiplier} \times \text{modifier
 
 **Multipliers** (by outcome × quality):
 
-| Outcome    | Optimal | Brute Force | No Solution |
-| ---------- | :-----: | :---------: | :---------: |
-| Solved     |  2.5×   |    1.5×     |      —      |
-| Partial    | 1.1× (quality ignored) | 1.1× | —  |
-| Not solved |    —    |    0.8×     |    0.5×     |
+| Outcome    |        Optimal         | Brute Force | No Solution |
+| ---------- | :--------------------: | :---------: | :---------: |
+| Solved     |          2.5×          |    1.5×     |      —      |
+| Partial    | 1.1× (quality ignored) |    1.1×     |      —      |
+| Not solved |           —            |    0.8×     |    0.5×     |
 
 **Modifiers** (independent solves only): rewrote from scratch (+0.5), correct time complexity (+0.2), correct space complexity (+0.2), fast solve (+0.2). **Confidence** (all attempts): level 5 (+0.3), level 4 (+0.1), level 2 (−0.2), level 1 (−0.4). Stability clamped to [0.5, 365] days.
 
@@ -171,16 +171,16 @@ Areas where help is useful: algorithm tuning, complexity verification, UI/UX, mo
 
 ## Glossary
 
-| Term | Definition |
-| ---- | ---------- |
+| Term                  | Definition                                                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Spaced Repetition** | A learning technique where reviews are scheduled at increasing intervals. Each successful review pushes the next one further out. |
-| **FSRS** | Free Spaced Repetition Scheduler — an open-source algorithm by Jarrett Ye. NeetcodeSRS uses a modified multi-signal version. |
-| **Stability** | How durable your memory of a problem is, in days. Higher = slower forgetting = longer review intervals. |
-| **Retrievability** | Estimated probability (0–100%) you could solve a problem right now. Decays exponentially since last review. Floored at 30%. |
-| **Forgetting Curve** | The graph of retrievability over time (exponential decay). First measured by Ebbinghaus in 1885. |
-| **NeetCode 150** | A curated list of 150 LeetCode problems covering all major interview topics, organized by category. |
-| **Blind 75** | A subset of 75 most frequently asked coding interview problems. Given a small priority bonus in the review queue. |
-| **Readiness Score** | A 0–100 composite of coverage (30%), retention (40%), category balance (20%), and consistency (10%). Maps to tiers S through D. |
+| **FSRS**              | Free Spaced Repetition Scheduler — an open-source algorithm by Jarrett Ye. NeetcodeSRS uses a modified multi-signal version.      |
+| **Stability**         | How durable your memory of a problem is, in days. Higher = slower forgetting = longer review intervals.                           |
+| **Retrievability**    | Estimated probability (0–100%) you could solve a problem right now. Decays exponentially since last review. Floored at 30%.       |
+| **Forgetting Curve**  | The graph of retrievability over time (exponential decay). First measured by Ebbinghaus in 1885.                                  |
+| **NeetCode 150**      | A curated list of 150 LeetCode problems covering all major interview topics, organized by category.                               |
+| **Blind 75**          | A subset of 75 most frequently asked coding interview problems. Given a small priority bonus in the review queue.                 |
+| **Readiness Score**   | A 0–100 composite of coverage (30%), retention (40%), category balance (20%), and consistency (10%). Maps to tiers S through D.   |
 
 For a detailed walkthrough with examples, see the [How It Works](https://leetcode-spaced-repetition-system.vercel.app/info) page in the app.
 
