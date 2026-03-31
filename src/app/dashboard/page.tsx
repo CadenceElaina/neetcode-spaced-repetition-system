@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { db } from "@/db";
 import { problems, userProblemStates, attempts } from "@/db/schema";
 import { auth } from "@/auth";
@@ -280,6 +281,7 @@ export default async function DashboardPage() {
     .sort((a, b) => b.stability - a.stability);
 
   return (
+    <Suspense>
     <DashboardClient
       data={{
         reviewQueue,
@@ -322,6 +324,7 @@ export default async function DashboardPage() {
         importAttemptedIds: [...attemptedIds],
       }}
     />
+    </Suspense>
   );
 }
 

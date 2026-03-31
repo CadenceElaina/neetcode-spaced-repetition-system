@@ -1,17 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Outcome = "NO_SOLUTION" | "PARTIAL" | "SOLVED";
 type Quality = "BRUTE_FORCE" | "OPTIMAL";
-
-type SrsFeedback = {
-  oldStability: number;
-  newStability: number;
-  nextReviewAt: string;
-  masteryPct: number;
-};
 
 const CONFIDENCE_LABELS: Record<number, string> = {
   1: "Can't solve or pseudocode",
@@ -37,7 +30,6 @@ export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComp
   const [showCode, setShowCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [srsFeedback, setSrsFeedback] = useState<SrsFeedback | null>(null);
 
   const showQuality = outcome === "SOLVED";
   const defaultSolveTime = isReview ? 15 : 20;
@@ -92,85 +84,22 @@ export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComp
     }
 
     const data = await res.json();
-    setSrsFeedback(data.srs);
+    const srs = data.srs;
+    const params = new URLSearchParams({
+      oldS: String(srs.oldStability),
+      newS: String(srs.newStability),
+      next: srs.nextReviewAt,
+      pct: String(srs.masteryPct),
+    });
+    router.push(`/dashboard?${params.toString()}`);
+    router.refresh();
   }
-
-  // Auto-redirect after showing feedback
-  useEffect(() => {
-    if (!srsFeedback) return;
-    const timer = setTimeout(() => {
-      router.push("/dashboard");
-      router.refresh();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [srsFeedback, router]);
 
   const btnBase = "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm transition-colors duration-150 border";
   const btnActive = "border-accent bg-accent/10 text-accent font-medium";
   const btnInactive = "border-border text-muted-foreground hover:bg-muted hover:text-foreground";
   const inputClass = "h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
   const labelClass = "block text-xs font-medium text-muted-foreground mb-1";
-
-  if (srsFeedback) {
-    const nextDate = new Date(srsFeedback.nextReviewAt);
-    const now = new Date();
-    const diffMs = nextDate.getTime() - now.getTime();
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-    const nextLabel = diffDays <= 0 ? "Now" : diffDays === 1 ? "Tomorrow" : `In ${diffDays} days`;
-    const stabilityGrew = srsFeedback.newStability > srsFeedback.oldStability;
-    const isFirst = srsFeedback.oldStability === 0;
-
-    return (
-      <div className="max-w-md space-y-4 animate-in fade-in duration-300">
-        <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
-          <p className="text-sm font-medium text-foreground">Attempt saved</p>
-
-          {/* Stability change */}
-          <div className="flex items-baseline gap-2 text-sm">
-            <span className="text-muted-foreground">Stability:</span>
-            {isFirst ? (
-              <span className="text-accent font-medium">{srsFeedback.newStability}d</span>
-            ) : (
-              <>
-                <span className="text-muted-foreground">{srsFeedback.oldStability}d</span>
-                <span className="text-muted-foreground">→</span>
-                <span className={stabilityGrew ? "text-green-500 font-medium" : "text-orange-500 font-medium"}>
-                  {srsFeedback.newStability}d
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Next review */}
-          <div className="flex items-baseline gap-2 text-sm">
-            <span className="text-muted-foreground">Next review:</span>
-            <span className="text-foreground">{nextLabel}</span>
-          </div>
-
-          {/* Mastery progress bar */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Mastery</span>
-              <span className="text-xs tabular-nums text-muted-foreground">{srsFeedback.masteryPct}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-background">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${srsFeedback.masteryPct >= 100 ? "bg-green-500" : "bg-accent"}`}
-                style={{ width: `${srsFeedback.masteryPct}%` }}
-              />
-            </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">
-              {srsFeedback.masteryPct >= 100
-                ? "Mastered — won't come back for 30+ days"
-                : `${srsFeedback.newStability}d / 30d stability needed`}
-            </p>
-          </div>
-        </div>
-
-        <p className="text-xs text-muted-foreground">Returning to dashboard…</p>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">

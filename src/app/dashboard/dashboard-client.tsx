@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { ImportClient } from "@/app/import/import-client";
@@ -209,6 +210,9 @@ function getDefaultTargetDate(): string {
 /* ── Main Component ── */
 
 export function DashboardClient({ data }: { data: DashboardData }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number } | null>(null);
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
   const [targetCount, setTargetCount] = useState(150);
   const [showSettings, setShowSettings] = useState(false);
@@ -230,6 +234,21 @@ export function DashboardClient({ data }: { data: DashboardData }) {
       } catch { /* ignore */ }
     }
   }, []);
+
+  // SRS feedback banner from attempt redirect
+  useEffect(() => {
+    const oldS = searchParams.get("oldS");
+    const newS = searchParams.get("newS");
+    const next = searchParams.get("next");
+    const pct = searchParams.get("pct");
+    if (oldS && newS && next && pct) {
+      setSrsBanner({ oldS: Number(oldS), newS: Number(newS), next, pct: Number(pct) });
+      // Clean URL without reload
+      router.replace("/dashboard", { scroll: false });
+      const timer = setTimeout(() => setSrsBanner(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, router]);
 
   function saveSettings(date: string, count: number) {
     setTargetDate(date);
@@ -319,6 +338,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
   return (
     <div className="h-[calc(100dvh-120px)]">
+    {/* SRS Feedback Banner */}
+    {srsBanner && <SrsFeedbackBanner {...srsBanner} onDismiss={() => setSrsBanner(null)} />}
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 h-full min-h-0 lg:grid-rows-1">
       {/* ── Combined Problem Queue ── */}
       <div className="flex flex-col min-h-0 lg:col-span-6">
@@ -693,14 +714,6 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
 
 
-        {/* Review Urgency */}
-        {data.reviewQueue.length > 0 && (
-          <section className="rounded-lg border border-border bg-muted p-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Review Priority</p>
-            <ReviewUrgencyBar queue={data.reviewQueue} />
-          </section>
-        )}
-
         {/* Activity Chart */}
         <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
           <p className="text-xs font-medium text-muted-foreground mb-2">Activity (14 days)</p>
@@ -1061,9 +1074,11 @@ function MasteryProgress({
   masteryList: MasteryItem[];
   learningList: MasteryItem[];
 }) {
+  const [showAll, setShowAll] = useState(false);
   const newCount = total - mastered - learning;
   const masteredPct = total > 0 ? (mastered / total) * 100 : 0;
   const learningPct = total > 0 ? (learning / total) * 100 : 0;
+  const displayLearning = showAll ? learningList : learningList.slice(0, 5);
 
   return (
     <div>
@@ -1114,8 +1129,8 @@ function MasteryProgress({
       {learningList.length > 0 && (
         <div className="mt-2 pt-2 border-t border-border/50">
           <p className="text-[10px] text-muted-foreground mb-1">Learning — stability toward 30d</p>
-          <div className="space-y-1 max-h-[200px] overflow-y-auto">
-            {learningList.map((item) => {
+          <div className="space-y-1">
+            {displayLearning.map((item) => {
               const pct = Math.min(100, (item.stability / MASTERY_THRESHOLD) * 100);
               return (
                 <div key={item.leetcodeNumber ?? item.title} className="flex items-center gap-1.5 text-[11px] group/learn">
@@ -1132,8 +1147,66 @@ function MasteryProgress({
               );
             })}
           </div>
+          {learningList.length > 5 && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="text-[10px] text-muted-foreground hover:text-foreground mt-1"
+            >
+              {showAll ? "Show less" : `Show all ${learningList.length}`}
+            </button>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── SRS Feedback Banner ── */
+
+function SrsFeedbackBanner({
+  oldS,
+  newS,
+  next,
+  pct,
+  onDismiss,
+}: {
+  oldS: number;
+  newS: number;
+  next: string;
+  pct: number;
+  onDismiss: () => void;
+}) {
+  const nextDate = new Date(next);
+  const now = new Date();
+  const diffDays = Math.round((nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const nextLabel = diffDays <= 0 ? "now" : diffDays === 1 ? "tomorrow" : `in ${diffDays}d`;
+  const grew = newS > oldS;
+  const isFirst = oldS === 0;
+
+  return (
+    <div className="mb-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-2.5 flex items-center gap-4 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+      <span className="text-foreground font-medium shrink-0">Saved</span>
+      <span className="text-muted-foreground">
+        Stability{" "}
+        {isFirst ? (
+          <span className="text-accent font-medium">{newS}d</span>
+        ) : (
+          <>
+            {oldS}d → <span className={grew ? "text-green-500 font-medium" : "text-orange-500 font-medium"}>{newS}d</span>
+          </>
+        )}
+      </span>
+      <span className="text-muted-foreground">Next: {nextLabel}</span>
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-background">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${pct >= 100 ? "bg-green-500" : "bg-accent"}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
+      </div>
+      <button onClick={onDismiss} className="text-muted-foreground hover:text-foreground text-xs shrink-0">✕</button>
     </div>
   );
 }
