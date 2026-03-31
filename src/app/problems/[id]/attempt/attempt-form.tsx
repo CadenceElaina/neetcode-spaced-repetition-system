@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 type Outcome = "NO_SOLUTION" | "PARTIAL" | "SOLVED";
 type Quality = "BRUTE_FORCE" | "OPTIMAL";
@@ -22,7 +21,6 @@ type Props = {
 };
 
 export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComplexity, isReview }: Props) {
-  const router = useRouter();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [quality, setQuality] = useState<Quality | null>(null);
   const [confidence, setConfidence] = useState(3);
@@ -91,8 +89,7 @@ export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComp
       next: srs.nextReviewAt,
       pct: String(srs.masteryPct),
     });
-    router.push(`/dashboard?${params.toString()}`);
-    router.refresh();
+    window.location.href = `/dashboard?${params.toString()}`;
   }
 
   const btnBase = "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm transition-colors duration-150 border";
