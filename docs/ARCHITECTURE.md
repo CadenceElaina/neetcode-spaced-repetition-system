@@ -134,14 +134,14 @@ $$S_{\text{new}} = S_{\text{old}} \times \text{multiplier} \times \text{modifier
 
 **Modifiers** (additive bonuses):
 
-| Signal                   | Modifier |
-| ------------------------ | :------: |
-| Rewrote from scratch     |   +0.5   |
-| Time complexity correct  |   +0.2   |
-| Space complexity correct |   +0.2   |
-| Fast solve (< 10 min)    |   +0.2   |
-| Confidence 4–5           |   +0.1   |
-| Confidence 1–2           |   −0.1   |
+| Signal                | Modifier |
+| --------------------- | :------: |
+| Rewrote from scratch  |   +0.5   |
+| Fast solve (< 10 min) |   +0.2   |
+| Confidence 4–5        |   +0.1   |
+| Confidence 1–2        |   −0.1   |
+
+> **Note:** Time/space complexity correctness bonuses (+0.2 each) were removed. Complexity columns remain in the DB but always store N/A/null. Quality is now binary: Optimal or Not Optimal.
 
 **Bounds:** Stability clamped to [0.5, 365] days. Initial stability = 0.5 days.
 
