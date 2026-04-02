@@ -236,6 +236,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   const [showStatsDetail, setShowStatsDetail] = useState(false);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>(data.pendingSubmissions);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -433,6 +434,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           <PendingBanner
             items={pendingItems}
             confirmingId={confirmingId}
+            confirmedIds={confirmedIds}
             onConfirm={async (item) => {
               setConfirmingId(item.id);
               try {
@@ -458,7 +460,12 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id: item.id, action: "confirm" }),
                   });
-                  setPendingItems((prev) => prev.filter((p) => p.id !== item.id));
+                  // Show confirmed state briefly, then remove + refresh
+                  setConfirmedIds((prev) => new Set(prev).add(item.id));
+                  setTimeout(() => {
+                    setPendingItems((prev) => prev.filter((p) => p.id !== item.id));
+                    router.refresh();
+                  }, 800);
                 }
               } finally {
                 setConfirmingId(null);
@@ -1497,11 +1504,13 @@ function SrsFeedbackBanner({
 function PendingBanner({
   items,
   confirmingId,
+  confirmedIds,
   onConfirm,
   onDismiss,
 }: {
   items: PendingItem[];
   confirmingId: string | null;
+  confirmedIds: Set<string>;
   onConfirm: (item: PendingItem) => void;
   onDismiss: (item: PendingItem) => void;
 }) {
@@ -1529,8 +1538,18 @@ function PendingBanner({
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 px-3 py-2.5 border-b border-border/50 last:border-b-0 hover:bg-muted/50 transition-colors"
+              className={`flex items-center gap-3 px-3 py-2.5 border-b border-border/50 last:border-b-0 transition-colors ${
+                confirmedIds.has(item.id) ? "bg-green-500/10" : "hover:bg-muted/50"
+              }`}
             >
+              {confirmedIds.has(item.id) ? (
+                <>
+                  <span className="text-green-500 text-sm">✓</span>
+                  <span className="text-sm font-medium text-green-500">{item.problemTitle}</span>
+                  <span className="ml-auto text-xs text-green-500/70">Logged</span>
+                </>
+              ) : (
+                <>
               <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
               <div className="min-w-0 flex-1">
                 <Link href={`/problems/${item.problemId}`} className="text-sm font-medium text-foreground hover:text-accent truncate block">
@@ -1562,6 +1581,8 @@ function PendingBanner({
                   ✕
                 </button>
               </div>
+                </>
+              )}
             </div>
           ))}
         </div>
