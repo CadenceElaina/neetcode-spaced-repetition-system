@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { attempts, userProblemStates, problems } from "@/db/schema";
+import { attempts, userProblemStates, problems, pendingSubmissions } from "@/db/schema";
 import { eq, and, gte, lt } from "drizzle-orm";
 import {
   computeNewStability,
@@ -110,6 +110,20 @@ export async function POST(req: NextRequest) {
       source: body.source === "github" ? "github" : body.source === "import" ? "import" : "manual",
     })
     .returning({ id: attempts.id });
+
+  // Auto-resolve any pending submissions for this problem —
+  // whether the user came from the pending banner or the full form,
+  // the pending's purpose is fulfilled once an attempt is logged.
+  await db
+    .update(pendingSubmissions)
+    .set({ status: "confirmed", resolvedAt: new Date() })
+    .where(
+      and(
+        eq(pendingSubmissions.userId, session.user.id),
+        eq(pendingSubmissions.problemId, problemId),
+        eq(pendingSubmissions.status, "pending"),
+      ),
+    );
 
   // Build signals for SRS algorithm
   const signals: AttemptSignals = {
