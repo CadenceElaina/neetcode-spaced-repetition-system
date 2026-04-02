@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { users, problems, pendingSubmissions, userProblemStates } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 import crypto from "crypto";
 
 /**
@@ -116,6 +116,27 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existingPending) {
+      skipped.push(commit.id);
+      continue;
+    }
+
+    // Time-window dedup: skip if same problem has a pending submission within last 60 min
+    const commitTime = new Date(commit.timestamp);
+    const windowStart = new Date(commitTime.getTime() - 60 * 60 * 1000);
+
+    const [recentPending] = await db
+      .select({ id: pendingSubmissions.id })
+      .from(pendingSubmissions)
+      .where(
+        and(
+          eq(pendingSubmissions.userId, user.id),
+          eq(pendingSubmissions.problemId, problemId),
+          gte(pendingSubmissions.detectedAt, windowStart),
+        ),
+      )
+      .limit(1);
+
+    if (recentPending) {
       skipped.push(commit.id);
       continue;
     }

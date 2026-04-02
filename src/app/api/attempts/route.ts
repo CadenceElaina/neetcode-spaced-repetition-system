@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
     const existing = await db
-      .select({ id: attempts.id })
+      .select({ id: attempts.id, createdAt: attempts.createdAt })
       .from(attempts)
       .where(
         and(
@@ -75,7 +75,11 @@ export async function POST(req: NextRequest) {
 
     if (existing.length > 0) {
       return NextResponse.json(
-        { error: "duplicate", message: `Already logged ${problem[0].title} today` },
+        {
+          error: "duplicate",
+          message: `Already logged ${problem[0].title} today`,
+          existingTime: existing[0].createdAt.toISOString(),
+        },
         { status: 409 },
       );
     }

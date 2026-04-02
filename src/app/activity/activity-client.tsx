@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DifficultyBadge } from "@/components/difficulty-badge";
@@ -226,79 +227,207 @@ export function ActivityClient({ items, date, range, summary }: Props) {
   );
 }
 
-function AttemptList({ items }: { items: ActivityItem[] }) {
+function AttemptList({ items: initialItems }: { items: ActivityItem[] }) {
+  const router = useRouter();
+  const [items, setItems] = useState(initialItems);
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
+
+  // Group items by problemId to detect duplicates on the same day
+  const byProblem = new Map<number, ActivityItem[]>();
+  for (const item of items) {
+    if (!byProblem.has(item.problemId)) byProblem.set(item.problemId, []);
+    byProblem.get(item.problemId)!.push(item);
+  }
+
+  // Build display order: unique problems in order of first appearance
+  const seen = new Set<number>();
+  const orderedProblems: number[] = [];
+  for (const item of items) {
+    if (!seen.has(item.problemId)) {
+      seen.add(item.problemId);
+      orderedProblems.push(item.problemId);
+    }
+  }
+
+  async function handleDelete(attemptId: string) {
+    setDeleting((prev) => new Set(prev).add(attemptId));
+    try {
+      const res = await fetch(`/api/attempts?id=${attemptId}`, { method: "DELETE" });
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.attemptId !== attemptId));
+        router.refresh();
+      }
+    } finally {
+      setDeleting((prev) => {
+        const next = new Set(prev);
+        next.delete(attemptId);
+        return next;
+      });
+    }
+  }
+
+  function toggleExpand(problemId: number) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(problemId)) next.delete(problemId);
+      else next.add(problemId);
+      return next;
+    });
+  }
+
   return (
     <div className="space-y-2">
-      {items.map((item) => {
-        const solved = SOLVED_LABELS[item.solvedIndependently] ?? {
-          label: item.solvedIndependently,
+      {orderedProblems.map((problemId) => {
+        const problemItems = byProblem.get(problemId)!.filter((i) =>
+          items.some((it) => it.attemptId === i.attemptId),
+        );
+        if (problemItems.length === 0) return null;
+
+        const first = problemItems[0];
+        const hasDupes = problemItems.length > 1;
+        const isExpanded = expanded.has(problemId);
+
+        const solved = SOLVED_LABELS[first.solvedIndependently] ?? {
+          label: first.solvedIndependently,
           className: "text-muted-foreground",
         };
-        const quality = QUALITY_LABELS[item.solutionQuality] ?? {
-          label: item.solutionQuality,
+        const quality = QUALITY_LABELS[first.solutionQuality] ?? {
+          label: first.solutionQuality,
           className: "text-muted-foreground",
         };
         const totalMins =
-          (item.solveTimeMinutes ?? 0) + (item.studyTimeMinutes ?? 0);
+          (first.solveTimeMinutes ?? 0) + (first.studyTimeMinutes ?? 0);
 
         return (
-          <Link
-            key={item.attemptId}
-            href={`/problems/${item.problemId}`}
-            className="flex items-center gap-4 rounded-lg border border-border bg-muted p-3 transition-colors hover:bg-muted/80 group"
-          >
-            {/* Problem info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                    item.isNew
-                      ? "bg-accent/15 text-accent"
-                      : "bg-muted-foreground/15 text-muted-foreground"
-                  }`}
+          <div key={problemId}>
+            {/* Main row */}
+            <div
+              className="flex items-center gap-4 rounded-lg border border-border bg-muted p-3 transition-colors hover:bg-muted/80 group"
+            >
+              {/* Expand toggle for duplicates */}
+              {hasDupes ? (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(problemId)}
+                  className="text-xs text-muted-foreground hover:text-foreground shrink-0 w-4"
+                  title={`${problemItems.length} attempts`}
                 >
-                  {item.isNew ? "New" : "Review"}
-                </span>
-                <DifficultyBadge difficulty={item.difficulty} />
-                <span className="text-sm font-medium text-foreground truncate">
-                  {item.leetcodeNumber != null && (
-                    <span className="text-muted-foreground mr-1">
-                      {item.leetcodeNumber}.
+                  {isExpanded ? "▾" : "▸"}
+                </button>
+              ) : (
+                <span className="w-4 shrink-0" />
+              )}
+
+              {/* Problem info */}
+              <Link href={`/problems/${first.problemId}`} className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                      first.isNew
+                        ? "bg-accent/15 text-accent"
+                        : "bg-muted-foreground/15 text-muted-foreground"
+                    }`}
+                  >
+                    {first.isNew ? "New" : "Review"}
+                  </span>
+                  <DifficultyBadge difficulty={first.difficulty} />
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {first.leetcodeNumber != null && (
+                      <span className="text-muted-foreground mr-1">
+                        {first.leetcodeNumber}.
+                      </span>
+                    )}
+                    {first.title}
+                  </span>
+                  {hasDupes && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ×{problemItems.length}
                     </span>
                   )}
-                  {item.title}
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                  <span>{first.category}</span>
+                  <span className={solved.className}>{solved.label}</span>
+                  {first.solutionQuality !== "NONE" && (
+                    <span className={quality.className}>{quality.label}</span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Stats */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+                {totalMins > 0 && <span>{totalMins}m</span>}
+                <span className="tabular-nums">
+                  {first.confidence}/5
                 </span>
-              </div>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span>{item.category}</span>
-                <span className={solved.className}>{solved.label}</span>
-                {item.solutionQuality !== "NONE" && (
-                  <span className={quality.className}>{quality.label}</span>
+                <span className="text-[10px] hidden sm:inline">
+                  {formatTime(first.createdAt)}
+                </span>
+                {/* Delete for single-attempt problems */}
+                {!hasDupes && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(first.attemptId)}
+                    disabled={deleting.has(first.attemptId)}
+                    className="text-muted-foreground/50 hover:text-red-500 transition-colors ml-1"
+                    title="Delete attempt"
+                  >
+                    {deleting.has(first.attemptId) ? "…" : "×"}
+                  </button>
                 )}
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-              {totalMins > 0 && <span>{totalMins}m</span>}
-              <span className="tabular-nums">
-                {item.confidence}/5
-              </span>
-              {item.timeCorrect !== null && (
-                <span title="Time complexity">
-                  T{item.timeCorrect ? "✓" : "✗"}
-                </span>
-              )}
-              {item.spaceCorrect !== null && (
-                <span title="Space complexity">
-                  S{item.spaceCorrect ? "✓" : "✗"}
-                </span>
-              )}
-              <span className="text-[10px] hidden sm:inline">
-                {formatTime(item.createdAt)}
-              </span>
-            </div>
-          </Link>
+            {/* Expanded sub-rows for duplicate attempts */}
+            {hasDupes && isExpanded && (
+              <div className="ml-6 mt-1 space-y-1">
+                {problemItems.map((item) => {
+                  const itemSolved = SOLVED_LABELS[item.solvedIndependently] ?? {
+                    label: item.solvedIndependently,
+                    className: "text-muted-foreground",
+                  };
+                  const itemQuality = QUALITY_LABELS[item.solutionQuality] ?? {
+                    label: item.solutionQuality,
+                    className: "text-muted-foreground",
+                  };
+                  const itemMins =
+                    (item.solveTimeMinutes ?? 0) + (item.studyTimeMinutes ?? 0);
+
+                  return (
+                    <div
+                      key={item.attemptId}
+                      className="flex items-center gap-4 rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-xs"
+                    >
+                      <span className="text-muted-foreground shrink-0">
+                        {formatTime(item.createdAt)}
+                      </span>
+                      <span className={itemSolved.className}>{itemSolved.label}</span>
+                      {item.solutionQuality !== "NONE" && (
+                        <span className={itemQuality.className}>{itemQuality.label}</span>
+                      )}
+                      {itemMins > 0 && (
+                        <span className="text-muted-foreground">{itemMins}m</span>
+                      )}
+                      <span className="text-muted-foreground tabular-nums">
+                        {item.confidence}/5
+                      </span>
+                      <span className="flex-1" />
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.attemptId)}
+                        disabled={deleting.has(item.attemptId)}
+                        className="text-muted-foreground/50 hover:text-red-500 transition-colors"
+                        title="Delete attempt"
+                      >
+                        {deleting.has(item.attemptId) ? "…" : "×"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

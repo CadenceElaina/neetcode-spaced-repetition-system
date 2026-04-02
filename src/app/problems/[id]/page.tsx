@@ -225,6 +225,9 @@ export default async function ProblemDetailPage({ params }: { params: Promise<{ 
                   <tr key={a.id} className="border-b border-border last:border-b-0">
                     <td className="px-4 py-2 text-muted-foreground">
                       {a.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      <span className="ml-1 text-xs opacity-60">
+                        {a.createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      </span>
                     </td>
                     <td className="px-4 py-2">
                       <span className={

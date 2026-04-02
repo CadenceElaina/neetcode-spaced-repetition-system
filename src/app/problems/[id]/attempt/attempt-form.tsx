@@ -28,7 +28,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
   const [showCode, setShowCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const showQuality = outcome === "SOLVED";
@@ -75,7 +75,11 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       if (res.status === 409) {
-        setDuplicateWarning(true);
+        const existingTime = (data as { existingTime?: string }).existingTime;
+        const timeLabel = existingTime
+          ? new Date(existingTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+          : "earlier";
+        setDuplicateWarning(timeLabel);
         setSubmitting(false);
         return;
       }
@@ -92,7 +96,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
     if (!outcome) return;
     setSubmitting(true);
     setError(null);
-    setDuplicateWarning(false);
+    setDuplicateWarning(null);
 
     const form = new FormData(e.currentTarget);
     formRef.current = e.currentTarget;
@@ -118,7 +122,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
   async function handleForceSubmit() {
     if (!formRef.current || !outcome) return;
     setSubmitting(true);
-    setDuplicateWarning(false);
+    setDuplicateWarning(null);
     setError(null);
 
     const form = new FormData(formRef.current);
@@ -271,18 +275,20 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
 
       {duplicateWarning && (
         <div className="rounded-md border border-yellow-500/40 bg-yellow-500/5 p-3 space-y-2">
-          <p className="text-sm text-yellow-500">You already logged this problem today.</p>
+          <p className="text-sm text-yellow-500">
+            You attempted this at {duplicateWarning} earlier today. Is this a new review attempt?
+          </p>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={handleForceSubmit}
               className="inline-flex h-8 items-center rounded-md bg-yellow-600 px-3 text-xs text-white hover:bg-yellow-700"
             >
-              Log Again Anyway
+              Yes, Log New Attempt
             </button>
             <button
               type="button"
-              onClick={() => setDuplicateWarning(false)}
+              onClick={() => setDuplicateWarning(null)}
               className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted"
             >
               Cancel
