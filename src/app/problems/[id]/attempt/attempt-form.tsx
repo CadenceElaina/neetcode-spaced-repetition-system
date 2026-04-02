@@ -15,12 +15,14 @@ const CONFIDENCE_LABELS: Record<number, string> = {
 
 type Props = {
   problemId: number;
+  problemTitle: string;
+  leetcodeNumber: number | null;
   optimalTimeComplexity: string | null;
   optimalSpaceComplexity: string | null;
   isReview: boolean;
 };
 
-export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComplexity, isReview }: Props) {
+export function AttemptForm({ problemId, problemTitle, leetcodeNumber, optimalTimeComplexity, optimalSpaceComplexity, isReview }: Props) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [quality, setQuality] = useState<Quality | null>(null);
   const [confidence, setConfidence] = useState(3);
@@ -88,6 +90,9 @@ export function AttemptForm({ problemId, optimalTimeComplexity, optimalSpaceComp
       newS: String(srs.newStability),
       next: srs.nextReviewAt,
       pct: String(srs.masteryPct),
+      attemptId: data.id,
+      pName: problemTitle,
+      pNum: String(leetcodeNumber ?? ""),
     });
     window.location.href = `/dashboard?${params.toString()}`;
   }

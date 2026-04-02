@@ -212,7 +212,7 @@ function getDefaultTargetDate(): string {
 export function DashboardClient({ data }: { data: DashboardData }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number } | null>(null);
+  const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string } | null>(null);
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
   const [targetCount, setTargetCount] = useState(150);
   const [showSettings, setShowSettings] = useState(false);
@@ -241,8 +241,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const newS = searchParams.get("newS");
     const next = searchParams.get("next");
     const pct = searchParams.get("pct");
-    if (oldS && newS && next && pct) {
-      setSrsBanner({ oldS: Number(oldS), newS: Number(newS), next, pct: Number(pct) });
+    const attemptId = searchParams.get("attemptId");
+    const pName = searchParams.get("pName");
+    const pNum = searchParams.get("pNum");
+    if (oldS && newS && next && pct && attemptId) {
+      setSrsBanner({ oldS: Number(oldS), newS: Number(newS), next, pct: Number(pct), attemptId, pName: pName ?? "", pNum: pNum ?? "" });
       // Clean URL without reload
       router.replace("/dashboard", { scroll: false });
     }
@@ -344,7 +347,14 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="h-[calc(100dvh-120px)]">
     {/* SRS Feedback Banner */}
-    {srsBanner && <SrsFeedbackBanner {...srsBanner} onDismiss={() => setSrsBanner(null)} />}
+    {srsBanner && <SrsFeedbackBanner {...srsBanner} onDismiss={() => setSrsBanner(null)} onUndo={async () => {
+      if (!srsBanner.attemptId) return;
+      const res = await fetch(`/api/attempts?id=${srsBanner.attemptId}`, { method: "DELETE" });
+      if (res.ok) {
+        setSrsBanner(null);
+        window.location.reload();
+      }
+    }} />}
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 h-full min-h-0 lg:grid-rows-1">
       {/* ── Combined Problem Queue ── */}
       <div className="flex flex-col min-h-0 lg:col-span-6">
@@ -693,6 +703,10 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             <div className="flex items-center gap-1">
               <span className="text-xs font-semibold tabular-nums">{data.avgPerDay.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">/day</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-semibold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projected}</span>
+              <span className="text-xs text-muted-foreground">projected</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-xs font-semibold">{formatMinutes(data.totalSolveMinutes)}</span>
@@ -1173,13 +1187,21 @@ function SrsFeedbackBanner({
   newS,
   next,
   pct,
+  attemptId,
+  pName,
+  pNum,
   onDismiss,
+  onUndo,
 }: {
   oldS: number;
   newS: number;
   next: string;
   pct: number;
+  attemptId: string;
+  pName: string;
+  pNum: string;
   onDismiss: () => void;
+  onUndo: () => void;
 }) {
   const nextDate = new Date(next);
   const now = new Date();
@@ -1187,10 +1209,11 @@ function SrsFeedbackBanner({
   const nextLabel = diffDays <= 0 ? "now" : diffDays === 1 ? "tomorrow" : `in ${diffDays}d`;
   const grew = newS > oldS;
   const isFirst = oldS === 0;
+  const problemLabel = pNum ? `${pNum}. ${pName}` : pName;
 
   return (
     <div className="mb-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-2.5 flex items-center gap-4 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-      <span className="text-foreground font-medium shrink-0">Saved</span>
+      <span className="text-foreground font-medium shrink-0">{problemLabel || "Saved"}</span>
       <span className="text-muted-foreground">
         Stability{" "}
         {isFirst ? (
@@ -1211,6 +1234,7 @@ function SrsFeedbackBanner({
         </div>
         <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
       </div>
+      <button onClick={onUndo} className="text-orange-500 hover:text-orange-400 text-xs font-medium shrink-0">Undo</button>
       <button onClick={onDismiss} className="text-muted-foreground hover:text-foreground text-xs shrink-0">✕</button>
     </div>
   );
