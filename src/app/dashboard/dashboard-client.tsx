@@ -722,9 +722,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           {/* Projection */}
           <div className={`mt-3 rounded-md p-2 text-xs ${countdown.onTrack ? "bg-green-500/10 text-green-500" : "bg-orange-500/10 text-orange-500"}`}>
             {countdown.onTrack ? (
-              <span>On track — projected {countdown.projectedRaw} by target date</span>
+              <span>On track — projected {countdown.projectedRaw}/{targetCount} by target date</span>
             ) : (
-              <span>Behind — projected {countdown.projectedRaw}, need {countdown.neededPerDay.toFixed(1)} new/day ({data.avgPerDay.toFixed(1)} total/day capacity)</span>
+              <span>Behind — projected {countdown.projectedRaw}/{targetCount} · need {countdown.neededPerDay.toFixed(1)} new problems/day</span>
             )}
           </div>
 
@@ -758,10 +758,10 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-xs font-semibold tabular-nums">{data.avgPerDay.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">/day</span>
+              <span className="text-xs text-muted-foreground">attempts/day</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className={`text-xs font-semibold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projectedRaw}</span>
+              <span className={`text-xs font-semibold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projectedRaw}/{targetCount}</span>
               <span className="text-xs text-muted-foreground">projected</span>
             </div>
             <div className="flex items-center gap-1">
