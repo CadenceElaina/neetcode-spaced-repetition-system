@@ -24,7 +24,7 @@ Built around the NeetCode 150 with a modified [FSRS](https://github.com/open-spa
 - **NeetCode 150** — categories, difficulty, LeetCode/NeetCode links, video explanations, verified optimal time & space complexity, Blind 75 flags
 - **Attempt logging** — outcome (solved/partial/no), solution quality, complexity comparison, solve time, rewrite-from-scratch signal, confidence, code, notes
 - **Spaced repetition** — FSRS-based scheduling adapted for coding problems (see [Algorithm](#algorithm) below)
-- **Readiness dashboard** — tier score, coverage, retention, category balance, consistency, pace projection toward a configurable target date
+- **Readiness dashboard** — tier score, coverage, retention, category balance, consistency, capacity-adjusted pace projection toward a configurable target date
 - **Mock interviews** — random medium + hard from weak categories, 45-minute timer
 - **Pattern drills** — focused practice on a single category, sorted weakest-first
 - **NeetCode import** — paste activity from neetcode.io to bulk-log problems
@@ -69,6 +69,19 @@ Weighted composite (0–100):
 | Consistency      |  10%   | % of scheduled reviews completed (14-day window) |
 
 **Tiers**: S ≥ 90 · A ≥ 75 · B ≥ 55 · C ≥ 35 · D < 35
+
+### Coverage Projection
+
+The dashboard projects how many unique problems you'll cover by your target date using a **capacity-adjusted day-by-day simulation**:
+
+1. **Daily capacity** = your average attempts/day (last 30 days)
+2. **Daily review load** = `learning_problems / avg_stability + mastered_problems / 30`
+3. **Available for new** = `capacity − review_load` (floored at 0)
+4. Each simulated day: new problems enter the learning pool, increasing future review load
+5. Stability grows over time as reviews strengthen retention, gradually reducing review frequency
+6. Problems "graduate" to mastered (stability ≥ 30d), freeing capacity
+
+This captures the key dynamic: as you learn more problems, reviews consume more of your daily budget, naturally slowing the rate of new problem acquisition — then mastery gradually frees capacity back up.
 
 ---
 

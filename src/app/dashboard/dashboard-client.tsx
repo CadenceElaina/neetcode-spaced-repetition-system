@@ -271,12 +271,67 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const target = new Date(targetDate + "T00:00:00");
     const daysLeft = Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     const remaining = Math.max(0, targetCount - data.attemptedCount);
-    const projectedRaw = data.attemptedCount + Math.round(data.avgNewPerDay * daysLeft);
+
+    // Capacity-adjusted projection: simulate day-by-day
+    // Each day, review load from learning problems eats into daily capacity.
+    // Remaining capacity goes to new problems. New problems enter learning pool.
+    const dailyCapacity = data.avgPerDay;
+    const MASTERY_THRESHOLD = 30;
+
+    // Compute average stability of learning problems (used for review frequency estimate)
+    const avgLearningStability = data.learningList.length > 0
+      ? data.learningList.reduce((sum, p) => sum + p.stability, 0) / data.learningList.length
+      : 3; // conservative default for new users
+
+    let learning = data.learningCount;
+    let mastered = data.masteredCount;
+    let projectedNew = 0;
+
+    // Track stability growth: on average, each review multiplies stability by ~2.5
+    // (solved + optimal). A problem "graduates" to mastered when stability >= 30.
+    // Avg reviews to mastery from current avg stability:
+    let currentAvgStability = avgLearningStability;
+
+    for (let day = 0; day < daysLeft; day++) {
+      // Daily reviews needed: each learning problem needs a review every ~stability days
+      // Mastered problems rarely need review (every 30+ days)
+      const dailyReviews = (learning > 0 ? learning / Math.max(1, currentAvgStability) : 0)
+        + (mastered > 0 ? mastered / MASTERY_THRESHOLD : 0);
+      const availableForNew = Math.max(0, dailyCapacity - dailyReviews);
+      const newToday = Math.min(availableForNew, remaining - projectedNew);
+
+      if (newToday <= 0 && dailyReviews >= dailyCapacity) {
+        // Capacity fully consumed by reviews — but stability grows over time
+        // so review load will decrease. Keep simulating.
+      }
+
+      projectedNew += newToday;
+      learning += newToday;
+
+      // Stability grows with each review cycle — problems get easier over time
+      // Conservative: avg stability grows ~15% per day of reviews across the pool
+      if (learning > 0 && dailyReviews > 0) {
+        const reviewedFraction = Math.min(1, dailyReviews / learning);
+        // Each reviewed problem's stability grows by ~2.5x, averaged across pool
+        currentAvgStability += reviewedFraction * (currentAvgStability * 0.15);
+        currentAvgStability = Math.min(currentAvgStability, MASTERY_THRESHOLD * 2);
+
+        // Graduate problems to mastered as avg stability grows
+        if (currentAvgStability >= MASTERY_THRESHOLD && learning > 0) {
+          // Estimate fraction that would graduate
+          const graduateRate = Math.min(learning, Math.ceil(learning * 0.05));
+          learning -= graduateRate;
+          mastered += graduateRate;
+        }
+      }
+    }
+
+    const projectedRaw = data.attemptedCount + Math.round(projectedNew);
     const projected = Math.min(targetCount, projectedRaw);
     const onTrack = projectedRaw >= targetCount;
     const neededPerDay = daysLeft > 0 ? remaining / daysLeft : remaining;
     return { daysLeft, remaining, projected, projectedRaw, onTrack, neededPerDay };
-  }, [targetDate, targetCount, data.attemptedCount, data.avgNewPerDay]);
+  }, [targetDate, targetCount, data.attemptedCount, data.avgPerDay, data.learningCount, data.masteredCount, data.learningList]);
 
   const weakCategories = useMemo(() =>
     [...data.categoryStats]
@@ -667,9 +722,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           {/* Projection */}
           <div className={`mt-3 rounded-md p-2 text-xs ${countdown.onTrack ? "bg-green-500/10 text-green-500" : "bg-orange-500/10 text-orange-500"}`}>
             {countdown.onTrack ? (
-              <span>On track — projected {countdown.projected} by target date</span>
+              <span>On track — projected {countdown.projectedRaw} by target date</span>
             ) : (
-              <span>Need ~{countdown.neededPerDay.toFixed(1)}/day to hit target (currently {data.avgNewPerDay.toFixed(1)}/day)</span>
+              <span>Behind — projected {countdown.projectedRaw}, need {countdown.neededPerDay.toFixed(1)} new/day ({data.avgPerDay.toFixed(1)} total/day capacity)</span>
             )}
           </div>
 
