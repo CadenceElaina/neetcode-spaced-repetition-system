@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users, problems, pendingSubmissions, userProblemStates } from "@/db/schema";
+import { users, problems, pendingSubmissions, userProblemStates, attempts } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -120,11 +120,8 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    // Time-window dedup: skip if same problem has an unresolved pending submission within last 60 min
-    const commitTime = new Date(commit.timestamp);
-    const windowStart = new Date(commitTime.getTime() - 60 * 60 * 1000);
-
-    const [recentPending] = await db
+    // Skip if there's already an unresolved pending for this problem
+    const [unresolvedPending] = await db
       .select({ id: pendingSubmissions.id })
       .from(pendingSubmissions)
       .where(
@@ -132,12 +129,32 @@ export async function POST(req: NextRequest) {
           eq(pendingSubmissions.userId, user.id),
           eq(pendingSubmissions.problemId, problemId),
           eq(pendingSubmissions.status, "pending"),
-          gte(pendingSubmissions.detectedAt, windowStart),
         ),
       )
       .limit(1);
 
-    if (recentPending) {
+    if (unresolvedPending) {
+      skipped.push(commit.id);
+      continue;
+    }
+
+    // Time-window dedup: skip if user already has an attempt for this problem within last 60 min
+    const commitTime = new Date(commit.timestamp);
+    const windowStart = new Date(commitTime.getTime() - 60 * 60 * 1000);
+
+    const [recentAttempt] = await db
+      .select({ id: attempts.id })
+      .from(attempts)
+      .where(
+        and(
+          eq(attempts.userId, user.id),
+          eq(attempts.problemId, problemId),
+          gte(attempts.createdAt, windowStart),
+        ),
+      )
+      .limit(1);
+
+    if (recentAttempt) {
       skipped.push(commit.id);
       continue;
     }
