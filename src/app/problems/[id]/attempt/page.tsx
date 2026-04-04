@@ -12,8 +12,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: `Log Attempt — ${rows[0].title} — NeetcodeSRS` };
 }
 
-export default async function AttemptPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AttemptPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ attemptDate?: string }> }) {
   const { id } = await params;
+  const { attemptDate } = await searchParams;
   const rows = await db.select().from(problems).where(eq(problems.id, Number(id))).limit(1);
   const problem = rows[0];
   if (!problem) notFound();
@@ -47,6 +48,7 @@ export default async function AttemptPage({ params }: { params: Promise<{ id: st
         problemTitle={problem.title}
         leetcodeNumber={problem.leetcodeNumber}
         isReview={isReview}
+        defaultAttemptDate={attemptDate ?? null}
       />
     </div>
   );

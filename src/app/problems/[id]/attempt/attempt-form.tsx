@@ -18,9 +18,10 @@ type Props = {
   problemTitle: string;
   leetcodeNumber: number | null;
   isReview: boolean;
+  defaultAttemptDate?: string | null;
 };
 
-export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview }: Props) {
+export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview, defaultAttemptDate }: Props) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [quality, setQuality] = useState<Quality | null>(null);
   const [confidence, setConfidence] = useState(3);
@@ -30,6 +31,10 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Pre-fill date from GitHub commit timestamp if provided
+  const initialDate = defaultAttemptDate ? new Date(defaultAttemptDate).toISOString().slice(0, 10) : "";
+  const [attemptDate, setAttemptDate] = useState(initialDate);
 
   const showQuality = outcome === "SOLVED";
   const defaultSolveTime = isReview ? 15 : 20;
@@ -62,6 +67,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
       code: form.get("code") || null,
       notes: form.get("notes") || null,
       ...(force && { force: true }),
+      ...(attemptDate && { attemptDate: new Date(attemptDate).toISOString() }),
     };
   }
 
@@ -196,6 +202,32 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview 
           </div>
         </div>
       )}
+
+      {/* Attempt Date (shown when pre-filled from GitHub, or user can add) */}
+      {(attemptDate || defaultAttemptDate) ? (
+        <div>
+          <label className={labelClass}>Attempt Date</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={attemptDate}
+              onChange={(e) => setAttemptDate(e.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+              className={`${inputClass} w-48`}
+            />
+            {attemptDate && (
+              <button
+                type="button"
+                onClick={() => setAttemptDate("")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Use today
+              </button>
+            )}
+            <span className="text-xs text-muted-foreground">From GitHub commit</span>
+          </div>
+        </div>
+      ) : null}
 
       {/* Timing */}
       <div className="grid grid-cols-2 gap-3">

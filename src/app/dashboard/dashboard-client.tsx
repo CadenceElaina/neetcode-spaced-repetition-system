@@ -454,6 +454,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     solveTimeMinutes: 20,
                     source: "github",
                     force: true,
+                    attemptDate: item.detectedAt,
                   }),
                 });
                 if (res.ok) {
@@ -1597,7 +1598,7 @@ function PendingBanner({
               <div className="flex items-center gap-1.5 shrink-0">
                 <DifficultyBadge difficulty={item.difficulty} />
                 <Link
-                  href={`/problems/${item.problemId}/attempt`}
+                  href={`/problems/${item.problemId}/attempt?attemptDate=${encodeURIComponent(item.detectedAt)}`}
                   className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-xs text-foreground transition-colors hover:bg-muted"
                 >
                   Full form

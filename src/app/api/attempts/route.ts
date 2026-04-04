@@ -52,10 +52,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Problem not found" }, { status: 404 });
   }
 
+  // Optional: use a custom attempt date (e.g. from GitHub commit timestamp)
+  let attemptDate: Date | null = null;
+  if (body.attemptDate) {
+    const parsed = new Date(body.attemptDate);
+    if (!isNaN(parsed.getTime()) && parsed <= new Date()) {
+      attemptDate = parsed;
+    }
+  }
+
   // Duplicate check: same user + problem + calendar day
   const skipDupeCheck = body.force === true;
   if (!skipDupeCheck) {
-    const todayStart = new Date();
+    const checkDay = attemptDate ?? new Date();
+    const todayStart = new Date(checkDay);
     todayStart.setHours(0, 0, 0, 0);
     const tomorrowStart = new Date(todayStart);
     tomorrowStart.setDate(tomorrowStart.getDate() + 1);
@@ -108,6 +118,7 @@ export async function POST(req: NextRequest) {
       code: typeof body.code === "string" ? body.code : null,
       notes: typeof body.notes === "string" ? body.notes : null,
       source: body.source === "github" ? "github" : body.source === "import" ? "import" : "manual",
+      ...(attemptDate && { createdAt: attemptDate }),
     })
     .returning({ id: attempts.id });
 
@@ -147,7 +158,7 @@ export async function POST(req: NextRequest) {
     )
     .limit(1);
 
-  const now = new Date();
+  const now = attemptDate ?? new Date();
 
   // Failed or struggled attempts should come back quickly
   const isFailed = solvedIndependently === "NO";
