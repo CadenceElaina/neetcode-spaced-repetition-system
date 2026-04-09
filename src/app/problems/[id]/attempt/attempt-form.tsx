@@ -68,7 +68,11 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview,
       code: form.get("code") || null,
       notes: form.get("notes") || null,
       ...(force && { force: true }),
-      ...(attemptDate && { attemptDate: new Date(attemptDate).toISOString() }),
+      ...(attemptDate && {
+        attemptDate: attemptDate === todayStr
+          ? new Date().toISOString()
+          : new Date(attemptDate + "T12:00:00").toISOString(),
+      }),
     };
   }
 
