@@ -93,13 +93,48 @@ export async function GET() {
     results.columns = { error: e.message };
   }
 
-  // 8. Check env vars are set (not their values)
+  // 8. Check env vars are set (not their values, but show partial for debugging)
+  const ghId = process.env.AUTH_GITHUB_ID ?? "";
+  const ghSecret = process.env.AUTH_GITHUB_SECRET ?? "";
   results.envCheck = {
     DATABASE_URL: !!process.env.DATABASE_URL,
     AUTH_SECRET: !!process.env.AUTH_SECRET,
     AUTH_GITHUB_ID: !!process.env.AUTH_GITHUB_ID,
     AUTH_GITHUB_SECRET: !!process.env.AUTH_GITHUB_SECRET,
+    // Show first 4 and last 4 chars to verify correct values without exposing full secrets
+    AUTH_GITHUB_ID_preview: ghId.length > 8 ? `${ghId.slice(0, 4)}...${ghId.slice(-4)} (len=${ghId.length})` : `(len=${ghId.length})`,
+    AUTH_GITHUB_SECRET_preview: ghSecret.length > 8 ? `${ghSecret.slice(0, 4)}...${ghSecret.slice(-4)} (len=${ghSecret.length})` : `(len=${ghSecret.length})`,
   };
+
+  // 9. Test GitHub credentials directly
+  try {
+    const testRes = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        client_id: process.env.AUTH_GITHUB_ID,
+        client_secret: process.env.AUTH_GITHUB_SECRET,
+        code: "test_invalid_code",
+      }),
+    });
+    const testBody = await testRes.json();
+    // If credentials are correct, GitHub returns "bad_verification_code"
+    // If credentials are wrong, GitHub returns "incorrect_client_credentials"
+    results.githubCredentialTest = {
+      status: testRes.status,
+      body: testBody,
+      verdict: testBody.error === "bad_verification_code"
+        ? "CREDENTIALS OK (code was fake but client_id/secret accepted)"
+        : testBody.error === "incorrect_client_credentials"
+          ? "CREDENTIALS WRONG - client_id or client_secret is incorrect"
+          : `UNEXPECTED: ${testBody.error}`,
+    };
+  } catch (e: any) {
+    results.githubCredentialTest = { error: e.message };
+  }
 
   return NextResponse.json(results, { status: 200 });
 }
