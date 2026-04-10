@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import GitHub from "next-auth/providers/github";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db";
@@ -12,43 +13,43 @@ const adapter = DrizzleAdapter(db, {
 });
 
 // Wrap adapter methods to distinguish DB errors from config errors
-const wrappedAdapter: typeof adapter = {
+const wrappedAdapter: Adapter = {
   ...adapter,
-  createUser: async (data) => {
+  createUser: async (...args) => {
     try {
-      return await adapter.createUser!(data);
+      return await adapter.createUser!(...args);
     } catch (e) {
       console.error("[auth] Database error in createUser:", e);
       throw new Error("DatabaseError");
     }
   },
-  getUserByEmail: async (email) => {
+  getUserByEmail: async (...args) => {
     try {
-      return await adapter.getUserByEmail!(email);
+      return await adapter.getUserByEmail!(...args);
     } catch (e) {
       console.error("[auth] Database error in getUserByEmail:", e);
       throw new Error("DatabaseError");
     }
   },
-  getUserByAccount: async (account) => {
+  getUserByAccount: async (...args) => {
     try {
-      return await adapter.getUserByAccount!(account);
+      return await adapter.getUserByAccount!(...args);
     } catch (e) {
       console.error("[auth] Database error in getUserByAccount:", e);
       throw new Error("DatabaseError");
     }
   },
-  linkAccount: async (account) => {
+  linkAccount: async (...args) => {
     try {
-      return await adapter.linkAccount!(account);
+      return await adapter.linkAccount!(...args);
     } catch (e) {
       console.error("[auth] Database error in linkAccount:", e);
       throw new Error("DatabaseError");
     }
   },
-  createSession: async (session) => {
+  createSession: async (...args) => {
     try {
-      return await adapter.createSession!(session);
+      return await adapter.createSession!(...args);
     } catch (e) {
       console.error("[auth] Database error in createSession:", e);
       throw new Error("DatabaseError");

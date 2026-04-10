@@ -55,7 +55,7 @@ export async function GET() {
     `);
     results.authTables = {
       status: "OK",
-      found: tables.map((r: Record<string, unknown>) => r.table_name),
+      found: (tables as unknown as Array<{ table_name: string }>).map((r) => r.table_name),
     };
   } catch (e: unknown) {
     const error = e instanceof Error ? e : new Error(String(e));
