@@ -46,6 +46,27 @@ function retentionBgColor(r: number): string {
   return "bg-red-500";
 }
 
+const PATTERN_HINTS: Record<string, string> = {
+  "Arrays & Hashing": "Use hash maps for O(1) lookups. Think: frequency counts, seen-sets, index maps.",
+  "Two Pointers": "One pointer from each end, or slow/fast. Works on sorted arrays—move the pointer that improves the condition.",
+  "Sliding Window": "Expand right to grow, shrink left when constraint breaks. Track window state in a hash map or counter.",
+  "Stack": "Use a stack when you need to match/undo or track a monotonic sequence. Think: next-greater, valid brackets.",
+  "Binary Search": "Sorted or monotonic? Binary search. Define the search space, decide which half to eliminate each step.",
+  "Linked List": "Use slow/fast pointers for cycles and midpoints. Dummy head simplifies edge cases.",
+  "Trees": "DFS (pre/in/post-order) or BFS. Recursive = implicit stack. Return values up, pass constraints down.",
+  "Tries": "Prefix tree for string lookups. Each node has children[26]. Insert char-by-char, search by walking down.",
+  "Heap / Priority Queue": "Use a heap when you need the min/max repeatedly. Think: top-K, merge-K, scheduling.",
+  "Backtracking": "Build candidates incrementally, abandon (prune) when constraints fail. Classic: permutations, subsets, N-queens.",
+  "Graphs": "Model relationships as adjacency list. BFS for shortest path, DFS for traversal/cycle detection. Track visited.",
+  "Advanced Graphs": "Dijkstra for weighted shortest path, topological sort for DAGs, union-find for components.",
+  "1-D Dynamic Programming": "Define dp[i] = optimal answer ending/starting at i. Base case, recurrence, iteration order.",
+  "2-D Dynamic Programming": "dp[i][j] = answer for subproblem (i,j). Fill row-by-row or diagonal. Watch space optimization.",
+  "Greedy": "Make the locally optimal choice at each step. Prove that local optimal leads to global optimal (exchange argument).",
+  "Intervals": "Sort by start (or end). Merge overlapping, or sweep with a priority queue.",
+  "Math & Geometry": "Look for modular arithmetic, number properties, or geometric invariants. Avoid brute force—find the math shortcut.",
+  "Bit Manipulation": "XOR for cancel-pairs, AND/OR for masks. Know: n & (n-1) clears lowest set bit, n & -n isolates it.",
+};
+
 export function DrillClient({ categories }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
@@ -117,6 +138,15 @@ export function DrillClient({ categories }: Props) {
               </span>
             </div>
           </div>
+
+          {PATTERN_HINTS[activeCategory.name] && (
+            <div className="rounded-md border border-border/50 bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-medium text-foreground/80">Pattern: </span>
+                {PATTERN_HINTS[activeCategory.name]}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             {activeCategory.problems.map((p) => (

@@ -640,6 +640,17 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 <div className="overflow-y-auto flex-1 min-h-0">
                   {filteredReviewQueue.map((item) => {
                     const prio = priorityLevel(item);
+                    const catStat = data.categoryStats.find(c => c.category === item.category);
+                    const isWeakCategory = catStat && catStat.avgRetention < 0.6;
+                    // Build concise "why" reason
+                    const reasons: string[] = [];
+                    if (item.retrievability < 0.3) reasons.push("Memory nearly gone");
+                    else if (item.retrievability < 0.5) reasons.push("Retention dropping fast");
+                    if (item.daysOverdue >= 7) reasons.push(`${item.daysOverdue}d past due`);
+                    else if (item.daysOverdue >= 2) reasons.push(`${item.daysOverdue}d overdue`);
+                    if (isWeakCategory) reasons.push(`${item.category} is weak (${Math.round((catStat?.avgRetention ?? 0) * 100)}%)`);
+                    if (item.totalAttempts === 1) reasons.push("Only seen once");
+                    if (reasons.length === 0) reasons.push("Scheduled review");
                     return (
                       <div
                         key={item.stateId}
@@ -651,6 +662,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                           retrievability={item.retrievability}
                           daysOverdue={item.daysOverdue}
                           priority={prio}
+                          whyReasons={reasons}
                         />
                         <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
                         <div className="min-w-0 flex-1">
@@ -1432,12 +1444,14 @@ function StatusDot({
   retrievability,
   daysOverdue,
   priority,
+  whyReasons,
 }: {
   color: string;
   label: string;
   retrievability: number;
   daysOverdue: number;
   priority: "critical" | "high" | "medium" | "due";
+  whyReasons: string[];
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -1477,6 +1491,14 @@ function StatusDot({
               <span>{daysOverdue > 0 ? `${daysOverdue} day${daysOverdue !== 1 ? "s" : ""}` : "Due today"}</span>
             </div>
           </div>
+          {whyReasons.length > 0 && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-0.5">Why now</p>
+              {whyReasons.map((r, i) => (
+                <p key={i} className="text-[11px] text-foreground/80">• {r}</p>
+              ))}
+            </div>
+          )}
         </div>,
         document.body,
       )}
