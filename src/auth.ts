@@ -25,6 +25,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   logger: {
     error: (error) => {
       console.error("[auth] Error:", error);
+      if (error && typeof error === "object" && "cause" in error) {
+        console.error("[auth] Cause:", JSON.stringify(error.cause, Object.getOwnPropertyNames(error.cause as object)));
+      }
     },
   },
 });
