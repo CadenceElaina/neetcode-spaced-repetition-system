@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Setup Guide — NeetcodeSRS" };
+export const metadata = { title: "Setup Guide — Aurora" };
 
 const errorMessages: Record<string, { title: string; description: string }> = {
   AccessDenied: {
@@ -36,7 +36,7 @@ function SetupGuide({ error }: { error: string }) {
             {isDbError ? "Database Setup Needed" : "Welcome! Let\u2019s get you set up."}
           </h1>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            NeetcodeSRS is a self-hosted app. You need to configure a few environment
+            Aurora is a self-hosted app. You need to configure a few environment
             variables to enable sign-in and personal tracking.
           </p>
         </div>

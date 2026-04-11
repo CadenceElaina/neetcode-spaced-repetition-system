@@ -21,7 +21,11 @@ export function Nav({ isAuthenticated = false, authConfigured = true }: { isAuth
   const isLanding = pathname === "/";
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 backdrop-blur-md px-6">
+    <header className={`sticky top-0 z-50 flex h-14 items-center justify-between px-6 transition-colors duration-300 ${
+      isLanding
+        ? "border-b border-transparent bg-transparent"
+        : "border-b border-border/60 bg-background/80 backdrop-blur-md"
+    }`}>
       <div className="flex items-center gap-8">
         <Link
           href="/"
@@ -30,19 +34,12 @@ export function Nav({ isAuthenticated = false, authConfigured = true }: { isAuth
           onMouseLeave={() => setLogoHovered(false)}
         >
           <span className="inline-flex">
-            <span>Neetcode</span>
+            <span>Aurora</span>
             <span
               className="inline-block overflow-hidden transition-all duration-300 ease-in-out"
-              style={{ maxWidth: logoHovered ? "20rem" : "0rem", opacity: logoHovered ? 1 : 0 }}
+              style={{ maxWidth: logoHovered ? "14rem" : "0rem", opacity: logoHovered ? 1 : 0 }}
             >
-              &nbsp;Spaced Repetition&nbsp;
-            </span>
-            <span>S</span>
-            <span
-              className="inline-block overflow-hidden transition-all duration-300 ease-in-out"
-              style={{ maxWidth: logoHovered ? "10rem" : "0rem", opacity: logoHovered ? 1 : 0 }}
-            >
-              ystem
+              &nbsp;— interview prep
             </span>
           </span>
         </Link>

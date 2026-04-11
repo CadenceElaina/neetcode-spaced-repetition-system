@@ -5,8 +5,8 @@ import { Nav } from "@/components/nav";
 import { auth, isAuthConfigured } from "@/auth";
 
 export const metadata: Metadata = {
-  title: "NeetcodeSRS",
-  description: "Spaced repetition tracker for the NeetCode 150",
+  title: "Aurora",
+  description: "Spaced repetition for technical interviews",
 };
 
 export default async function RootLayout({

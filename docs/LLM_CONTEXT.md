@@ -1,4 +1,4 @@
-# LLM Agent Context — NeetcodeSRS
+# LLM Agent Context — Aurora
 
 > This document is the single source of truth for any AI/LLM coding agent working on this project. Read this FIRST before making any changes.
 
@@ -6,7 +6,7 @@
 
 ## Project Summary
 
-**NeetcodeSRS** is a self-hosted spaced repetition system for the NeetCode 150 LeetCode problems. It tracks what you've solved, computes when you'll forget it, and schedules reviews. It's a free, open-source portfolio piece targeting CS students preparing for SWE internship/new-grad interviews.
+**Aurora** is a self-hosted spaced repetition system for 150 curated LeetCode problems. It tracks what you've solved, computes when you'll forget it, and schedules reviews. It's a free, open-source portfolio piece targeting CS students preparing for SWE internship/new-grad interviews.
 
 **Live deployment:** Vercel (owner's instance). Users fork the repo and self-host with their own Supabase + GitHub OAuth.
 

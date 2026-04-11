@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "How It Works — NeetcodeSRS",
-  description: "Algorithm details, glossary, and design rationale for NeetcodeSRS",
+  title: "How It Works — Aurora",
+  description: "Algorithm details, glossary, and design rationale for Aurora",
 };
 
 export default function InfoPage() {
   return (
     <article className="mx-auto max-w-3xl space-y-12 text-sm leading-relaxed text-foreground">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">How NeetcodeSRS Works</h1>
+        <h1 className="text-2xl font-semibold">How Aurora Works</h1>
         <p className="text-muted-foreground">
-          The scheduling engine behind NeetcodeSRS, explained from scratch. No statistics background required.
+          The scheduling engine behind Aurora, explained from scratch. No statistics background required.
         </p>
       </header>
 
@@ -40,7 +40,7 @@ export default function InfoPage() {
           you&apos;d forget, and each review pushes the next one further into the future.
         </p>
         <p>
-          NeetcodeSRS tracks two things for every problem you&apos;ve attempted:
+          Aurora tracks two things for every problem you&apos;ve attempted:
         </p>
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>Stability</strong> — how durable your memory is (measured in days)</li>
@@ -351,7 +351,7 @@ export default function InfoPage() {
           </div>
           <div>
             <dt className="font-semibold">FSRS (Free Spaced Repetition Scheduler)</dt>
-            <dd className="text-muted-foreground">An open-source spaced repetition algorithm by Jarrett Ye. NeetcodeSRS uses a modified version adapted for coding problems (multi-signal scoring instead of single pass/fail grades).</dd>
+            <dd className="text-muted-foreground">An open-source spaced repetition algorithm by Jarrett Ye. Aurora uses a modified version adapted for coding problems (multi-signal scoring instead of single pass/fail grades).</dd>
           </div>
           <div>
             <dt className="font-semibold">Stability</dt>
@@ -424,10 +424,10 @@ export default function InfoPage() {
       <footer className="border-t border-border pt-6 text-xs text-muted-foreground">
         <p>
           The algorithm source code is in{" "}
-          <a href="https://github.com/CadenceElaina/neetcode-spaced-repetition-system/blob/main/src/lib/srs.ts" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+          <a href="https://github.com/CadenceElaina/aurora/blob/main/src/lib/srs.ts" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
             src/lib/srs.ts
           </a>. Full design rationale is in{" "}
-          <a href="https://github.com/CadenceElaina/neetcode-spaced-repetition-system/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+          <a href="https://github.com/CadenceElaina/aurora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
             docs/ARCHITECTURE.md
           </a>.
         </p>

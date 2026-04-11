@@ -1,4 +1,4 @@
-# NeetcodeSRS — Design System
+# Aurora — Design System
 
 > **Single source of truth for all visual and interaction decisions.**
 > Every component, page, and UI element must follow these rules.
@@ -171,7 +171,7 @@ No outline buttons. No tertiary. No icon-only buttons without a tooltip.
 ### Navigation
 
 - Top navbar, full width
-- Left: Logo/wordmark ("NeetcodeSRS", text, no icon)
+- Left: Logo/wordmark ("Aurora", text, no icon)
 - Right: Nav links (Dashboard, Problems, Review, Stats) + user avatar/menu
 - Height: `h-14`
 - Border bottom: `border-b border-border`

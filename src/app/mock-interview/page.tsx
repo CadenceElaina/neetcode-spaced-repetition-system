@@ -6,7 +6,7 @@ import { computeRetrievability } from "@/lib/srs";
 import { MockInterviewClient } from "./mock-interview-client";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mock Interview — NeetcodeSRS" };
+export const metadata = { title: "Mock Interview — Aurora" };
 
 type InterviewProblem = {
   id: number;

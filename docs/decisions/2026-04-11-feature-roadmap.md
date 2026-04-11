@@ -6,7 +6,7 @@
 
 ## Context
 
-NeetcodeSRS currently does one thing well: spaced repetition for the NeetCode 150. This roadmap expands it into a broader interview prep platform — while keeping the core focused on intern/new-grad SWE first, with room to add role tracks later.
+Aurora currently does one thing well: spaced repetition for 150 curated LeetCode problems. This roadmap expands it into a broader interview prep platform — while keeping the core focused on intern/new-grad SWE first, with room to add role tracks later.
 
 **Guiding principles:**
 
@@ -53,7 +53,7 @@ NeetcodeSRS currently does one thing well: spaced repetition for the NeetCode 15
 
 NeetCode's landing page (clean, dark, shows the roadmap visually) — but our identity is different:
 
-| NeetCode                 | NeetcodeSRS                                 |
+| NeetCode                 | Aurora                                      |
 | ------------------------ | ------------------------------------------- |
 | Video courses + practice | Retention tracking + intelligent scheduling |
 | "Learn these problems"   | "Never forget what you've learned"          |

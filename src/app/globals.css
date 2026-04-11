@@ -14,8 +14,8 @@
   --destructive: #e11d48;
   --success: #10b981;
   --warning: #f59e0b;
-  --glow: rgba(168, 85, 247, 0.15);
-  --glow-pink: rgba(236, 72, 153, 0.12);
+  --glow: rgba(168, 85, 247, 0.25);
+  --glow-pink: rgba(236, 72, 153, 0.2);
 }
 
 /* ── Dark theme — Deep Space ── */
@@ -32,8 +32,8 @@
   --destructive: #fb7185;
   --success: #34d399;
   --warning: #fbbf24;
-  --glow: rgba(192, 132, 252, 0.2);
-  --glow-pink: rgba(244, 114, 182, 0.15);
+  --glow: rgba(192, 132, 252, 0.35);
+  --glow-pink: rgba(244, 114, 182, 0.25);
 }
 
 @theme inline {
@@ -79,31 +79,8 @@ body {
   animation: pulse-ring 2s ease-out infinite;
 }
 
-/* Constellation glow for nodes */
-@keyframes nebula-pulse {
+/* Constellation line pulse */
+@keyframes line-pulse {
   0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-.glow-node {
-  box-shadow: 0 0 12px var(--glow), 0 0 4px var(--glow-pink);
-}
-
-.glow-node:hover {
-  box-shadow: 0 0 20px var(--glow), 0 0 8px var(--glow-pink);
-}
-
-/* Star field background for landing */
-.starfield {
-  background-image:
-    radial-gradient(1px 1px at 10% 20%, var(--accent) 0.5px, transparent 1px),
-    radial-gradient(1px 1px at 30% 65%, var(--accent-secondary) 0.5px, transparent 1px),
-    radial-gradient(1px 1px at 50% 10%, var(--muted-foreground) 0.3px, transparent 1px),
-    radial-gradient(1px 1px at 70% 40%, var(--accent) 0.4px, transparent 1px),
-    radial-gradient(1px 1px at 80% 80%, var(--accent-secondary) 0.3px, transparent 1px),
-    radial-gradient(1px 1px at 15% 85%, var(--muted-foreground) 0.5px, transparent 1px),
-    radial-gradient(1px 1px at 90% 15%, var(--accent) 0.3px, transparent 1px),
-    radial-gradient(1px 1px at 40% 90%, var(--accent-secondary) 0.4px, transparent 1px),
-    radial-gradient(1px 1px at 60% 55%, var(--muted-foreground) 0.3px, transparent 1px),
-    radial-gradient(1px 1px at 25% 45%, var(--accent) 0.3px, transparent 1px);
+  50% { opacity: 0.85; }
 }

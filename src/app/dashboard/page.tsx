@@ -8,7 +8,7 @@ import { computeRetrievability, computeReadiness } from "@/lib/srs";
 import { DashboardClient } from "./dashboard-client";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Dashboard — NeetcodeSRS" };
+export const metadata = { title: "Dashboard — Aurora" };
 
 export default async function DashboardPage() {
   const session = await auth();

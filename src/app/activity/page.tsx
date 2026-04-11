@@ -5,7 +5,7 @@ import { eq, and, gte, lt, sql } from "drizzle-orm";
 import { ActivityClient } from "./activity-client";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Activity — NeetcodeSRS" };
+export const metadata = { title: "Activity — Aurora" };
 
 export default async function ActivityPage({
   searchParams,

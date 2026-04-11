@@ -7,7 +7,7 @@ import { StatsCharts } from "./stats-charts";
 import { computeRetrievability } from "@/lib/srs";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Stats — NeetcodeSRS" };
+export const metadata = { title: "Stats — Aurora" };
 
 export default async function StatsPage() {
   const session = await auth();

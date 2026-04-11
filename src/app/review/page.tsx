@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ReviewQueueClient } from "./review-client";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Review — NeetcodeSRS" };
+export const metadata = { title: "Review — Aurora" };
 
 export default async function ReviewPage() {
   const session = await auth();

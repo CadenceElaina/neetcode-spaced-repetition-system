@@ -1,6 +1,6 @@
 # Architecture
 
-> Technical reference for NeetcodeSRS internals — data model, algorithm, system design.
+> Technical reference for Aurora internals — data model, algorithm, system design.
 
 ---
 

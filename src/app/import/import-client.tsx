@@ -363,7 +363,7 @@ export function ImportClient({ allProblems, attemptedIds, todayAttemptedIds, onD
       <div className={embedded ? "flex flex-col gap-3 flex-1 min-h-0" : "max-w-2xl mx-auto space-y-6"}>
         {!embedded && (
           <div>
-            <h1 className="text-xl font-semibold">Import NeetCode Activity</h1>
+            <h1 className="text-xl font-semibold">Import Activity</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Go to{" "}
               <code className="rounded bg-muted px-1 py-0.5 text-xs">
@@ -397,7 +397,7 @@ export function ImportClient({ allProblems, attemptedIds, todayAttemptedIds, onD
           <textarea
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
-            placeholder="Paste NeetCode activity table here…"
+            placeholder="Paste activity table here…"
             rows={embedded ? 8 : 12}
             className={`block w-full rounded-md border border-border bg-muted px-3 py-2 font-mono text-sm ${
               embedded ? "flex-1 min-h-0 resize-none" : "resize-y"

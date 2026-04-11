@@ -6,7 +6,7 @@ import { computeRetrievability } from "@/lib/srs";
 import { DrillClient } from "./drill-client";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Pattern Drill — NeetcodeSRS" };
+export const metadata = { title: "Pattern Drill — Aurora" };
 
 export default async function DrillPage() {
   const session = await auth();

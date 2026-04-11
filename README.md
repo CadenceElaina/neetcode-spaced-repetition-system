@@ -1,10 +1,10 @@
-# NeetcodeSRS
+# Aurora
 
-**Free, open-source spaced repetition for LeetCode interview prep.**
+**Free, open-source spaced repetition for technical interview prep.**
 
-NeetcodeSRS tracks what you've solved, predicts what you're forgetting, and schedules reviews automatically — so you spend time on problems that need work, not problems you already know.
+Aurora tracks what you've solved, predicts what you're forgetting, and schedules reviews automatically — so you spend time on problems that need work, not problems you already know.
 
-Built around the NeetCode 150 with a modified [FSRS](https://github.com/open-spaced-repetition/fsrs4anki) algorithm, structured attempt logging, and an interview readiness score.
+Built around 150 curated LeetCode problems with a modified [FSRS](https://github.com/open-spaced-repetition/fsrs4anki) algorithm, structured attempt logging, and an interview readiness score.
 
 ## Table of Contents
 
@@ -38,13 +38,13 @@ Built around the NeetCode 150 with a modified [FSRS](https://github.com/open-spa
 
 ## Features
 
-- **NeetCode 150** — categories, difficulty, LeetCode/NeetCode links, video explanations, verified optimal time & space complexity, Blind 75 flags
+- **150 curated problems** — categories, difficulty, LeetCode/NeetCode links, video explanations, verified optimal time & space complexity, Blind 75 flags
 - **Attempt logging** — outcome (solved/partial/no), solution quality, complexity comparison, solve time, rewrite-from-scratch signal, confidence, code, notes
 - **Spaced repetition** — FSRS-based scheduling adapted for coding problems (see [Algorithm](#algorithm) below)
 - **Readiness dashboard** — tier score, coverage, retention, category balance, consistency, capacity-adjusted pace projection toward a configurable target date
 - **Mock interviews** — random medium + hard from weak categories, 45-minute timer
 - **Pattern drills** — focused practice on a single category, sorted weakest-first
-- **NeetCode import** — paste activity from neetcode.io to bulk-log problems
+- **Activity import** — paste activity from neetcode.io to bulk-log problems
 - **GitHub sync** — auto-detect NeetCode submissions via webhook, confirm from dashboard
 
 ---
@@ -81,7 +81,7 @@ Weighted composite (0–100):
 
 | Component        | Weight | Measures                                         |
 | ---------------- | :----: | ------------------------------------------------ |
-| Coverage         |  30%   | % of NeetCode 150 attempted                      |
+| Coverage         |  30%   | % of 150 curated problems attempted               |
 | Retention        |  40%   | % of attempted problems with R > 0.7             |
 | Category Balance |  20%   | Lowest category average R                        |
 | Consistency      |  10%   | % of scheduled reviews completed (14-day window) |
@@ -127,8 +127,8 @@ This captures the key dynamic: as you learn more problems, reviews consume more 
 ### Setup
 
 ```bash
-git clone https://github.com/CadenceElaina/neetcode-spaced-repetition-system.git
-cd neetcode-spaced-repetition-system
+git clone https://github.com/CadenceElaina/aurora.git
+cd aurora
 npm install
 cp .env.example .env.local
 ```
@@ -154,7 +154,7 @@ Start the dev server:
 npm run dev
 ```
 
-`seed.ts` inserts the 150 NeetCode problem rows only — no user data. Fresh installs start with a clean slate.
+`seed.ts` inserts the 150 problem rows only — no user data. Fresh installs start with a clean slate.
 
 ### Regenerate Problem Data (optional)
 
@@ -224,7 +224,7 @@ Auto-detect when you solve problems on NeetCode and surface them for confirmatio
 
 **Setup:**
 
-1. Open your NeetcodeSRS dashboard → look for the "Auto-sync from NeetCode" banner in the right column
+1. Open your Aurora dashboard → look for the GitHub sync icon in the nav bar
 2. Click **Set up** and enter your NeetCode submissions repo name (e.g., `your-username/neetcode-submissions-xxxxx`)
 3. Click **Connect** — you'll receive a webhook URL and secret
 4. Go to your GitHub repo → **Settings** → **Webhooks** → **Add webhook**
@@ -315,7 +315,7 @@ Areas where help is useful: algorithm tuning, complexity verification, UI/UX, mo
 | Term                  | Definition                                                                                                                        |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Spaced Repetition** | A learning technique where reviews are scheduled at increasing intervals. Each successful review pushes the next one further out. |
-| **FSRS**              | Free Spaced Repetition Scheduler — an open-source algorithm by Jarrett Ye. NeetcodeSRS uses a modified multi-signal version.      |
+| **FSRS**              | Free Spaced Repetition Scheduler — an open-source algorithm by Jarrett Ye. Aurora uses a modified multi-signal version.      |
 | **Stability**         | How durable your memory of a problem is, in days. Higher = slower forgetting = longer review intervals.                           |
 | **Retrievability**    | Estimated probability (0–100%) you could solve a problem right now. Decays exponentially since last review. Floored at 30%.       |
 | **Forgetting Curve**  | The graph of retrievability over time (exponential decay). First measured by Ebbinghaus in 1885.                                  |
@@ -323,7 +323,7 @@ Areas where help is useful: algorithm tuning, complexity verification, UI/UX, mo
 | **Blind 75**          | A subset of 75 most frequently asked coding interview problems. Given a small priority bonus in the review queue.                 |
 | **Readiness Score**   | A 0–100 composite of coverage (30%), retention (40%), category balance (20%), and consistency (10%). Maps to tiers S through D.   |
 
-For a detailed walkthrough with examples, see the [How It Works](https://leetcode-spaced-repetition-system.vercel.app/info) page in the app.
+For a detailed walkthrough with examples, see the [How It Works](/info) page in the app.
 
 ---
 

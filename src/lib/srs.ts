@@ -148,7 +148,7 @@ export function computeReviewPriority(input: PriorityInput): number {
 /* ── Readiness engine (§7) ── */
 
 export interface ReadinessInput {
-  totalProblems: number; // total in NeetCode 150
+  totalProblems: number; // total in problem set (e.g. 150)
   attemptedCount: number;
   retainedCount: number; // problems with R > 0.7
   lowestCategoryAvgR: number; // 0–1
