@@ -154,6 +154,77 @@ const DIFF_COLORS: Record<string, string> = {
   Hard: "bg-red-500",
 };
 
+/* ── Subtle dashboard starfield ── */
+function DashboardSkyCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let W = 0, H = 0;
+
+    function resize() {
+      W = canvas!.offsetWidth;
+      H = canvas!.offsetHeight;
+      canvas!.width = W * devicePixelRatio;
+      canvas!.height = H * devicePixelRatio;
+      ctx!.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    resize();
+
+    type Star = { x: number; y: number; r: number; a: number; ts: number; to: number };
+    let stars: Star[] = [];
+
+    function makeStars() {
+      stars = [];
+      // ~1 star per 4500px² — sparse but visible in dark gaps + gutters
+      const count = Math.floor((W * H) / 4500);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: Math.random() * 0.9 + 0.25,
+          a: Math.random() * 0.35 + 0.15, // max ~0.50
+          ts: Math.random() * 0.008 + 0.003,
+          to: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+    makeStars();
+
+    const resizeCb = () => { resize(); makeStars(); };
+    window.addEventListener("resize", resizeCb);
+
+    function hexAlpha(hex: string, a: number) {
+      return hex + Math.floor(a * 255).toString(16).padStart(2, "0");
+    }
+
+    function frame(ts: number) {
+      ctx!.clearRect(0, 0, W, H);
+      for (const s of stars) {
+        const a = s.a * (0.5 + 0.5 * Math.sin(ts * s.ts + s.to));
+        ctx!.beginPath();
+        ctx!.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx!.fillStyle = hexAlpha("#a78bfa", a);
+        ctx!.fill();
+      }
+      animId = requestAnimationFrame(frame);
+    }
+
+    animId = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resizeCb);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 w-screen h-screen pointer-events-none z-0" />;
+}
+
 function retentionColor(r: number): string {
   if (r >= 0.8) return "text-green-500";
   if (r >= 0.6) return "text-emerald-400";
@@ -474,6 +545,10 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
 
   return (
     <div className="h-[calc(100dvh-120px)] relative">
+    {/* Subtle ambient starfield — fixed, full-viewport, behind all content */}
+    <DashboardSkyCanvas />
+    {/* All interactive content above the starfield */}
+    <div className="relative z-[1] flex flex-col h-full min-h-0">
     {/* Demo sign-in prompt */}
     {showDemoSignIn && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowDemoSignIn(false)}>
@@ -521,7 +596,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
         window.location.reload();
       }
     }} />}
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 h-full min-h-0 lg:grid-rows-1">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 flex-1 min-h-0 lg:grid-rows-1">
       {/* ── Combined Problem Queue ── */}
       <div className="flex flex-col min-h-0 lg:col-span-6">
         {/* Pending GitHub submissions banner */}
@@ -1282,6 +1357,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
         </>
         )}
       </div>
+    </div>
     </div>
     </div>
   );

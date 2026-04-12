@@ -89,7 +89,7 @@ function SkyCanvas() {
 
     const BG = ["#000008", "#04000f", "#07000e", "#0c0015"];
     const STAR_COLOR = "#a78bfa";
-    const NEB = { xf: 0.64, yf: 0.22, rx: 180, ry: 85, col: "#7c3aed", al: 0.18 };
+    const NEB = { xf: 0.26, yf: 0.40, rx: 200, ry: 110, col: "#7c3aed", al: 0.14 };
 
     function hexAlpha(hex: string, a: number) {
       return hex + Math.floor(a * 255).toString(16).padStart(2, "0");
@@ -192,8 +192,8 @@ const MAP_NODES = [
 
 // Indices: 0=Arrays 1=TwoPtr 2=Stack 3=BinSearch 4=SlidWin 5=LinkedList 6=Trees 7=Tries 8=Heap 9=Backtrack 10=Graphs 11=DP
 const MAP_EDGES: [number, number][] = [
-  [0, 1], [0, 2], [1, 4], [1, 5], [2, 3], [4, 6], [5, 6], [3, 6],
-  [6, 7], [6, 8], [6, 9], [7, 10], [8, 11], [9, 11],
+  [0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [5, 6], [3, 6],
+  [6, 7], [6, 8], [6, 9], [7, 10], [8, 11], [9, 11], [10, 11],
 ];
 
 // Predefined learning paths — each starts with fundamentals, ends with advanced
@@ -214,6 +214,7 @@ function ConstellationMap() {
   const [revealedNodes, setRevealedNodes] = useState<Set<number>>(new Set());
   const [revealedEdges, setRevealedEdges] = useState<Set<string>>(new Set());
   const [latestNode, setLatestNode] = useState<number | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<number | null>(null);
   const pathRef = useRef<number[]>([]);
 
   // Pick a random path on mount
@@ -238,7 +239,7 @@ function ConstellationMap() {
         });
       }, (step + 1) * NODE_DELAY);
     });
-  }, []);
+  }, []);;
 
   const floats = useMemo(
     () =>
@@ -251,7 +252,7 @@ function ConstellationMap() {
   );
 
   return (
-    <svg viewBox="-10 -10 550 480" className="w-full h-full overflow-visible" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="-10 -35 550 505" className="w-full h-full overflow-visible" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="glow">
           <feGaussianBlur stdDeviation="6" result="blur" />
@@ -261,8 +262,8 @@ function ConstellationMap() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="glow-strong">
-          <feGaussianBlur stdDeviation="10" result="blur" />
+        <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="7" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="blur" />
@@ -293,25 +294,35 @@ function ConstellationMap() {
         );
       })}
 
-      {/* Nodes — dim until revealed, glow on latest */}
+      {/* Nodes — dim until revealed; active nodes styled like "How it works" button */}
       {MAP_NODES.map((n, i) => {
         const f = floats[i];
         const active = revealedNodes.has(i);
         const isLatest = latestNode === i;
-        const nodeOpacity = active ? 1 : 0.12;
-        const fillAlpha = active ? 0.12 : 0.03;
-        const strokeAlpha = active ? 0.6 : 0.1;
-        const dotAlpha = active ? 0.9 : 0.15;
-        const textAlpha = active ? 0.95 : 0.15;
+        const isHovered = hoveredNode === i && active;
+        const nodeOpacity = active ? 1 : 0.1;
+        // Border matches button: accent/30 at rest → accent/60 on hover
+        const strokeColor = isHovered
+          ? "rgba(167, 139, 250, 0.6)"
+          : active
+          ? "rgba(167, 139, 250, 0.3)"
+          : "rgba(124, 58, 237, 0.08)";
+        const fillColor = isHovered
+          ? "rgba(167, 139, 250, 0.14)"
+          : active
+          ? "rgba(167, 139, 250, 0.06)"
+          : "rgba(167, 139, 250, 0.02)";
+        // Text is foreground-white (like button text), not purple accent
+        const textColor = active ? "rgba(237, 233, 246, 0.95)" : "rgba(167, 139, 250, 0.12)";
+        const dotColor = active ? "rgba(167, 139, 250, 0.9)" : "rgba(167, 139, 250, 0.12)";
 
         return (
           <g
             key={`n-${i}`}
-            style={{
-              transition: "opacity 0.8s ease",
-              opacity: nodeOpacity,
-            }}
-            filter={isLatest ? "url(#glow-strong)" : active ? "url(#glow)" : undefined}
+            style={{ transition: "opacity 0.8s ease", opacity: nodeOpacity, cursor: active ? "default" : "default" }}
+            filter={isHovered || isLatest ? "url(#glow-strong)" : active ? "url(#glow)" : undefined}
+            onMouseEnter={() => active && setHoveredNode(i)}
+            onMouseLeave={() => setHoveredNode(null)}
           >
             <animateTransform
               attributeName="transform"
@@ -326,18 +337,19 @@ function ConstellationMap() {
               width={NODE_W}
               height={NODE_H}
               rx="6"
-              fill={`rgba(167, 139, 250, ${fillAlpha})`}
-              stroke={`rgba(167, 139, 250, ${strokeAlpha})`}
-              strokeWidth="0.7"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={active ? "1" : "0.5"}
             />
-            <circle cx="12" cy={NODE_H / 2} r="3.5" fill={`rgba(167, 139, 250, ${dotAlpha})`} />
+            <circle cx="12" cy={NODE_H / 2} r="3.5" fill={dotColor} />
             <text
               x={NODE_W / 2 + 4}
               y={NODE_H / 2 + 4.5}
               textAnchor="middle"
               fontSize="13"
-              fill={`rgba(167, 139, 250, ${textAlpha})`}
+              fill={textColor}
               fontFamily="system-ui, sans-serif"
+              fontWeight={isHovered ? "500" : "400"}
             >
               {n.label}
             </text>
@@ -444,15 +456,16 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
         <div className="flex flex-col justify-center w-full lg:w-[45%] shrink-0 overflow-y-auto py-6 pl-[8vw] pr-8 lg:pl-[10vw] lg:pr-12">
           <div className="space-y-3 max-w-lg">
             {/* Tagline */}
-            <p className="text-xs font-medium uppercase tracking-widest text-accent/70">Spaced repetition for LeetCode</p>
+            <p className="text-xs font-medium uppercase tracking-widest text-accent">Spaced repetition for LeetCode</p>
 
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl leading-tight min-h-[4.5rem] text-foreground">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl leading-tight min-h-[4.5rem] text-white">
               <span
                 className="inline-block"
                 style={{
                   opacity: visible ? 1 : 0,
                   transform: visible ? "translateY(0)" : "translateY(8px)",
                   transition: "opacity 0.8s ease, transform 0.8s ease",
+                  textShadow: "0 2px 24px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.6)",
                 }}
               >
                 {headline.top}
@@ -529,7 +542,10 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
 
         {/* Right: Floating constellation — fills space, overflow visible */}
         <div className="hidden lg:flex flex-1 items-center justify-center min-h-0 overflow-visible">
-          <div className="w-full h-full max-w-[600px] max-h-[560px] overflow-visible">
+          <div
+            className="w-full h-full max-w-[600px] max-h-[560px] overflow-visible"
+            style={{ filter: "drop-shadow(0 0 50px rgba(167, 139, 250, 0.08))" }}
+          >
             <ConstellationMap />
           </div>
         </div>

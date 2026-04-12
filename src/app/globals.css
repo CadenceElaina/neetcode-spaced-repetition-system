@@ -79,8 +79,8 @@ body {
   animation: pulse-ring 2s ease-out infinite;
 }
 
-/* Constellation line pulse */
+/* Constellation line pulse — vivid breathe */
 @keyframes line-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.85; }
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
 }
