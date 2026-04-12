@@ -88,12 +88,9 @@ export function MockInterviewClient({ problems, categories, weakCategories, isDe
     return (
       <div className="space-y-6">
         {isDemo && (
-          <div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-2 flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-accent">DEMO</span>
-              <span className="text-muted-foreground text-xs">Try the mock interview timer — sign in to track results</span>
-            </div>
-            <Link href="/auth/signin" className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground transition-all duration-150 hover:opacity-90">Sign in</Link>
+          <div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-2 flex items-center gap-2 text-sm">
+            <span className="text-xs font-medium text-accent">DEMO</span>
+            <span className="text-muted-foreground text-xs">Try the mock interview timer — sign in to track results</span>
           </div>
         )}
         <h1 className="text-2xl font-semibold">Mock Interview</h1>
@@ -147,12 +144,7 @@ export function MockInterviewClient({ problems, categories, weakCategories, isDe
           <p className="text-sm text-foreground">
             {timeLeft === 0 ? "Time's up!" : "Interview ended."} Now log your attempts for each problem.
           </p>
-          {isDemo && (
-            <div className="rounded-md border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-muted-foreground">
-              Sign in to log your results and track improvement over time.
-              <Link href="/auth/signin" className="ml-2 text-accent hover:underline font-medium">Sign in →</Link>
-            </div>
-          )}
+
           <div className="space-y-2">
             {problems.map((p) => (
               <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
@@ -162,12 +154,7 @@ export function MockInterviewClient({ problems, categories, weakCategories, isDe
                   <DifficultyBadge difficulty={p.difficulty} />
                 </div>
                 {isDemo ? (
-                  <Link
-                    href="/auth/signin"
-                    className="inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm text-accent-foreground transition-colors duration-150 hover:opacity-90"
-                  >
-                    Sign in to Log
-                  </Link>
+                  <span className="text-xs text-muted-foreground">Sign in to log</span>
                 ) : (
                 <Link
                   href={`/problems/${p.id}/attempt`}

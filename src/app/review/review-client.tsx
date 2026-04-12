@@ -89,12 +89,9 @@ export function ReviewQueueClient({ initialQueue, isDemo = false }: Props) {
       )}
       {/* Demo banner */}
       {isDemo && (
-        <div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-2 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-accent">DEMO</span>
-            <span className="text-muted-foreground text-xs">Sample review queue — sign in to get your personalized schedule</span>
-          </div>
-          <Link href="/auth/signin" className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground transition-all duration-150 hover:opacity-90">Sign in</Link>
+        <div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-2 flex items-center gap-2 text-sm">
+          <span className="text-xs font-medium text-accent">DEMO</span>
+          <span className="text-muted-foreground text-xs">Sample review queue — sign in to get your personalized schedule</span>
         </div>
       )}
       {logModalProblem && !isDemo && (
