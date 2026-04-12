@@ -9,6 +9,7 @@ import {
   real,
   timestamp,
   date,
+  serial,
   pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -187,4 +188,68 @@ export const pendingSubmissions = pgTable("pending_submission", {
   status: pendingStatusEnum("status").notNull().default("pending"),
   detectedAt: timestamp("detected_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
+});
+
+/* ── Enums (Drills) ── */
+
+export const drillLevelEnum = pgEnum("drill_level", ["1", "2", "3", "4"]);
+
+export const drillConfidenceEnum = pgEnum("drill_confidence", [
+  "1",
+  "2",
+  "3",
+  "4",
+]);
+
+/* ── Syntax Drills (content — seeded, not user-generated) ── */
+
+export const syntaxDrills = pgTable("syntax_drill", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  level: smallint("level").notNull(), // 1-4
+  language: varchar("language", { length: 20 }).notNull().default("python"),
+  prompt: text("prompt").notNull(),
+  expectedCode: text("expected_code").notNull(),
+  alternatives: text("alternatives").array(),
+  explanation: text("explanation").notNull(),
+  tags: text("tags").array(),
+});
+
+/* ── User Drill State (SRS state per drill per user) ── */
+
+export const userDrillStates = pgTable("user_drill_state", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  drillId: integer("drill_id")
+    .notNull()
+    .references(() => syntaxDrills.id, { onDelete: "cascade" }),
+  stability: real("stability").notNull().default(0.5),
+  lastReviewedAt: timestamp("last_reviewed_at"),
+  nextReviewAt: timestamp("next_review_at"),
+  totalAttempts: integer("total_attempts").notNull().default(0),
+  bestConfidence: smallint("best_confidence"), // 1-4
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/* ── Drill Attempts (history / analytics) ── */
+
+export const drillAttempts = pgTable("drill_attempt", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  drillId: integer("drill_id")
+    .notNull()
+    .references(() => syntaxDrills.id, { onDelete: "cascade" }),
+  userCode: text("user_code"),
+  confidence: smallint("confidence").notNull(), // 1-4
+  sessionPosition: integer("session_position"), // nth drill in session
+  categoryStreak: integer("category_streak"), // consecutive same-category
+  effectiveCredit: real("effective_credit"), // fatigue multiplier applied
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -1,0 +1,241 @@
+[
+  {
+    "title": "Create a frequency counter with Counter",
+    "category": "Arrays & Hashing",
+    "level": 1,
+    "prompt": "Given a list `words`, create a frequency counter that maps each word to how many times it appears.",
+    "expectedCode": "from collections import Counter\nword_count = Counter(words)",
+    "alternatives": [
+      "word_count = {}\nfor w in words:\n    word_count[w] = word_count.get(w, 0) + 1"
+    ],
+    "explanation": "`Counter` is a `dict` subclass from `collections` built for counting hashable objects. It accepts any iterable and returns a dict-like object mapping elements to counts.\n\nAlternative: manual `.get(key, default)` loop — works fine, but `Counter` is a single expression and also gives you `.most_common(n)` for free.\n\nWhen to use manual: when you need custom counting logic (e.g., conditional counting).",
+    "tags": ["Counter", "dict", "collections"]
+  },
+  {
+    "title": "Build a dict from two parallel lists",
+    "category": "Arrays & Hashing",
+    "level": 1,
+    "prompt": "Given `keys = ['a', 'b', 'c']` and `values = [1, 2, 3]`, create a dictionary mapping each key to its corresponding value.",
+    "expectedCode": "d = dict(zip(keys, values))",
+    "alternatives": [
+      "d = {k: v for k, v in zip(keys, values)}"
+    ],
+    "explanation": "`zip(keys, values)` produces pairs `('a',1), ('b',2), ('c',3)`. Wrapping in `dict()` converts to `{'a': 1, 'b': 2, 'c': 3}`.\n\nThe dict comprehension version does the same thing but is more explicit — useful when you need to transform keys or values inline (e.g., `{k.upper(): v * 2 for k, v in zip(keys, values)}`).\n\nIf lists are different lengths, `zip` silently truncates to the shorter one.",
+    "tags": ["zip", "dict", "comprehension"]
+  },
+  {
+    "title": "defaultdict for grouping",
+    "category": "Arrays & Hashing",
+    "level": 1,
+    "prompt": "Given a list of `(name, score)` tuples called `records`, group scores by name into a dict of lists.",
+    "expectedCode": "from collections import defaultdict\ngrouped = defaultdict(list)\nfor name, score in records:\n    grouped[name].append(score)",
+    "alternatives": [
+      "grouped = {}\nfor name, score in records:\n    grouped.setdefault(name, []).append(score)"
+    ],
+    "explanation": "`defaultdict(list)` auto-creates an empty list on first access to a missing key, so you never need to check `if key not in dict`.\n\n`.setdefault(key, [])` does the same thing inline but is less readable in loops.\n\nUse `defaultdict` when: grouping, building adjacency lists, accumulating values. Use regular `dict` when: you want a KeyError on missing keys (intentional strictness).",
+    "tags": ["defaultdict", "grouping", "collections"]
+  },
+  {
+    "title": "Check membership with a set",
+    "category": "Arrays & Hashing",
+    "level": 1,
+    "prompt": "Given a list `nums`, write the fastest way to check if a value `target` exists in it.",
+    "expectedCode": "num_set = set(nums)\nexists = target in num_set",
+    "alternatives": [
+      "exists = target in nums"
+    ],
+    "explanation": "`target in list` is O(n) — scans the entire list. `target in set` is O(1) average — hash lookup.\n\nConverting to a set costs O(n), so it only pays off if you do multiple lookups. For a single check, `in list` is fine. For repeated lookups (e.g., inside a loop), always convert to set first.\n\nSets also deduplicate — `set([1,1,2])` → `{1, 2}`.",
+    "tags": ["set", "membership", "O(1) lookup"]
+  },
+  {
+    "title": "Dict comprehension with condition",
+    "category": "Arrays & Hashing",
+    "level": 2,
+    "prompt": "Given a dict `scores = {'Alice': 85, 'Bob': 42, 'Carol': 91}`, create a new dict containing only entries where the score is >= 60.",
+    "expectedCode": "passing = {name: score for name, score in scores.items() if score >= 60}",
+    "alternatives": [],
+    "explanation": "Dict comprehensions follow the same pattern as list comprehensions: `{key_expr: val_expr for item in iterable if condition}`.\n\n`.items()` gives `(key, value)` pairs. The `if` clause filters — only entries satisfying the condition are included.\n\nThis is more concise than building an empty dict and using a for-loop with an if statement. Use the loop version when the logic is complex enough that a comprehension hurts readability.",
+    "tags": ["comprehension", "dict", "filtering"]
+  },
+  {
+    "title": "Counter — most common elements",
+    "category": "Arrays & Hashing",
+    "level": 2,
+    "prompt": "Given a string `s`, find the 3 most frequently occurring characters.",
+    "expectedCode": "from collections import Counter\ntop3 = Counter(s).most_common(3)",
+    "alternatives": [],
+    "explanation": "`Counter.most_common(n)` returns a list of `(element, count)` tuples sorted by count descending.\n\nWith no argument, `.most_common()` returns ALL elements sorted by frequency. This is often what you need for \"top K frequent\" problems.\n\nUnder the hood, `.most_common(n)` uses `heapq.nlargest` for efficiency when n is small relative to the total — O(m log n) instead of O(m log m) for full sort.",
+    "tags": ["Counter", "most_common", "top-k"]
+  },
+  {
+    "title": "Anagram grouping with defaultdict",
+    "category": "Arrays & Hashing",
+    "level": 2,
+    "prompt": "Given a list of strings `strs`, group anagrams together. Return a list of groups.",
+    "expectedCode": "from collections import defaultdict\ngroups = defaultdict(list)\nfor s in strs:\n    groups[tuple(sorted(s))].append(s)\nresult = list(groups.values())",
+    "alternatives": [
+      "from collections import defaultdict\ngroups = defaultdict(list)\nfor s in strs:\n    key = [0] * 26\n    for c in s:\n        key[ord(c) - ord('a')] += 1\n    groups[tuple(key)].append(s)\nresult = list(groups.values())"
+    ],
+    "explanation": "Key insight: anagrams produce the same sorted string. `tuple(sorted('eat'))` → `('a','e','t')` — same for 'tea', 'ate'.\n\nWe use `tuple()` because lists aren't hashable (can't be dict keys), but tuples are.\n\nAlternative: character frequency tuple `[0]*26` — O(n) per string vs O(n log n) for sort. Better asymptotically but sort version is simpler for interviews.\n\n`.values()` gives the grouped lists. `list()` wraps the view into a regular list.",
+    "tags": ["defaultdict", "anagram", "sorted", "tuple"]
+  },
+  {
+    "title": "Two-sum with hash map",
+    "category": "Arrays & Hashing",
+    "level": 2,
+    "prompt": "Given a list `nums` and an integer `target`, return the indices of two numbers that add up to target. Assume exactly one solution exists.",
+    "expectedCode": "seen = {}\nfor i, num in enumerate(nums):\n    comp = target - num\n    if comp in seen:\n        return [seen[comp], i]\n    seen[num] = i",
+    "alternatives": [],
+    "explanation": "The hash map stores `{value: index}` for numbers seen so far. For each number, check if its complement (`target - num`) was already seen. If yes, return both indices.\n\nKey patterns:\n- `enumerate(nums)` gives `(index, value)` — you need both\n- One-pass: check THEN insert, so a number doesn't pair with itself\n- `comp in seen` is O(1) hash lookup\n\nTotal: O(n) time, O(n) space. Brute force (two loops) is O(n²).",
+    "tags": ["hash map", "enumerate", "complement", "two-sum"]
+  },
+  {
+    "title": "Basic two-pointer converging pattern",
+    "category": "Two Pointers",
+    "level": 1,
+    "prompt": "Given a sorted list `nums`, write the two-pointer template to find a pair that sums to `target`.",
+    "expectedCode": "l, r = 0, len(nums) - 1\nwhile l < r:\n    s = nums[l] + nums[r]\n    if s == target:\n        return [l, r]\n    elif s < target:\n        l += 1\n    else:\n        r -= 1",
+    "alternatives": [],
+    "explanation": "Two pointers start at opposite ends of a SORTED array. The key insight: if `sum < target`, moving `l` right increases the sum; if `sum > target`, moving `r` left decreases it.\n\nCritical details:\n- Array MUST be sorted (or the narrowing logic breaks)\n- `while l < r` not `<=` — you never want the same element twice\n- Each step eliminates one element, so O(n) total\n\nThis template applies to: two-sum II, 3sum, container with most water, trapping rain water.",
+    "tags": ["two pointers", "sorted", "converging"]
+  },
+  {
+    "title": "In-place swap with two pointers",
+    "category": "Two Pointers",
+    "level": 1,
+    "prompt": "Reverse a list `nums` in-place using two pointers.",
+    "expectedCode": "l, r = 0, len(nums) - 1\nwhile l < r:\n    nums[l], nums[r] = nums[r], nums[l]\n    l += 1\n    r -= 1",
+    "alternatives": [
+      "nums.reverse()",
+      "nums[:] = nums[::-1]"
+    ],
+    "explanation": "Python's tuple swap `a, b = b, a` avoids needing a temp variable. Pointers converge toward the middle.\n\n`nums.reverse()` and `nums[::-1]` work but interviewers want to see you write the pointer logic. Also, `nums[::-1]` creates a new list — the `[:]` assignment copies it back in-place.\n\nThis swap pattern appears in: reverse string, palindrome check, partition algorithms, Dutch national flag.",
+    "tags": ["two pointers", "swap", "in-place", "reverse"]
+  },
+  {
+    "title": "Remove duplicates from sorted array",
+    "category": "Two Pointers",
+    "level": 1,
+    "prompt": "Given a sorted list `nums`, remove duplicates in-place and return the new length. Use a slow/fast pointer approach.",
+    "expectedCode": "slow = 0\nfor fast in range(1, len(nums)):\n    if nums[fast] != nums[slow]:\n        slow += 1\n        nums[slow] = nums[fast]\nreturn slow + 1",
+    "alternatives": [],
+    "explanation": "`slow` marks the last position of unique elements. `fast` scans ahead. When `fast` finds a new value, advance `slow` and copy it.\n\nThis is the \"reader-writer\" two-pointer pattern:\n- `fast` = reader (scans everything)\n- `slow` = writer (only advances for valid elements)\n\nReturn `slow + 1` because `slow` is an index (0-based) and we need the count.\n\nSame pattern applies to: remove element, move zeroes, remove duplicates II.",
+    "tags": ["two pointers", "slow-fast", "in-place", "dedup"]
+  },
+  {
+    "title": "Palindrome check with two pointers",
+    "category": "Two Pointers",
+    "level": 2,
+    "prompt": "Check if a string `s` is a palindrome, considering only alphanumeric characters and ignoring case.",
+    "expectedCode": "l, r = 0, len(s) - 1\nwhile l < r:\n    while l < r and not s[l].isalnum():\n        l += 1\n    while l < r and not s[r].isalnum():\n        r -= 1\n    if s[l].lower() != s[r].lower():\n        return False\n    l += 1\n    r -= 1\nreturn True",
+    "alternatives": [
+      "cleaned = ''.join(c.lower() for c in s if c.isalnum())\nreturn cleaned == cleaned[::-1]"
+    ],
+    "explanation": "The two-pointer version skips non-alphanumeric characters with inner while loops. `.isalnum()` returns True for letters and digits.\n\nCritical: the inner `while` loops need `l < r` guard — without it, you can overshoot.\n\nThe one-liner alternative is clean but uses O(n) extra space. Interviewers often want the O(1) space pointer version.\n\n`.lower()` handles case-insensitivity. Compare after normalizing, not before.",
+    "tags": ["two pointers", "palindrome", "isalnum", "lower"]
+  },
+  {
+    "title": "Three sum with two pointers",
+    "category": "Two Pointers",
+    "level": 2,
+    "prompt": "Given a list `nums`, find all unique triplets that sum to zero. Avoid duplicate triplets.",
+    "expectedCode": "nums.sort()\nresult = []\nfor i in range(len(nums) - 2):\n    if i > 0 and nums[i] == nums[i - 1]:\n        continue\n    l, r = i + 1, len(nums) - 1\n    while l < r:\n        s = nums[i] + nums[l] + nums[r]\n        if s == 0:\n            result.append([nums[i], nums[l], nums[r]])\n            while l < r and nums[l] == nums[l + 1]:\n                l += 1\n            while l < r and nums[r] == nums[r - 1]:\n                r -= 1\n            l += 1\n            r -= 1\n        elif s < 0:\n            l += 1\n        else:\n            r -= 1\nreturn result",
+    "alternatives": [],
+    "explanation": "3Sum = fix one number, then run 2Sum II (sorted two-pointer) on the remaining.\n\nDuplicate avoidance has two parts:\n1. Skip duplicate `i` values: `if i > 0 and nums[i] == nums[i-1]: continue`\n2. After finding a triplet, skip duplicate `l` and `r` values with inner while loops\n\nSort first (O(n log n)) — enables the two-pointer narrowing and duplicate skipping.\n\nTotal: O(n²). This is the canonical example of reducing O(n³) brute force by sorting + two pointers.",
+    "tags": ["two pointers", "three sum", "sort", "dedup"]
+  },
+  {
+    "title": "List as a stack — push and pop",
+    "category": "Stack",
+    "level": 1,
+    "prompt": "Demonstrate using a Python list as a stack: push values 1, 2, 3, then pop and print the top.",
+    "expectedCode": "stack = []\nstack.append(1)\nstack.append(2)\nstack.append(3)\ntop = stack.pop()  # 3\npeek = stack[-1]   # 2",
+    "alternatives": [],
+    "explanation": "Python lists are stacks out of the box:\n- `append(x)` = push (adds to end) — O(1) amortized\n- `pop()` = pop (removes from end) — O(1)\n- `stack[-1]` = peek (view top without removing)\n\nDo NOT use `pop(0)` — that's O(n) because it shifts all elements. For FIFO (queue), use `collections.deque`.\n\nNegative indexing: `[-1]` is last element, `[-2]` is second-to-last. Very useful for stack problems.",
+    "tags": ["stack", "list", "append", "pop", "peek"]
+  },
+  {
+    "title": "Valid parentheses with a stack",
+    "category": "Stack",
+    "level": 1,
+    "prompt": "Given a string `s` containing only '(', ')', '{', '}', '[', ']', determine if the input string is valid (every open bracket is closed by the same type in correct order).",
+    "expectedCode": "stack = []\nmatch = {')': '(', '}': '{', ']': '['}\nfor c in s:\n    if c in match:\n        if not stack or stack[-1] != match[c]:\n            return False\n        stack.pop()\n    else:\n        stack.append(c)\nreturn len(stack) == 0",
+    "alternatives": [],
+    "explanation": "The matching dict maps closing → opening brackets. For each character:\n- If it's a closer: check the stack top matches. If not, invalid.\n- If it's an opener: push it.\n\nAfter processing all characters, the stack must be empty (no unmatched openers).\n\nKey patterns:\n- `c in match` checks closers (dict keys are closers)\n- `not stack` handles the edge case of a closer with nothing to match\n- `stack[-1]` peeks without popping — only pop when we confirm the match\n- Final `len(stack) == 0` catches unmatched openers like `'((('`",
+    "tags": ["stack", "parentheses", "matching", "dict"]
+  },
+  {
+    "title": "Monotonic decreasing stack",
+    "category": "Stack",
+    "level": 2,
+    "prompt": "Given a list of daily temperatures `temps`, return a list where each element is the number of days until a warmer temperature. If no warmer day exists, use 0.",
+    "expectedCode": "result = [0] * len(temps)\nstack = []  # stores indices\nfor i, t in enumerate(temps):\n    while stack and temps[stack[-1]] < t:\n        j = stack.pop()\n        result[j] = i - j\n    stack.append(i)\nreturn result",
+    "alternatives": [],
+    "explanation": "The monotonic stack maintains indices of temperatures in decreasing order. When we encounter a warmer temperature, we pop all cooler ones and compute the distance.\n\nKey details:\n- Stack stores INDICES, not values — we need indices for the distance calculation\n- `temps[stack[-1]] < t` — current temp is warmer than stack top → pop\n- `result[j] = i - j` — days until warmer = current index minus popped index\n- Elements that are never popped stay 0 (no warmer day)\n\nEach element is pushed and popped at most once → O(n) total, not O(n²).\n\nThis pattern applies to: next greater element, stock span, largest rectangle in histogram.",
+    "tags": ["stack", "monotonic", "indices", "next greater"]
+  },
+  {
+    "title": "Evaluate reverse Polish notation",
+    "category": "Stack",
+    "level": 2,
+    "prompt": "Given a list of tokens in Reverse Polish Notation (e.g., `['2','1','+','3','*']`), evaluate the expression. Supported operators: +, -, *, /. Division truncates toward zero.",
+    "expectedCode": "stack = []\nfor token in tokens:\n    if token in '+-*/':\n        b, a = stack.pop(), stack.pop()\n        if token == '+': stack.append(a + b)\n        elif token == '-': stack.append(a - b)\n        elif token == '*': stack.append(a * b)\n        else: stack.append(int(a / b))\n    else:\n        stack.append(int(token))\nreturn stack[0]",
+    "alternatives": [],
+    "explanation": "RPN evaluation is the textbook stack problem. Numbers get pushed; operators pop two operands, compute, push the result.\n\nCritical details:\n- Pop order matters: `b, a = pop(), pop()` — b is the RIGHT operand (popped first), a is the LEFT\n- `int(a / b)` truncates toward zero (Python's `//` truncates toward negative infinity, which is wrong for `-3 // 2 = -2` but the problem wants `-1`)\n- `token in '+-*/'` works because single-char strings are in a string — but be careful with negative numbers like `'-3'` (length > 1, won't match)\n\nFinal answer is the single remaining element: `stack[0]`.",
+    "tags": ["stack", "RPN", "evaluation", "operators"]
+  },
+  {
+    "title": "Recursive DFS on a binary tree",
+    "category": "Trees",
+    "level": 1,
+    "prompt": "Write a function to find the maximum depth of a binary tree. Nodes have `.val`, `.left`, `.right` attributes.",
+    "expectedCode": "def maxDepth(root):\n    if not root:\n        return 0\n    return 1 + max(maxDepth(root.left), maxDepth(root.right))",
+    "alternatives": [
+      "def maxDepth(root):\n    if not root:\n        return 0\n    left = maxDepth(root.left)\n    right = maxDepth(root.right)\n    return 1 + max(left, right)"
+    ],
+    "explanation": "The basic recursive DFS template for trees:\n1. Base case: `if not root: return <base_value>`\n2. Recurse on left and right\n3. Combine results\n\nHere, depth = 1 (current node) + max of left and right subtree depths. An empty tree has depth 0.\n\nThe expanded version (storing left/right in variables) is identical but easier to debug — you can print intermediate values.\n\nThis template applies to: max depth, min depth, diameter, balanced check, same tree, subtree check.",
+    "tags": ["tree", "DFS", "recursion", "max depth"]
+  },
+  {
+    "title": "BFS with deque — level-order traversal",
+    "category": "Trees",
+    "level": 1,
+    "prompt": "Given a binary tree root, return its level-order traversal as a list of lists (each inner list = one level).",
+    "expectedCode": "from collections import deque\nresult = []\nif not root:\n    return result\nq = deque([root])\nwhile q:\n    level = []\n    for _ in range(len(q)):\n        node = q.popleft()\n        level.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    result.append(level)\nreturn result",
+    "alternatives": [],
+    "explanation": "BFS uses a queue (FIFO). `deque` gives O(1) `popleft()` — a regular list's `pop(0)` is O(n).\n\nThe key trick for level-order: snapshot the queue size at the start of each level with `range(len(q))`. This processes exactly one level per outer loop iteration.\n\nWithout the `for _ in range(len(q))` loop, you'd mix nodes from different levels together.\n\nTemplate:\n1. Seed queue with root\n2. While queue not empty: process one level\n3. For each node in current level: visit, enqueue children\n\nThis applies to: level-order, zigzag, right side view, average of levels.",
+    "tags": ["tree", "BFS", "deque", "level-order"]
+  },
+  {
+    "title": "DFS with nonlocal closure",
+    "category": "Trees",
+    "level": 2,
+    "prompt": "Find the diameter of a binary tree (longest path between any two nodes, measured in edges). Use a closure variable to track the maximum.",
+    "expectedCode": "def diameterOfBinaryTree(root):\n    diameter = 0\n    def dfs(node):\n        nonlocal diameter\n        if not node:\n            return 0\n        left = dfs(node.left)\n        right = dfs(node.right)\n        diameter = max(diameter, left + right)\n        return 1 + max(left, right)\n    dfs(root)\n    return diameter",
+    "alternatives": [],
+    "explanation": "`nonlocal` lets an inner function modify a variable from the enclosing scope. Without it, `diameter = ...` would create a new local variable inside `dfs`.\n\nThe pattern: define a closure variable, use `nonlocal` inside the DFS helper to update it, return it from the outer function.\n\nWhy not return it from DFS? Because DFS returns one thing (height) but we need to track a second thing (diameter). The closure is the clean way to carry a \"global best\" through recursion.\n\nAlternative: use `self.diameter` in a class, or pass a mutable container like `[0]`. `nonlocal` is the most Pythonic.\n\nThis pattern applies to: diameter, longest univalue path, max path sum.",
+    "tags": ["tree", "DFS", "nonlocal", "closure", "diameter"]
+  },
+  {
+    "title": "Invert a binary tree",
+    "category": "Trees",
+    "level": 1,
+    "prompt": "Invert a binary tree (mirror it). Every left child becomes right and vice versa.",
+    "expectedCode": "def invertTree(root):\n    if not root:\n        return None\n    root.left, root.right = root.right, root.left\n    invertTree(root.left)\n    invertTree(root.right)\n    return root",
+    "alternatives": [
+      "def invertTree(root):\n    if not root:\n        return None\n    return TreeNode(root.val, invertTree(root.right), invertTree(root.left))"
+    ],
+    "explanation": "Swap children, then recurse. Python's tuple swap `a, b = b, a` makes it one line.\n\nOrder doesn't matter — you can swap before or after recursing (pre-order or post-order). Just don't mix them up accidentally.\n\nThe alternative creates new nodes instead of modifying in-place — cleaner functionally but uses O(n) extra space.\n\nThis is the classic \"simple recursion\" interview question. The pattern: do something at current node, recurse on children.",
+    "tags": ["tree", "recursion", "invert", "swap"]
+  },
+  {
+    "title": "Validate BST with min/max bounds",
+    "category": "Trees",
+    "level": 2,
+    "prompt": "Determine if a binary tree is a valid BST. Each node's value must be strictly between a lower and upper bound.",
+    "expectedCode": "def isValidBST(root, lo=float('-inf'), hi=float('inf')):\n    if not root:\n        return True\n    if root.val <= lo or root.val >= hi:\n        return False\n    return isValidBST(root.left, lo, root.val) and isValidBST(root.right, root.val, hi)",
+    "alternatives": [],
+    "explanation": "Common mistake: only checking `node.left.val < node.val < node.right.val`. This misses cases where a deeper node violates the BST property with an ancestor.\n\nThe fix: carry bounds. Every left child must be less than its parent (upper bound tightens). Every right child must be greater (lower bound tightens).\n\nDefault bounds: `(-inf, inf)` — the root can be any value.\n\n`<=` and `>=` enforce strict inequality (most BST problems require distinct values). Change to `<` / `>` if duplicates are allowed.\n\nThis pattern — \"carry constraints down\" — appears in interval trees, segment trees, and range queries.",
+    "tags": ["tree", "BST", "validation", "bounds", "recursion"]
+  }
+]

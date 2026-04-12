@@ -219,3 +219,90 @@ export function retentionLabel(r: number): { label: string; color: string } {
   if (r >= 0.2) return { label: "Weak", color: "text-orange-500" };
   return { label: "Critical", color: "text-red-500" };
 }
+
+/* ── Drill SRS — fatigue & stability ── */
+
+/** Drill confidence maps to a base stability multiplier (simpler than problem signals). */
+const DRILL_CONFIDENCE_MULTIPLIERS: Record<number, number> = {
+  1: 0.5,  // Again — forgot it
+  2: 1.0,  // Hard — struggled
+  3: 1.8,  // Good — got it
+  4: 2.5,  // Easy — instant recall
+};
+
+/** Session fatigue: diminishing returns based on how many drills done this session. */
+export function computeSessionFatigue(sessionPosition: number): number {
+  if (sessionPosition <= 8) return 1.0;
+  if (sessionPosition <= 15) return 0.7;
+  if (sessionPosition <= 25) return 0.4;
+  return 0.2;
+}
+
+/** Same-category consecutive penalty: grinding one category has diminishing returns. */
+export function computeCategoryStreakPenalty(categoryStreak: number): number {
+  if (categoryStreak <= 1) return 1.0;
+  if (categoryStreak === 2) return 0.8;
+  if (categoryStreak === 3) return 0.5;
+  return 0.3;
+}
+
+/** Combined fatigue credit for a drill attempt. */
+export function computeFatigueCredit(
+  sessionPosition: number,
+  categoryStreak: number,
+): number {
+  return computeSessionFatigue(sessionPosition) *
+    computeCategoryStreakPenalty(categoryStreak);
+}
+
+/** Calculate new drill stability after a self-rated attempt. */
+export function computeDrillStability(
+  oldStability: number,
+  confidence: number, // 1-4
+  fatigueCredit: number, // 0-1 from computeFatigueCredit
+): number {
+  const baseMultiplier = DRILL_CONFIDENCE_MULTIPLIERS[confidence] ?? 1.0;
+
+  // Fatigue scales the multiplier toward 1.0 (neutral)
+  // At full credit (1.0), full multiplier applies
+  // At low credit (0.2), multiplier is pulled toward 1.0 (barely any change)
+  const effectiveMultiplier = 1.0 + (baseMultiplier - 1.0) * fatigueCredit;
+
+  const newS = oldStability * effectiveMultiplier;
+  return clampStability(newS);
+}
+
+/** Compute per-category syntax fluency from drill stabilities. */
+export interface DrillFluencyInput {
+  totalDrills: number;
+  reviewedDrills: number;
+  avgStability: number; // average stability across reviewed drills
+  dueCount: number; // drills currently due for review
+}
+
+export interface DrillFluencyResult {
+  fluency: number; // 0-1
+  tier: "S" | "A" | "B" | "C" | "D";
+  mastered: number; // drills with stability > 21 days
+}
+
+export function computeDrillFluency(input: DrillFluencyInput): DrillFluencyResult {
+  if (input.totalDrills === 0) return { fluency: 0, tier: "D", mastered: 0 };
+
+  const coverageRatio = input.reviewedDrills / input.totalDrills;
+  // Normalize stability: 30 days = fully fluent
+  const stabilityScore = Math.min(input.avgStability / 30, 1.0);
+  // Penalty for overdue drills
+  const duePenalty = input.dueCount / Math.max(input.reviewedDrills, 1);
+  const dueScore = Math.max(0, 1 - duePenalty);
+
+  // Coverage 30%, stability 50%, due freshness 20%
+  const fluency = coverageRatio * 0.3 + stabilityScore * 0.5 + dueScore * 0.2;
+  const pct = Math.round(fluency * 100);
+
+  return {
+    fluency,
+    tier: scoreToTier(pct),
+    mastered: 0, // caller fills this in from actual data
+  };
+}
