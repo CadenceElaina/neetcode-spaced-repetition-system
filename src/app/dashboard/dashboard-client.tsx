@@ -533,7 +533,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     setListMode("drills");
   }
 
-  function handleDrillRate(confidence: DrillConfidence) {
+  function handleDrillRate(confidence: DrillConfidence, _userCode: string) {
     if (!drillSession) return;
     const newResults = [...drillSession.results, confidence];
     if (drillSession.current + 1 >= drillSession.drills.length) {

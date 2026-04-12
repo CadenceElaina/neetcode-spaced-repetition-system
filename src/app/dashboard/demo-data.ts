@@ -531,6 +531,7 @@ export interface DemoDrill {
   level: DrillLevel;
   prompt: string;
   expectedCode: string;
+  alternatives?: string[];
   explanation: string;
   dueStatus: DemoDrillStatus;
   totalAttempts: number;
@@ -547,6 +548,14 @@ export const DEMO_DRILLS: DemoDrill[] = [
     expectedCode: `freq = {}
 for n in nums:
     freq[n] = freq.get(n, 0) + 1`,
+    alternatives: [
+      `from collections import Counter
+freq = Counter(nums)`,
+      `from collections import defaultdict
+freq = defaultdict(int)
+for n in nums:
+    freq[n] += 1`,
+    ],
     explanation: "Use `dict.get(key, default)` to safely increment. This is the foundation of most hash map patterns — counting occurrences in O(n) time, O(n) space.",
     dueStatus: "due",
     totalAttempts: 3,
@@ -582,6 +591,9 @@ while left < right:
     left += 1
     right -= 1
 return True`,
+    alternatives: [
+      `return s == s[::-1]`,
+    ],
     explanation: "Classic opposite-end pattern: start pointers at both ends, move inward. If characters ever mismatch, it's not a palindrome.",
     dueStatus: "due",
     totalAttempts: 4,
@@ -658,6 +670,14 @@ return ans`,
     if not root:
         return 0
     return 1 + max(maxDepth(root.left), maxDepth(root.right))`,
+    alternatives: [
+      `def maxDepth(root):
+    if root is None:
+        return 0
+    left = maxDepth(root.left)
+    right = maxDepth(root.right)
+    return 1 + max(left, right)`,
+    ],
     explanation: "Base case: null node has depth 0. Recursive case: depth is 1 plus the max of left and right subtree depths. Classic DFS post-order.",
     dueStatus: "mastered",
     totalAttempts: 6,
@@ -720,6 +740,16 @@ return max_len`,
     invertTree(root.left)
     invertTree(root.right)
     return root`,
+    alternatives: [
+      `def invertTree(root):
+    if root is None:
+        return None
+    left = invertTree(root.left)
+    right = invertTree(root.right)
+    root.left = right
+    root.right = left
+    return root`,
+    ],
     explanation: "Swap children, then recurse on both. Pre-order traversal works naturally — swap first, then let recursion handle subtrees.",
     dueStatus: "mastered",
     totalAttempts: 5,
