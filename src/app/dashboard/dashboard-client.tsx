@@ -300,9 +300,50 @@ function getDefaultTargetDate(): string {
   return `${year}-09-01`;
 }
 
+/* ── Time-based greeting ── */
+function getGreeting(name?: string): string {
+  const hour = new Date().getHours();
+  const first = name?.split(" ")[0];
+
+  if (hour < 4) {
+    const opts = first
+      ? [`Burning the midnight oil, ${first}?`, `Late night grind, ${first}.`, `Still at it, ${first}?`]
+      : ["Burning the midnight oil?", "Late night grind.", "Midnight session. Let's go."];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  if (hour < 7) {
+    const opts = first
+      ? [`Rise and grind, ${first}.`, `Early bird, ${first}.`, `Up before the sun, ${first}.`]
+      : ["Rise and grind.", "Early bird gets the offer.", "Up before the sun."];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  if (hour < 12) {
+    const opts = first
+      ? [`Good morning, ${first}.`, `Morning, ${first}.`, `Let's get it, ${first}.`]
+      : ["Good morning.", "Morning.", "Let's get it."];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  if (hour < 17) {
+    const opts = first
+      ? [`Good afternoon, ${first}.`, `Afternoon session, ${first}.`, `Welcome back, ${first}.`]
+      : ["Good afternoon.", "Afternoon session.", "Welcome back."];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  if (hour < 21) {
+    const opts = first
+      ? [`Good evening, ${first}.`, `Evening, ${first}.`, `Welcome back, ${first}.`]
+      : ["Good evening.", "Evening session.", "Welcome back."];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  const opts = first
+    ? [`Night owl, ${first}?`, `Late session, ${first}.`, `Winding down, ${first}?`]
+    : ["Night owl?", "Late session.", "Winding down?"];
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
 /* ── Main Component ── */
 
-export function DashboardClient({ data, isDemo = false }: { data: DashboardData; isDemo?: boolean }) {
+export function DashboardClient({ data, isDemo = false, userName }: { data: DashboardData; isDemo?: boolean; userName?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string } | null>(null);
@@ -321,6 +362,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({});
   const [showOverallPace, setShowOverallPace] = useState(false);
   const [activityRange, setActivityRange] = useState<"14d" | "30d" | "90d" | "all">("14d");
+  const [greeting] = useState(() => getGreeting(userName));
 
   const activityData = useMemo(() => {
     if (activityRange === "14d") return data.attemptHistory;
@@ -930,6 +972,10 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
 
       {/* ── Right Column ── */}
       <div className="space-y-3 lg:col-span-6 overflow-y-auto min-h-0">
+        {/* Greeting */}
+        {!isDemo && (
+          <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
+        )}
         {showStatsDetail ? (
           /* ── Stats Detail (back side) ── */
           <section className="rounded-lg border border-border bg-muted p-4 space-y-4">

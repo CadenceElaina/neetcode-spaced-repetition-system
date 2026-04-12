@@ -504,6 +504,13 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
               </Link>
             </div>
 
+            {/* Demo link */}
+            {!isAuthenticated && (
+              <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-accent transition-colors">
+                or explore the demo dashboard →
+              </Link>
+            )}
+
             {/* Stats row */}
             <div className="flex items-center gap-5">
               <div className="text-center">
