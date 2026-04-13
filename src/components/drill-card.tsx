@@ -446,6 +446,14 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
               </button>
             )}
             <span className="text-[10px] text-muted-foreground">Ctrl+Shift+Enter</span>
+            <div className="ml-auto">
+              <button
+                onClick={() => onRate(1, "")}
+                className="inline-flex h-8 items-center rounded-md px-3 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground hover:bg-muted"
+              >
+                Skip
+              </button>
+            </div>
           </div>
 
           {/* Run output panel */}

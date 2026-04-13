@@ -362,6 +362,13 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [drillCombo, setDrillCombo] = useState(0);
   const [showDrillTour, setShowDrillTour] = useState(false);
   const [syntaxRefEnabled, setSyntaxRefEnabled] = useState(true);
+  const [excludedDrillCategories, setExcludedDrillCategories] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("aurora-excluded-drill-categories");
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+    } catch { return new Set(); }
+  });
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<"stats" | "syntax">(() => {
     try { return (localStorage.getItem("aurora-right-panel") as "stats" | "syntax") ?? "stats"; } catch { return "stats"; }
   });
@@ -670,10 +677,19 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     return levels;
   }, [selectedCategory, allDrills]);
 
+  function toggleDrillCategory(cat: string) {
+    setExcludedDrillCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      try { localStorage.setItem("aurora-excluded-drill-categories", JSON.stringify([...next])); } catch { /* ok */ }
+      return next;
+    });
+  }
+
   function startDrillSession(categoryFilter?: string) {
     const pool = categoryFilter
       ? allDrills.filter(d => d.category === categoryFilter)
-      : allDrills;
+      : allDrills.filter(d => !excludedDrillCategories.has(d.category));
     const sessionDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
     if (sessionDrills.length === 0) return;
 
@@ -1400,14 +1416,72 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                       Mastered
                     </button>
                   </div>
-                  <button
-                    onClick={() => demoGuard(() => startDrillSession())}
-                    className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90 gap-1"
-                  >
-                    <span>⚡</span> Daily Drill
-                    <span className="text-[10px] opacity-70">(~10 min)</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setShowCategoryFilter(prev => !prev)}
+                      className={`inline-flex h-7 items-center rounded-md border px-2 text-xs transition-colors ${
+                        excludedDrillCategories.size > 0
+                          ? "border-accent/40 text-accent bg-accent/10"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-accent/40"
+                      }`}
+                      title="Filter categories"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                      {excludedDrillCategories.size > 0 && (
+                        <span className="ml-1 text-[10px]">{excludedDrillCategories.size}</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => demoGuard(() => startDrillSession())}
+                      className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90 gap-1"
+                    >
+                      <span>⚡</span> Daily Drill
+                      <span className="text-[10px] opacity-70">(~10 min)</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Category filter panel */}
+                {showCategoryFilter && (
+                  <div className="rounded-lg border border-border bg-muted p-3 space-y-2 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-medium text-muted-foreground">Include in Daily Drill</p>
+                      <button
+                        onClick={() => {
+                          if (excludedDrillCategories.size > 0) {
+                            setExcludedDrillCategories(new Set());
+                            try { localStorage.removeItem("aurora-excluded-drill-categories"); } catch { /* ok */ }
+                          } else {
+                            const allCats = new Set([...drillCategories.keys()]);
+                            setExcludedDrillCategories(allCats);
+                            try { localStorage.setItem("aurora-excluded-drill-categories", JSON.stringify([...allCats])); } catch { /* ok */ }
+                          }
+                        }}
+                        className="text-[10px] text-accent hover:underline"
+                      >
+                        {excludedDrillCategories.size > 0 ? "Select all" : "Deselect all"}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...drillCategories.keys()].map(cat => {
+                        const isExcluded = excludedDrillCategories.has(cat);
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => toggleDrillCategory(cat)}
+                            className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                              isExcluded
+                                ? "border-border bg-background text-muted-foreground/50 line-through"
+                                : "border-accent/30 bg-accent/10 text-foreground"
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Error / Loading states */}
                 {drillsError ? (
