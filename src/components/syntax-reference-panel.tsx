@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { CodeEditor } from "@/components/code-editor";
 import { getPyodide } from "@/lib/pyodide";
 import { SYNTAX_ENTRIES, type SyntaxEntry } from "@/components/syntax-entries";
@@ -44,6 +44,7 @@ function detectMentionedEntries(entry: SyntaxEntry): SyntaxEntry[] {
 export function SyntaxReferencePanel() {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(true);
 
   // Navigation — openId is current expanded entry; navHistory is the back-stack of IDs
   const [openId, setOpenId] = useState<string | null>(null);
@@ -57,6 +58,10 @@ export function SyntaxReferencePanel() {
   const [scratchOutput, setScratchOutput] = useState<Record<string, string | null>>({});
   const [scratchRunning, setScratchRunning] = useState<Record<string, boolean>>({});
   const [scratchError, setScratchError] = useState<Record<string, boolean>>({});
+
+  // Ref to scroll the open entry into view after navigation
+  const openEntryRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   /** Navigate to an entry via a cross-link — pushes current to history */
   const navigateTo = useCallback((id: string) => {
@@ -90,6 +95,23 @@ export function SyntaxReferencePanel() {
       return [];
     });
   }, []);
+
+  // Scroll opened entry into view whenever openId changes
+  useEffect(() => {
+    if (!openId || !openEntryRef.current || !scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const el = openEntryRef.current;
+    // Small delay to let the DOM expand before measuring
+    const id = setTimeout(() => {
+      const containerTop = container.getBoundingClientRect().top;
+      const elTop = el.getBoundingClientRect().top;
+      const offset = elTop - containerTop;
+      if (offset < 0 || offset + el.offsetHeight > container.clientHeight) {
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }, 50);
+    return () => clearTimeout(id);
+  }, [openId]);
 
   const cycleVariant = useCallback((entryId: string, dir: 1 | -1) => {
     setVariantIdx((prev) => {
@@ -143,41 +165,75 @@ export function SyntaxReferencePanel() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* ── Search + filter (non-sticky, stays in flex flow) ── */}
-      <div className="shrink-0 border-b border-border/50 pb-3 space-y-2 mb-3">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search syntax… (e.g. defaultdict, heapq)"
-          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
-        />
-
-        {ALL_CATEGORIES.length > 1 && (
-          <div className="flex flex-wrap gap-1">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className={`inline-flex h-5 items-center rounded-full px-2 text-[10px] font-medium transition-colors ${
-                activeCategory === null
-                  ? "bg-accent/20 text-accent"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
+      {/* ── Search + filter header ── */}
+      <div className="shrink-0 border-b border-border/50 pb-3 mb-3">
+        {/* Header row: label + toggle chevron */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+            Search &amp; Filter
+          </span>
+          <button
+            onClick={() => setSearchOpen((o) => !o)}
+            className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            title={searchOpen ? "Collapse search" : "Expand search"}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              All
-            </button>
-            {ALL_CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                className={`inline-flex h-5 items-center rounded-full px-2 text-[10px] font-medium transition-colors ${
-                  activeCategory === cat
-                    ? "bg-accent/20 text-accent"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+              {searchOpen ? (
+                <polyline points="18 15 12 9 6 15" />
+              ) : (
+                <polyline points="6 9 12 15 18 9" />
+              )}
+            </svg>
+          </button>
+        </div>
+
+        {searchOpen && (
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search syntax… (e.g. defaultdict, heapq)"
+              className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
+            />
+
+            {ALL_CATEGORIES.length > 1 && (
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setActiveCategory(null)}
+                  className={`inline-flex h-5 items-center rounded-full px-2 text-[10px] font-medium transition-colors ${
+                    activeCategory === null
+                      ? "bg-accent/20 text-accent"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All
+                </button>
+                {ALL_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                    className={`inline-flex h-5 items-center rounded-full px-2 text-[10px] font-medium transition-colors ${
+                      activeCategory === cat
+                        ? "bg-accent/20 text-accent"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -208,7 +264,10 @@ export function SyntaxReferencePanel() {
       </p>
 
       {/* ── Scrollable entries list ── */}
-      <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0">
+      <div
+        ref={scrollContainerRef}
+        className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0"
+      >
         {entriesToShow.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-6">
             No matches for &quot;{query}&quot;
@@ -227,6 +286,7 @@ export function SyntaxReferencePanel() {
           return (
             <div
               key={entry.id}
+              ref={isOpen ? openEntryRef : null}
               className={`rounded-lg border bg-card overflow-hidden transition-colors shrink-0 ${
                 isOpen ? "border-accent/30" : "border-border"
               }`}
@@ -307,26 +367,6 @@ export function SyntaxReferencePanel() {
                     <CodeEditor value={entry.example} onChange={() => {}} readOnly minHeight="auto" />
                   </div>
 
-                  {/* Auto-detected cross-links: other entries mentioned in this card's code */}
-                  {mentioned.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                        In this card
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {mentioned.map((m) => (
-                          <button
-                            key={m.id}
-                            onClick={() => navigateTo(m.id)}
-                            className="inline-flex h-6 items-center rounded-md border border-accent/30 bg-accent/10 px-2 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
-                          >
-                            {m.name} →
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Scratch pad */}
                   <div>
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
@@ -392,6 +432,27 @@ export function SyntaxReferencePanel() {
                         </div>
                       )}
                   </div>
+
+                  {/* Auto-detected cross-links: other entries mentioned in this card's code */}
+                  {mentioned.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                        In this card
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {mentioned.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => navigateTo(m.id)}
+                            className="inline-flex h-6 items-center rounded-md border border-accent/30 bg-accent/10 px-2 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+                          >
+                            {m.name} →
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
