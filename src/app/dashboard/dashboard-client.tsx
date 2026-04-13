@@ -1508,12 +1508,12 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       </div>
 
       {/* ── Right Column ── */}
-      <div className="space-y-3 lg:col-span-6 overflow-y-auto min-h-0">
+      <div className="flex flex-col lg:col-span-6 min-h-0">
         {listMode === "drills" ? (
           /* ── Right panel when Drills tab active: toggle between Fluency stats and Syntax reference ── */
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1 min-h-0 gap-3">
             {/* Toggle */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => { setRightPanelView("stats"); try { localStorage.setItem("aurora-right-panel", "stats"); } catch { /* ok */ } }}
                 className={`inline-flex h-7 items-center rounded-md border px-2.5 text-xs font-medium transition-colors ${rightPanelView === "stats" ? "border-accent/30 bg-accent/15 text-accent" : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80"}`}
@@ -1539,15 +1539,19 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                   </button>
                 </div>
               ) : (
-                <SyntaxReferencePanel />
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <SyntaxReferencePanel />
+                </div>
               )
             ) : (
-              <FluencyPanel stats={fluencyStats} allDrills={allDrills} categoryUnlocks={categoryUnlocks} onSelectCategory={(cat) => { setSelectedCategory(cat); }} />
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <FluencyPanel stats={fluencyStats} allDrills={allDrills} categoryUnlocks={categoryUnlocks} onSelectCategory={(cat) => { setSelectedCategory(cat); }} />
+              </div>
             )}
           </div>
         ) : showStatsDetail ? (
           /* ── Stats Detail (back side) ── */
-          <section className="rounded-lg border border-border bg-muted p-4 space-y-4">
+          <section className="rounded-lg border border-border bg-muted p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-muted-foreground">All Stats</p>
               <button
@@ -1697,7 +1701,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
             </div>
           </section>
         ) : (
-        <>
+        <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
         {/* Countdown */}
         <section className="rounded-lg border border-border bg-muted p-3">
           <div className="flex items-center justify-between mb-2">
@@ -1957,7 +1961,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
           )}
         </section>
 
-        </>
+        </div>
         )}
       </div>
     </div>
