@@ -510,6 +510,7 @@ export interface SyntaxDrill {
   tags: string[];
   promptVariants?: string[];
   testCases?: DrillTestCase[];
+  distractors?: string[];
 }
 
 export interface UserDrillState {
@@ -544,6 +545,7 @@ export interface DemoDrill {
   totalAttempts: number;
   stability: number;
   testCases?: DrillTestCase[];
+  distractors?: string[];
 }
 
 export const DEMO_DRILLS: DemoDrill[] = [

@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
       explanation: row.drill.explanation,
       tags: row.drill.tags ?? [],
       testCases: (row.drill.testCases as Array<{ input: string; expected: string }>) ?? [],
+      distractors: row.drill.distractors ?? [],
       state: row.state
         ? {
             stability: row.state.stability,

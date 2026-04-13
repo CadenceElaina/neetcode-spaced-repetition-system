@@ -182,9 +182,9 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
   // L5 Pyodide test results
   const [testResults, setTestResults] = useState<TestCaseResult[] | null>(null);
 
-  // Shuffled MC options — stable per drill id
+  // Shuffled MC options: 1 correct answer + distractors (wrong answers)
   const mcOptions = useMemo(
-    () => shuffle([drill.expectedCode, ...(drill.alternatives ?? [])]),
+    () => shuffle([drill.expectedCode, ...(drill.distractors ?? [])]),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [drill.id],
   );
@@ -292,7 +292,7 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
   /** MC option click (L1, MC path) */
   const handleMcClick = useCallback(
     (option: string) => {
-      // All MC options are correct equivalents — clicking any confirms recognition
+      // Check if the selected option is the correct answer (or an alternative)
       const match = checkCode(option, drill.expectedCode, drill.alternatives ?? [], drill.level);
       setUserCode(option);
       enterResult(match, option);

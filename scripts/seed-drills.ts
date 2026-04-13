@@ -31,6 +31,7 @@ interface SeedDrill {
   tags: string[];
   promptVariants?: string[];
   testCases?: DrillTestCase[];
+  distractors?: string[];
 }
 
 async function main() {
@@ -57,6 +58,7 @@ async function main() {
         tags: d.tags,
         promptVariants: d.promptVariants ?? [],
         testCases: d.testCases ?? null,
+        distractors: d.distractors ?? [],
       })
       .onConflictDoNothing();
   }

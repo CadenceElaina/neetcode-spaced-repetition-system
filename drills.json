@@ -8,7 +8,7 @@
     "alternatives": [
       "word_count = {}\nfor w in words:\n    word_count[w] = word_count.get(w, 0) + 1"
     ],
-    "explanation": "`Counter` is a `dict` subclass from `collections` built for counting hashable objects. It accepts any iterable and returns a dict-like object mapping elements to counts.\n\nAlternative: manual `.get(key, default)` loop \u2014 works fine, but `Counter` is a single expression and also gives you `.most_common(n)` for free.\n\nWhen to use manual: when you need custom counting logic (e.g., conditional counting).",
+    "explanation": "`Counter` is a `dict` subclass from `collections` built for counting hashable objects. It accepts any iterable and returns a dict-like object mapping elements to counts.\n\nAlternative: manual `.get(key, default)` loop — works fine, but `Counter` is a single expression and also gives you `.most_common(n)` for free.\n\nWhen to use manual: when you need custom counting logic (e.g., conditional counting).",
     "tags": [
       "Counter",
       "dict",
@@ -18,6 +18,10 @@
       "Use Python's `Counter` to count how often each word appears in the list `words`.",
       "Build a frequency map of `words` using the `Counter` class from `collections`.",
       "Given `words`, produce a dictionary-like object showing the count of each unique word."
+    ],
+    "distractors": [
+      "from collections import Counter\nword_count = Counter(words.keys())",
+      "word_count = {w: words.count(w) for w in set(words.values())}"
     ]
   },
   {
@@ -29,11 +33,15 @@
     "alternatives": [
       "d = {k: v for k, v in zip(keys, values)}"
     ],
-    "explanation": "`zip(keys, values)` produces pairs `('a',1), ('b',2), ('c',3)`. Wrapping in `dict()` converts to `{'a': 1, 'b': 2, 'c': 3}`.\n\nThe dict comprehension version does the same thing but is more explicit \u2014 useful when you need to transform keys or values inline (e.g., `{k.upper(): v * 2 for k, v in zip(keys, values)}`).\n\nIf lists are different lengths, `zip` silently truncates to the shorter one.",
+    "explanation": "`zip(keys, values)` produces pairs `('a',1), ('b',2), ('c',3)`. Wrapping in `dict()` converts to `{'a': 1, 'b': 2, 'c': 3}`.\n\nThe dict comprehension version does the same thing but is more explicit — useful when you need to transform keys or values inline (e.g., `{k.upper(): v * 2 for k, v in zip(keys, values)}`).\n\nIf lists are different lengths, `zip` silently truncates to the shorter one.",
     "tags": [
       "zip",
       "dict",
       "comprehension"
+    ],
+    "distractors": [
+      "d = dict(keys, values)",
+      "d = {keys: values}"
     ]
   },
   {
@@ -55,6 +63,10 @@
       "Given `records` (a list of `(name, score)` tuples), build a dictionary that maps each name to a list of their scores.",
       "Use `defaultdict` to group the scores in `records` by name, where each record is a `(name, score)` pair.",
       "From a list of `(name, score)` tuples called `records`, create a mapping from names to all their associated scores."
+    ],
+    "distractors": [
+      "from collections import defaultdict\ngrouped = defaultdict(int)\nfor name, score in records:\n    grouped[name] += score",
+      "grouped = defaultdict(set)\nfor name, score in records:\n    grouped[name].add(score)"
     ]
   },
   {
@@ -66,7 +78,7 @@
     "alternatives": [
       "exists = target in nums"
     ],
-    "explanation": "`target in list` is O(n) \u2014 scans the entire list. `target in set` is O(1) average \u2014 hash lookup.\n\nConverting to a set costs O(n), so it only pays off if you do multiple lookups. For a single check, `in list` is fine. For repeated lookups (e.g., inside a loop), always convert to set first.\n\nSets also deduplicate \u2014 `set([1,1,2])` \u2192 `{1, 2}`.",
+    "explanation": "`target in list` is O(n) — scans the entire list. `target in set` is O(1) average — hash lookup.\n\nConverting to a set costs O(n), so it only pays off if you do multiple lookups. For a single check, `in list` is fine. For repeated lookups (e.g., inside a loop), always convert to set first.\n\nSets also deduplicate — `set([1,1,2])` → `{1, 2}`.",
     "tags": [
       "set",
       "membership",
@@ -76,6 +88,10 @@
       "What's the most efficient way to check if `target` is in the list `nums`?",
       "Given `nums` and `target`, write the O(1) lookup approach to check for membership.",
       "Convert `nums` to the optimal data structure for checking whether `target` exists in it."
+    ],
+    "distractors": [
+      "num_set = set(nums)\nexists = num_set.get(target)",
+      "exists = target == num_set"
     ]
   },
   {
@@ -85,7 +101,7 @@
     "prompt": "Given a dict `scores = {'Alice': 85, 'Bob': 42, 'Carol': 91}`, create a new dict containing only entries where the score is >= 60.",
     "expectedCode": "passing = {name: score for name, score in scores.items() if score >= 60}",
     "alternatives": [],
-    "explanation": "Dict comprehensions follow the same pattern as list comprehensions: `{key_expr: val_expr for item in iterable if condition}`.\n\n`.items()` gives `(key, value)` pairs. The `if` clause filters \u2014 only entries satisfying the condition are included.\n\nThis is more concise than building an empty dict and using a for-loop with an if statement. Use the loop version when the logic is complex enough that a comprehension hurts readability.",
+    "explanation": "Dict comprehensions follow the same pattern as list comprehensions: `{key_expr: val_expr for item in iterable if condition}`.\n\n`.items()` gives `(key, value)` pairs. The `if` clause filters — only entries satisfying the condition are included.\n\nThis is more concise than building an empty dict and using a for-loop with an if statement. Use the loop version when the logic is complex enough that a comprehension hurts readability.",
     "tags": [
       "comprehension",
       "dict",
@@ -93,13 +109,13 @@
     ]
   },
   {
-    "title": "Counter \u2014 most common elements",
+    "title": "Counter — most common elements",
     "category": "Arrays & Hashing",
     "level": 2,
     "prompt": "Given a string `s`, find the 3 most frequently occurring characters.",
     "expectedCode": "from collections import Counter\ntop3 = Counter(s).most_common(3)",
     "alternatives": [],
-    "explanation": "`Counter.most_common(n)` returns a list of `(element, count)` tuples sorted by count descending.\n\nWith no argument, `.most_common()` returns ALL elements sorted by frequency. This is often what you need for \"top K frequent\" problems.\n\nUnder the hood, `.most_common(n)` uses `heapq.nlargest` for efficiency when n is small relative to the total \u2014 O(m log n) instead of O(m log m) for full sort.",
+    "explanation": "`Counter.most_common(n)` returns a list of `(element, count)` tuples sorted by count descending.\n\nWith no argument, `.most_common()` returns ALL elements sorted by frequency. This is often what you need for \"top K frequent\" problems.\n\nUnder the hood, `.most_common(n)` uses `heapq.nlargest` for efficiency when n is small relative to the total — O(m log n) instead of O(m log m) for full sort.",
     "tags": [
       "Counter",
       "most_common",
@@ -115,7 +131,7 @@
     "alternatives": [
       "from collections import defaultdict\ngroups = defaultdict(list)\nfor s in strs:\n    key = [0] * 26\n    for c in s:\n        key[ord(c) - ord('a')] += 1\n    groups[tuple(key)].append(s)\nresult = list(groups.values())"
     ],
-    "explanation": "Key insight: anagrams produce the same sorted string. `tuple(sorted('eat'))` \u2192 `('a','e','t')` \u2014 same for 'tea', 'ate'.\n\nWe use `tuple()` because lists aren't hashable (can't be dict keys), but tuples are.\n\nAlternative: character frequency tuple `[0]*26` \u2014 O(n) per string vs O(n log n) for sort. Better asymptotically but sort version is simpler for interviews.\n\n`.values()` gives the grouped lists. `list()` wraps the view into a regular list.",
+    "explanation": "Key insight: anagrams produce the same sorted string. `tuple(sorted('eat'))` → `('a','e','t')` — same for 'tea', 'ate'.\n\nWe use `tuple()` because lists aren't hashable (can't be dict keys), but tuples are.\n\nAlternative: character frequency tuple `[0]*26` — O(n) per string vs O(n log n) for sort. Better asymptotically but sort version is simpler for interviews.\n\n`.values()` gives the grouped lists. `list()` wraps the view into a regular list.",
     "tags": [
       "defaultdict",
       "anagram",
@@ -130,7 +146,7 @@
     "prompt": "Given a list `nums` and an integer `target`, return the indices of two numbers that add up to target. Assume exactly one solution exists.",
     "expectedCode": "seen = {}\nfor i, num in enumerate(nums):\n    comp = target - num\n    if comp in seen:\n        return [seen[comp], i]\n    seen[num] = i",
     "alternatives": [],
-    "explanation": "The hash map stores `{value: index}` for numbers seen so far. For each number, check if its complement (`target - num`) was already seen. If yes, return both indices.\n\nKey patterns:\n- `enumerate(nums)` gives `(index, value)` \u2014 you need both\n- One-pass: check THEN insert, so a number doesn't pair with itself\n- `comp in seen` is O(1) hash lookup\n\nTotal: O(n) time, O(n) space. Brute force (two loops) is O(n\u00b2).",
+    "explanation": "The hash map stores `{value: index}` for numbers seen so far. For each number, check if its complement (`target - num`) was already seen. If yes, return both indices.\n\nKey patterns:\n- `enumerate(nums)` gives `(index, value)` — you need both\n- One-pass: check THEN insert, so a number doesn't pair with itself\n- `comp in seen` is O(1) hash lookup\n\nTotal: O(n) time, O(n) space. Brute force (two loops) is O(n²).",
     "tags": [
       "hash map",
       "enumerate",
@@ -145,11 +161,15 @@
     "prompt": "Given a sorted list `nums`, write the two-pointer template to find a pair that sums to `target`.",
     "expectedCode": "l, r = 0, len(nums) - 1\nwhile l < r:\n    s = nums[l] + nums[r]\n    if s == target:\n        return [l, r]\n    elif s < target:\n        l += 1\n    else:\n        r -= 1",
     "alternatives": [],
-    "explanation": "Two pointers start at opposite ends of a SORTED array. The key insight: if `sum < target`, moving `l` right increases the sum; if `sum > target`, moving `r` left decreases it.\n\nCritical details:\n- Array MUST be sorted (or the narrowing logic breaks)\n- `while l < r` not `<=` \u2014 you never want the same element twice\n- Each step eliminates one element, so O(n) total\n\nThis template applies to: two-sum II, 3sum, container with most water, trapping rain water.",
+    "explanation": "Two pointers start at opposite ends of a SORTED array. The key insight: if `sum < target`, moving `l` right increases the sum; if `sum > target`, moving `r` left decreases it.\n\nCritical details:\n- Array MUST be sorted (or the narrowing logic breaks)\n- `while l < r` not `<=` — you never want the same element twice\n- Each step eliminates one element, so O(n) total\n\nThis template applies to: two-sum II, 3sum, container with most water, trapping rain water.",
     "tags": [
       "two pointers",
       "sorted",
       "converging"
+    ],
+    "distractors": [
+      "l, r = 0, len(nums)\nwhile l < r:\n    s = nums[l] + nums[r]\n    if s == target:\n        return [l, r]\n    elif s < target:\n        l += 1\n    else:\n        r -= 1",
+      "l, r = 0, len(nums) - 1\nwhile l <= r:\n    s = nums[l] + nums[r]\n    if s == target:\n        return [l, r]\n    elif s < target:\n        l += 1\n    else:\n        r -= 1"
     ]
   },
   {
@@ -162,12 +182,16 @@
       "nums.reverse()",
       "nums[:] = nums[::-1]"
     ],
-    "explanation": "Python's tuple swap `a, b = b, a` avoids needing a temp variable. Pointers converge toward the middle.\n\n`nums.reverse()` and `nums[::-1]` work but interviewers want to see you write the pointer logic. Also, `nums[::-1]` creates a new list \u2014 the `[:]` assignment copies it back in-place.\n\nThis swap pattern appears in: reverse string, palindrome check, partition algorithms, Dutch national flag.",
+    "explanation": "Python's tuple swap `a, b = b, a` avoids needing a temp variable. Pointers converge toward the middle.\n\n`nums.reverse()` and `nums[::-1]` work but interviewers want to see you write the pointer logic. Also, `nums[::-1]` creates a new list — the `[:]` assignment copies it back in-place.\n\nThis swap pattern appears in: reverse string, palindrome check, partition algorithms, Dutch national flag.",
     "tags": [
       "two pointers",
       "swap",
       "in-place",
       "reverse"
+    ],
+    "distractors": [
+      "l, r = 0, len(nums)\nwhile l < r:\n    nums[l], nums[r] = nums[r], nums[l]\n    l += 1\n    r += 1",
+      "l, r = 0, len(nums) - 1\nwhile l < r:\n    nums[l] = nums[r]\n    l += 1\n    r -= 1"
     ]
   },
   {
@@ -183,6 +207,10 @@
       "slow-fast",
       "in-place",
       "dedup"
+    ],
+    "distractors": [
+      "slow = 0\nfor fast in range(1, len(nums)):\n    if nums[fast] > nums[slow]:\n        slow += 1\n        nums[slow] = nums[fast]\nreturn slow",
+      "slow = 0\nfor fast in range(len(nums)):\n    if nums[fast] != nums[slow]:\n        slow += 1\n        nums[slow] = nums[fast]\nreturn slow + 1"
     ]
   },
   {
@@ -194,7 +222,7 @@
     "alternatives": [
       "cleaned = ''.join(c.lower() for c in s if c.isalnum())\nreturn cleaned == cleaned[::-1]"
     ],
-    "explanation": "The two-pointer version skips non-alphanumeric characters with inner while loops. `.isalnum()` returns True for letters and digits.\n\nCritical: the inner `while` loops need `l < r` guard \u2014 without it, you can overshoot.\n\nThe one-liner alternative is clean but uses O(n) extra space. Interviewers often want the O(1) space pointer version.\n\n`.lower()` handles case-insensitivity. Compare after normalizing, not before.",
+    "explanation": "The two-pointer version skips non-alphanumeric characters with inner while loops. `.isalnum()` returns True for letters and digits.\n\nCritical: the inner `while` loops need `l < r` guard — without it, you can overshoot.\n\nThe one-liner alternative is clean but uses O(n) extra space. Interviewers often want the O(1) space pointer version.\n\n`.lower()` handles case-insensitivity. Compare after normalizing, not before.",
     "tags": [
       "two pointers",
       "palindrome",
@@ -209,7 +237,7 @@
     "prompt": "Given a list `nums`, find all unique triplets that sum to zero. Avoid duplicate triplets.",
     "expectedCode": "nums.sort()\nresult = []\nfor i in range(len(nums) - 2):\n    if i > 0 and nums[i] == nums[i - 1]:\n        continue\n    l, r = i + 1, len(nums) - 1\n    while l < r:\n        s = nums[i] + nums[l] + nums[r]\n        if s == 0:\n            result.append([nums[i], nums[l], nums[r]])\n            while l < r and nums[l] == nums[l + 1]:\n                l += 1\n            while l < r and nums[r] == nums[r - 1]:\n                r -= 1\n            l += 1\n            r -= 1\n        elif s < 0:\n            l += 1\n        else:\n            r -= 1\nreturn result",
     "alternatives": [],
-    "explanation": "3Sum = fix one number, then run 2Sum II (sorted two-pointer) on the remaining.\n\nDuplicate avoidance has two parts:\n1. Skip duplicate `i` values: `if i > 0 and nums[i] == nums[i-1]: continue`\n2. After finding a triplet, skip duplicate `l` and `r` values with inner while loops\n\nSort first (O(n log n)) \u2014 enables the two-pointer narrowing and duplicate skipping.\n\nTotal: O(n\u00b2). This is the canonical example of reducing O(n\u00b3) brute force by sorting + two pointers.",
+    "explanation": "3Sum = fix one number, then run 2Sum II (sorted two-pointer) on the remaining.\n\nDuplicate avoidance has two parts:\n1. Skip duplicate `i` values: `if i > 0 and nums[i] == nums[i-1]: continue`\n2. After finding a triplet, skip duplicate `l` and `r` values with inner while loops\n\nSort first (O(n log n)) — enables the two-pointer narrowing and duplicate skipping.\n\nTotal: O(n²). This is the canonical example of reducing O(n³) brute force by sorting + two pointers.",
     "tags": [
       "two pointers",
       "three sum",
@@ -218,19 +246,23 @@
     ]
   },
   {
-    "title": "List as a stack \u2014 push and pop",
+    "title": "List as a stack — push and pop",
     "category": "Stack",
     "level": 1,
     "prompt": "Demonstrate using a Python list as a stack: push values 1, 2, 3, then pop and print the top.",
     "expectedCode": "stack = []\nstack.append(1)\nstack.append(2)\nstack.append(3)\ntop = stack.pop()  # 3\npeek = stack[-1]   # 2",
     "alternatives": [],
-    "explanation": "Python lists are stacks out of the box:\n- `append(x)` = push (adds to end) \u2014 O(1) amortized\n- `pop()` = pop (removes from end) \u2014 O(1)\n- `stack[-1]` = peek (view top without removing)\n\nDo NOT use `pop(0)` \u2014 that's O(n) because it shifts all elements. For FIFO (queue), use `collections.deque`.\n\nNegative indexing: `[-1]` is last element, `[-2]` is second-to-last. Very useful for stack problems.",
+    "explanation": "Python lists are stacks out of the box:\n- `append(x)` = push (adds to end) — O(1) amortized\n- `pop()` = pop (removes from end) — O(1)\n- `stack[-1]` = peek (view top without removing)\n\nDo NOT use `pop(0)` — that's O(n) because it shifts all elements. For FIFO (queue), use `collections.deque`.\n\nNegative indexing: `[-1]` is last element, `[-2]` is second-to-last. Very useful for stack problems.",
     "tags": [
       "stack",
       "list",
       "append",
       "pop",
       "peek"
+    ],
+    "distractors": [
+      "stack = []\nstack.push(1)\nstack.push(2)\nstack.push(3)\ntop = stack.pop()  # 3",
+      "stack = []\nstack.append(1)\nstack.append(2)\nstack.append(3)\ntop = stack.pop(0)  # 1\npeek = stack[0]   # 2"
     ]
   },
   {
@@ -240,12 +272,16 @@
     "prompt": "Given a string `s` containing only '(', ')', '{', '}', '[', ']', determine if the input string is valid (every open bracket is closed by the same type in correct order).",
     "expectedCode": "stack = []\nmatch = {')': '(', '}': '{', ']': '['}\nfor c in s:\n    if c in match:\n        if not stack or stack[-1] != match[c]:\n            return False\n        stack.pop()\n    else:\n        stack.append(c)\nreturn len(stack) == 0",
     "alternatives": [],
-    "explanation": "The matching dict maps closing \u2192 opening brackets. For each character:\n- If it's a closer: check the stack top matches. If not, invalid.\n- If it's an opener: push it.\n\nAfter processing all characters, the stack must be empty (no unmatched openers).\n\nKey patterns:\n- `c in match` checks closers (dict keys are closers)\n- `not stack` handles the edge case of a closer with nothing to match\n- `stack[-1]` peeks without popping \u2014 only pop when we confirm the match\n- Final `len(stack) == 0` catches unmatched openers like `'((('`",
+    "explanation": "The matching dict maps closing → opening brackets. For each character:\n- If it's a closer: check the stack top matches. If not, invalid.\n- If it's an opener: push it.\n\nAfter processing all characters, the stack must be empty (no unmatched openers).\n\nKey patterns:\n- `c in match` checks closers (dict keys are closers)\n- `not stack` handles the edge case of a closer with nothing to match\n- `stack[-1]` peeks without popping — only pop when we confirm the match\n- Final `len(stack) == 0` catches unmatched openers like `'((('`",
     "tags": [
       "stack",
       "parentheses",
       "matching",
       "dict"
+    ],
+    "distractors": [
+      "stack = []\nmatch = {')': '(', '}': '{', ']': '['}\nfor c in s:\n    if c in match:\n        if not stack or stack[-1] != match[c]:\n            return False\n        stack.pop()\nreturn True",
+      "stack = []\nfor c in s:\n    if c in '({[':\n        stack.append(c)\n    else:\n        if not stack:\n            return False\n        stack.pop()\nreturn len(stack) == 0"
     ]
   },
   {
@@ -255,7 +291,7 @@
     "prompt": "Given a list of daily temperatures `temps`, return a list where each element is the number of days until a warmer temperature. If no warmer day exists, use 0.",
     "expectedCode": "result = [0] * len(temps)\nstack = []  # stores indices\nfor i, t in enumerate(temps):\n    while stack and temps[stack[-1]] < t:\n        j = stack.pop()\n        result[j] = i - j\n    stack.append(i)\nreturn result",
     "alternatives": [],
-    "explanation": "The monotonic stack maintains indices of temperatures in decreasing order. When we encounter a warmer temperature, we pop all cooler ones and compute the distance.\n\nKey details:\n- Stack stores INDICES, not values \u2014 we need indices for the distance calculation\n- `temps[stack[-1]] < t` \u2014 current temp is warmer than stack top \u2192 pop\n- `result[j] = i - j` \u2014 days until warmer = current index minus popped index\n- Elements that are never popped stay 0 (no warmer day)\n\nEach element is pushed and popped at most once \u2192 O(n) total, not O(n\u00b2).\n\nThis pattern applies to: next greater element, stock span, largest rectangle in histogram.",
+    "explanation": "The monotonic stack maintains indices of temperatures in decreasing order. When we encounter a warmer temperature, we pop all cooler ones and compute the distance.\n\nKey details:\n- Stack stores INDICES, not values — we need indices for the distance calculation\n- `temps[stack[-1]] < t` — current temp is warmer than stack top → pop\n- `result[j] = i - j` — days until warmer = current index minus popped index\n- Elements that are never popped stay 0 (no warmer day)\n\nEach element is pushed and popped at most once → O(n) total, not O(n²).\n\nThis pattern applies to: next greater element, stock span, largest rectangle in histogram.",
     "tags": [
       "stack",
       "monotonic",
@@ -270,7 +306,7 @@
     "prompt": "Given a list of tokens in Reverse Polish Notation (e.g., `['2','1','+','3','*']`), evaluate the expression. Supported operators: +, -, *, /. Division truncates toward zero.",
     "expectedCode": "stack = []\nfor token in tokens:\n    if token in '+-*/':\n        b, a = stack.pop(), stack.pop()\n        if token == '+': stack.append(a + b)\n        elif token == '-': stack.append(a - b)\n        elif token == '*': stack.append(a * b)\n        else: stack.append(int(a / b))\n    else:\n        stack.append(int(token))\nreturn stack[0]",
     "alternatives": [],
-    "explanation": "RPN evaluation is the textbook stack problem. Numbers get pushed; operators pop two operands, compute, push the result.\n\nCritical details:\n- Pop order matters: `b, a = pop(), pop()` \u2014 b is the RIGHT operand (popped first), a is the LEFT\n- `int(a / b)` truncates toward zero (Python's `//` truncates toward negative infinity, which is wrong for `-3 // 2 = -2` but the problem wants `-1`)\n- `token in '+-*/'` works because single-char strings are in a string \u2014 but be careful with negative numbers like `'-3'` (length > 1, won't match)\n\nFinal answer is the single remaining element: `stack[0]`.",
+    "explanation": "RPN evaluation is the textbook stack problem. Numbers get pushed; operators pop two operands, compute, push the result.\n\nCritical details:\n- Pop order matters: `b, a = pop(), pop()` — b is the RIGHT operand (popped first), a is the LEFT\n- `int(a / b)` truncates toward zero (Python's `//` truncates toward negative infinity, which is wrong for `-3 // 2 = -2` but the problem wants `-1`)\n- `token in '+-*/'` works because single-char strings are in a string — but be careful with negative numbers like `'-3'` (length > 1, won't match)\n\nFinal answer is the single remaining element: `stack[0]`.",
     "tags": [
       "stack",
       "RPN",
@@ -287,27 +323,35 @@
     "alternatives": [
       "def maxDepth(root):\n    if not root:\n        return 0\n    left = maxDepth(root.left)\n    right = maxDepth(root.right)\n    return 1 + max(left, right)"
     ],
-    "explanation": "The basic recursive DFS template for trees:\n1. Base case: `if not root: return <base_value>`\n2. Recurse on left and right\n3. Combine results\n\nHere, depth = 1 (current node) + max of left and right subtree depths. An empty tree has depth 0.\n\nThe expanded version (storing left/right in variables) is identical but easier to debug \u2014 you can print intermediate values.\n\nThis template applies to: max depth, min depth, diameter, balanced check, same tree, subtree check.",
+    "explanation": "The basic recursive DFS template for trees:\n1. Base case: `if not root: return <base_value>`\n2. Recurse on left and right\n3. Combine results\n\nHere, depth = 1 (current node) + max of left and right subtree depths. An empty tree has depth 0.\n\nThe expanded version (storing left/right in variables) is identical but easier to debug — you can print intermediate values.\n\nThis template applies to: max depth, min depth, diameter, balanced check, same tree, subtree check.",
     "tags": [
       "tree",
       "DFS",
       "recursion",
       "max depth"
+    ],
+    "distractors": [
+      "def maxDepth(root):\n    if not root:\n        return 0\n    return max(maxDepth(root.left), maxDepth(root.right))",
+      "def maxDepth(root):\n    if not root:\n        return 1\n    return 1 + max(maxDepth(root.left), maxDepth(root.right))"
     ]
   },
   {
-    "title": "BFS with deque \u2014 level-order traversal",
+    "title": "BFS with deque — level-order traversal",
     "category": "Trees",
     "level": 1,
     "prompt": "Given a binary tree root, return its level-order traversal as a list of lists (each inner list = one level).",
     "expectedCode": "from collections import deque\nresult = []\nif not root:\n    return result\nq = deque([root])\nwhile q:\n    level = []\n    for _ in range(len(q)):\n        node = q.popleft()\n        level.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    result.append(level)\nreturn result",
     "alternatives": [],
-    "explanation": "BFS uses a queue (FIFO). `deque` gives O(1) `popleft()` \u2014 a regular list's `pop(0)` is O(n).\n\nThe key trick for level-order: snapshot the queue size at the start of each level with `range(len(q))`. This processes exactly one level per outer loop iteration.\n\nWithout the `for _ in range(len(q))` loop, you'd mix nodes from different levels together.\n\nTemplate:\n1. Seed queue with root\n2. While queue not empty: process one level\n3. For each node in current level: visit, enqueue children\n\nThis applies to: level-order, zigzag, right side view, average of levels.",
+    "explanation": "BFS uses a queue (FIFO). `deque` gives O(1) `popleft()` — a regular list's `pop(0)` is O(n).\n\nThe key trick for level-order: snapshot the queue size at the start of each level with `range(len(q))`. This processes exactly one level per outer loop iteration.\n\nWithout the `for _ in range(len(q))` loop, you'd mix nodes from different levels together.\n\nTemplate:\n1. Seed queue with root\n2. While queue not empty: process one level\n3. For each node in current level: visit, enqueue children\n\nThis applies to: level-order, zigzag, right side view, average of levels.",
     "tags": [
       "tree",
       "BFS",
       "deque",
       "level-order"
+    ],
+    "distractors": [
+      "from collections import deque\nresult = []\nq = deque([root])\nwhile q:\n    node = q.popleft()\n    result.append(node.val)\n    if node.left:\n        q.append(node.left)\n    if node.right:\n        q.append(node.right)\nreturn result",
+      "from collections import deque\nresult = []\nif not root:\n    return result\nq = deque([root])\nwhile q:\n    level = []\n    for _ in range(len(q)):\n        node = q.pop()\n        level.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    result.append(level)\nreturn result"
     ]
   },
   {
@@ -335,12 +379,16 @@
     "alternatives": [
       "def invertTree(root):\n    if not root:\n        return None\n    return TreeNode(root.val, invertTree(root.right), invertTree(root.left))"
     ],
-    "explanation": "Swap children, then recurse. Python's tuple swap `a, b = b, a` makes it one line.\n\nOrder doesn't matter \u2014 you can swap before or after recursing (pre-order or post-order). Just don't mix them up accidentally.\n\nThe alternative creates new nodes instead of modifying in-place \u2014 cleaner functionally but uses O(n) extra space.\n\nThis is the classic \"simple recursion\" interview question. The pattern: do something at current node, recurse on children.",
+    "explanation": "Swap children, then recurse. Python's tuple swap `a, b = b, a` makes it one line.\n\nOrder doesn't matter — you can swap before or after recursing (pre-order or post-order). Just don't mix them up accidentally.\n\nThe alternative creates new nodes instead of modifying in-place — cleaner functionally but uses O(n) extra space.\n\nThis is the classic \"simple recursion\" interview question. The pattern: do something at current node, recurse on children.",
     "tags": [
       "tree",
       "recursion",
       "invert",
       "swap"
+    ],
+    "distractors": [
+      "def invertTree(root):\n    if not root:\n        return None\n    root.left, root.right = root.left, root.left\n    invertTree(root.left)\n    invertTree(root.right)\n    return root",
+      "def invertTree(root):\n    if not root:\n        return None\n    root.left = root.right\n    root.right = root.left\n    invertTree(root.left)\n    invertTree(root.right)\n    return root"
     ]
   },
   {
@@ -350,7 +398,7 @@
     "prompt": "Determine if a binary tree is a valid BST. Each node's value must be strictly between a lower and upper bound.",
     "expectedCode": "def isValidBST(root, lo=float('-inf'), hi=float('inf')):\n    if not root:\n        return True\n    if root.val <= lo or root.val >= hi:\n        return False\n    return isValidBST(root.left, lo, root.val) and isValidBST(root.right, root.val, hi)",
     "alternatives": [],
-    "explanation": "Common mistake: only checking `node.left.val < node.val < node.right.val`. This misses cases where a deeper node violates the BST property with an ancestor.\n\nThe fix: carry bounds. Every left child must be less than its parent (upper bound tightens). Every right child must be greater (lower bound tightens).\n\nDefault bounds: `(-inf, inf)` \u2014 the root can be any value.\n\n`<=` and `>=` enforce strict inequality (most BST problems require distinct values). Change to `<` / `>` if duplicates are allowed.\n\nThis pattern \u2014 \"carry constraints down\" \u2014 appears in interval trees, segment trees, and range queries.",
+    "explanation": "Common mistake: only checking `node.left.val < node.val < node.right.val`. This misses cases where a deeper node violates the BST property with an ancestor.\n\nThe fix: carry bounds. Every left child must be less than its parent (upper bound tightens). Every right child must be greater (lower bound tightens).\n\nDefault bounds: `(-inf, inf)` — the root can be any value.\n\n`<=` and `>=` enforce strict inequality (most BST problems require distinct values). Change to `<` / `>` if duplicates are allowed.\n\nThis pattern — \"carry constraints down\" — appears in interval trees, segment trees, and range queries.",
     "tags": [
       "tree",
       "BST",
@@ -360,7 +408,7 @@
     ]
   },
   {
-    "title": "Basic sliding window \u2014 fixed size",
+    "title": "Basic sliding window — fixed size",
     "category": "Sliding Window",
     "level": 1,
     "prompt": "Given a list `nums` and integer `k`, find the maximum sum of any contiguous subarray of size `k`.",
@@ -371,6 +419,10 @@
       "sliding window",
       "fixed size",
       "sum"
+    ],
+    "distractors": [
+      "window_sum = sum(nums[:k])\nmax_sum = window_sum\nfor i in range(k, len(nums)):\n    window_sum += nums[i]\n    max_sum = max(max_sum, window_sum)\nreturn max_sum",
+      "window_sum = sum(nums[:k])\nmax_sum = window_sum\nfor i in range(k, len(nums)):\n    window_sum += nums[i] - nums[i - 1]\n    max_sum = max(max_sum, window_sum)\nreturn max_sum"
     ]
   },
   {
@@ -382,12 +434,16 @@
     "alternatives": [
       "last_seen = {}\nl = 0\nmax_len = 0\nfor r in range(len(s)):\n    if s[r] in last_seen and last_seen[s[r]] >= l:\n        l = last_seen[s[r]] + 1\n    last_seen[s[r]] = r\n    max_len = max(max_len, r - l + 1)\nreturn max_len"
     ],
-    "explanation": "Variable-size window: expand `r` every step, shrink `l` when the window is invalid.\n\nThe set tracks characters in the current window. When a duplicate is found, shrink from the left until the duplicate is removed.\n\nAlternative: dict storing last index \u2014 jump `l` directly instead of shrinking one at a time. Slightly faster but same O(n).\n\nWindow size is always `r - l + 1`. This template applies to: longest substring problems, minimum window substring.",
+    "explanation": "Variable-size window: expand `r` every step, shrink `l` when the window is invalid.\n\nThe set tracks characters in the current window. When a duplicate is found, shrink from the left until the duplicate is removed.\n\nAlternative: dict storing last index — jump `l` directly instead of shrinking one at a time. Slightly faster but same O(n).\n\nWindow size is always `r - l + 1`. This template applies to: longest substring problems, minimum window substring.",
     "tags": [
       "sliding window",
       "variable size",
       "set",
       "substring"
+    ],
+    "distractors": [
+      "seen = set()\nl = 0\nmax_len = 0\nfor r in range(len(s)):\n    while s[r] in seen:\n        seen.remove(s[r])\n        l += 1\n    seen.add(s[r])\n    max_len = max(max_len, r - l + 1)\nreturn max_len",
+      "seen = set()\nl = 0\nmax_len = 0\nfor r in range(len(s)):\n    if s[r] in seen:\n        seen.remove(s[l])\n        l += 1\n    seen.add(s[r])\n    max_len = max(max_len, r - l + 1)\nreturn max_len"
     ]
   },
   {
@@ -411,7 +467,7 @@
     "prompt": "Given a list `nums` and window size `k`, return the maximum value in each sliding window position.",
     "expectedCode": "from collections import deque\nq = deque()  # stores indices, decreasing order\nresult = []\nfor i in range(len(nums)):\n    while q and nums[q[-1]] <= nums[i]:\n        q.pop()\n    q.append(i)\n    if q[0] <= i - k:\n        q.popleft()\n    if i >= k - 1:\n        result.append(nums[q[0]])\nreturn result",
     "alternatives": [],
-    "explanation": "Monotonic deque maintains indices in decreasing value order. The front (`q[0]`) is always the max of the current window.\n\nThree operations per element:\n1. Remove from back: pop smaller elements (they can never be the max)\n2. Add current index to back\n3. Remove from front if it's outside the window (`i - k`)\n\nEach element is added/removed at most once \u2192 O(n) total.\n\n`deque` gives O(1) for both `popleft()` and `pop()`. A regular list's `pop(0)` would be O(n).",
+    "explanation": "Monotonic deque maintains indices in decreasing value order. The front (`q[0]`) is always the max of the current window.\n\nThree operations per element:\n1. Remove from back: pop smaller elements (they can never be the max)\n2. Add current index to back\n3. Remove from front if it's outside the window (`i - k`)\n\nEach element is added/removed at most once → O(n) total.\n\n`deque` gives O(1) for both `popleft()` and `pop()`. A regular list's `pop(0)` would be O(n).",
     "tags": [
       "sliding window",
       "deque",
@@ -431,6 +487,10 @@
       "binary search",
       "bisect",
       "sorted"
+    ],
+    "distractors": [
+      "from bisect import bisect_left, bisect_right\nleft_pos = bisect_right(nums, target)\nright_pos = bisect_left(nums, target)",
+      "from bisect import bisect_left\nleft_pos = bisect_left(nums, target)\nright_pos = bisect_left(nums, target + 1)"
     ]
   },
   {
@@ -440,11 +500,15 @@
     "prompt": "Write a binary search that returns the index of `target` in sorted list `nums`, or -1 if not found.",
     "expectedCode": "l, r = 0, len(nums) - 1\nwhile l <= r:\n    mid = l + (r - l) // 2\n    if nums[mid] == target:\n        return mid\n    elif nums[mid] < target:\n        l = mid + 1\n    else:\n        r = mid - 1\nreturn -1",
     "alternatives": [],
-    "explanation": "The standard binary search template. Key details:\n\n- `l + (r - l) // 2` avoids integer overflow (matters in other languages, good habit in Python too)\n- `while l <= r` \u2014 the `=` is critical; without it you miss the case where `l == r` (single element)\n- `l = mid + 1` and `r = mid - 1` \u2014 always exclude `mid` after checking it to avoid infinite loops\n\nCommon bug: using `l = mid` or `r = mid` without adjustment \u2192 infinite loop when `l + 1 == r`.",
+    "explanation": "The standard binary search template. Key details:\n\n- `l + (r - l) // 2` avoids integer overflow (matters in other languages, good habit in Python too)\n- `while l <= r` — the `=` is critical; without it you miss the case where `l == r` (single element)\n- `l = mid + 1` and `r = mid - 1` — always exclude `mid` after checking it to avoid infinite loops\n\nCommon bug: using `l = mid` or `r = mid` without adjustment → infinite loop when `l + 1 == r`.",
     "tags": [
       "binary search",
       "template",
       "manual"
+    ],
+    "distractors": [
+      "l, r = 0, len(nums) - 1\nwhile l < r:\n    mid = l + (r - l) // 2\n    if nums[mid] == target:\n        return mid\n    elif nums[mid] < target:\n        l = mid + 1\n    else:\n        r = mid - 1\nreturn -1",
+      "l, r = 0, len(nums)\nwhile l <= r:\n    mid = (l + r) // 2\n    if nums[mid] == target:\n        return mid\n    elif nums[mid] < target:\n        l = mid + 1\n    else:\n        r = mid - 1\nreturn -1"
     ]
   },
   {
@@ -454,7 +518,7 @@
     "prompt": "Given `n` piles of bananas with counts in `piles` and `h` hours, find the minimum eating speed `k` such that all bananas are eaten within `h` hours. Each hour, eat min(k, pile) from one pile.",
     "expectedCode": "import math\nl, r = 1, max(piles)\nwhile l < r:\n    mid = (l + r) // 2\n    hours = sum(math.ceil(p / mid) for p in piles)\n    if hours <= h:\n        r = mid\n    else:\n        l = mid + 1\nreturn l",
     "alternatives": [],
-    "explanation": "Binary search on the ANSWER, not on an array. The search space is `[1, max(piles)]` \u2014 the possible eating speeds.\n\nFor each candidate speed `mid`, compute total hours needed. If feasible (`<= h`), try slower (`r = mid`). If not, go faster (`l = mid + 1`).\n\nNote: `while l < r` (not `<=`) because we're finding a boundary, not a specific value. When `l == r`, that's the answer.\n\n`math.ceil(p / mid)` = hours to eat one pile. `sum(...)` = total hours.\n\nThis pattern applies to: koko bananas, split array, magnetic force, capacity to ship.",
+    "explanation": "Binary search on the ANSWER, not on an array. The search space is `[1, max(piles)]` — the possible eating speeds.\n\nFor each candidate speed `mid`, compute total hours needed. If feasible (`<= h`), try slower (`r = mid`). If not, go faster (`l = mid + 1`).\n\nNote: `while l < r` (not `<=`) because we're finding a boundary, not a specific value. When `l == r`, that's the answer.\n\n`math.ceil(p / mid)` = hours to eat one pile. `sum(...)` = total hours.\n\nThis pattern applies to: koko bananas, split array, magnetic force, capacity to ship.",
     "tags": [
       "binary search",
       "answer space",
@@ -468,7 +532,7 @@
     "prompt": "Given a rotated sorted array `nums` (no duplicates) and a `target`, return its index or -1.",
     "expectedCode": "l, r = 0, len(nums) - 1\nwhile l <= r:\n    mid = (l + r) // 2\n    if nums[mid] == target:\n        return mid\n    if nums[l] <= nums[mid]:\n        if nums[l] <= target < nums[mid]:\n            r = mid - 1\n        else:\n            l = mid + 1\n    else:\n        if nums[mid] < target <= nums[r]:\n            l = mid + 1\n        else:\n            r = mid - 1\nreturn -1",
     "alternatives": [],
-    "explanation": "The key insight: one half of the array is always sorted. Check which half is sorted, then determine if `target` falls in that sorted half.\n\n`nums[l] <= nums[mid]` \u2192 left half is sorted. Check if target is in `[nums[l], nums[mid])`. If yes, search left. Otherwise, search right.\n\nElse \u2192 right half is sorted. Check if target is in `(nums[mid], nums[r]]`.\n\nThe `<=` in `nums[l] <= nums[mid]` handles the case where `l == mid` (two elements remaining).",
+    "explanation": "The key insight: one half of the array is always sorted. Check which half is sorted, then determine if `target` falls in that sorted half.\n\n`nums[l] <= nums[mid]` → left half is sorted. Check if target is in `[nums[l], nums[mid])`. If yes, search left. Otherwise, search right.\n\nElse → right half is sorted. Check if target is in `(nums[mid], nums[r]]`.\n\nThe `<=` in `nums[l] <= nums[mid]` handles the case where `l == mid` (two elements remaining).",
     "tags": [
       "binary search",
       "rotated array",
@@ -487,6 +551,10 @@
       "linked list",
       "ListNode",
       "dummy head"
+    ],
+    "distractors": [
+      "class ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ncurr = ListNode(0)\nfor val in [1, 2, 3]:\n    curr.next = ListNode(val)\n    curr = curr.next\nhead = curr",
+      "class ListNode:\n    def __init__(self, val=0):\n        self.val = val\n\nhead = ListNode(1)\nhead.next = ListNode(2)\nhead.next = ListNode(3)"
     ]
   },
   {
@@ -503,16 +571,20 @@
       "linked list",
       "reverse",
       "iterative"
+    ],
+    "distractors": [
+      "prev = None\ncurr = head\nwhile curr:\n    curr.next = prev\n    prev = curr\n    curr = curr.next\nreturn prev",
+      "prev = None\ncurr = head\nwhile curr.next:\n    nxt = curr.next\n    curr.next = prev\n    prev = curr\n    curr = nxt\nreturn prev"
     ]
   },
   {
-    "title": "Fast and slow pointers \u2014 cycle detection",
+    "title": "Fast and slow pointers — cycle detection",
     "category": "Linked List",
     "level": 2,
     "prompt": "Detect if a linked list has a cycle. Use Floyd's algorithm (fast/slow pointers).",
     "expectedCode": "slow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast:\n        return True\nreturn False",
     "alternatives": [],
-    "explanation": "Floyd's tortoise and hare: slow moves 1 step, fast moves 2. If there's a cycle, they MUST meet (fast gains 1 node per step).\n\nIf no cycle, fast reaches the end (`fast` or `fast.next` is None).\n\n`while fast and fast.next` \u2014 checks both to avoid NullPointerError when fast is at the last node.\n\nTo find the CYCLE START: after detection, reset one pointer to head. Move both at speed 1. They meet at the cycle entry. This is a separate follow-up question.",
+    "explanation": "Floyd's tortoise and hare: slow moves 1 step, fast moves 2. If there's a cycle, they MUST meet (fast gains 1 node per step).\n\nIf no cycle, fast reaches the end (`fast` or `fast.next` is None).\n\n`while fast and fast.next` — checks both to avoid NullPointerError when fast is at the last node.\n\nTo find the CYCLE START: after detection, reset one pointer to head. Move both at speed 1. They meet at the cycle entry. This is a separate follow-up question.",
     "tags": [
       "linked list",
       "fast slow",
@@ -527,7 +599,7 @@
     "prompt": "Merge two sorted linked lists `l1` and `l2` into one sorted list. Return the head.",
     "expectedCode": "dummy = ListNode(0)\ncurr = dummy\nwhile l1 and l2:\n    if l1.val <= l2.val:\n        curr.next = l1\n        l1 = l1.next\n    else:\n        curr.next = l2\n        l2 = l2.next\n    curr = curr.next\ncurr.next = l1 or l2\nreturn dummy.next",
     "alternatives": [],
-    "explanation": "Dummy head again \u2014 avoids special-casing which list provides the first node.\n\nCompare heads of both lists, attach the smaller one, advance that list's pointer.\n\n`curr.next = l1 or l2` \u2014 whichever list has remaining nodes gets appended. `or` returns the first truthy value, so if `l1` is not None, it returns `l1`; otherwise `l2`.\n\nO(n + m) time, O(1) extra space (reuses existing nodes).",
+    "explanation": "Dummy head again — avoids special-casing which list provides the first node.\n\nCompare heads of both lists, attach the smaller one, advance that list's pointer.\n\n`curr.next = l1 or l2` — whichever list has remaining nodes gets appended. `or` returns the first truthy value, so if `l1` is not None, it returns `l1`; otherwise `l2`.\n\nO(n + m) time, O(1) extra space (reuses existing nodes).",
     "tags": [
       "linked list",
       "merge",
@@ -550,6 +622,10 @@
       "adjacency list",
       "defaultdict",
       "undirected"
+    ],
+    "distractors": [
+      "from collections import defaultdict\ngraph = defaultdict(list)\nfor u, v in edges:\n    graph[u].append(v)",
+      "graph = [[] for _ in range(n)]\nfor u, v in edges:\n    graph[u].append(v)\n    graph[u].append(v)"
     ]
   },
   {
@@ -559,16 +635,20 @@
     "prompt": "Given an adjacency list `graph` and a `start` node, perform BFS and return nodes in visit order.",
     "expectedCode": "from collections import deque\nvisited = set([start])\nqueue = deque([start])\norder = []\nwhile queue:\n    node = queue.popleft()\n    order.append(node)\n    for neighbor in graph[node]:\n        if neighbor not in visited:\n            visited.add(neighbor)\n            queue.append(neighbor)\nreturn order",
     "alternatives": [],
-    "explanation": "BFS uses a FIFO queue. `deque` gives O(1) `popleft()`.\n\nCritical: add to `visited` WHEN ENQUEUING, not when dequeuing. If you wait until dequeue, you may add the same node multiple times \u2192 wrong results + TLE.\n\n`set([start])` initializes visited with the start node.\n\nBFS gives shortest path in unweighted graphs. Pattern applies to: shortest path, level-order, flood fill, word ladder.",
+    "explanation": "BFS uses a FIFO queue. `deque` gives O(1) `popleft()`.\n\nCritical: add to `visited` WHEN ENQUEUING, not when dequeuing. If you wait until dequeue, you may add the same node multiple times → wrong results + TLE.\n\n`set([start])` initializes visited with the start node.\n\nBFS gives shortest path in unweighted graphs. Pattern applies to: shortest path, level-order, flood fill, word ladder.",
     "tags": [
       "graph",
       "BFS",
       "deque",
       "visited"
+    ],
+    "distractors": [
+      "from collections import deque\nvisited = set()\nqueue = deque([start])\norder = []\nwhile queue:\n    node = queue.popleft()\n    order.append(node)\n    visited.add(node)\n    for neighbor in graph[node]:\n        if neighbor not in visited:\n            queue.append(neighbor)\nreturn order",
+      "from collections import deque\nvisited = set([start])\nqueue = deque([start])\norder = []\nwhile queue:\n    node = queue.pop()\n    order.append(node)\n    for neighbor in graph[node]:\n        if neighbor not in visited:\n            visited.add(neighbor)\n            queue.append(neighbor)\nreturn order"
     ]
   },
   {
-    "title": "DFS traversal \u2014 iterative with stack",
+    "title": "DFS traversal — iterative with stack",
     "category": "Graphs",
     "level": 2,
     "prompt": "Given an adjacency list `graph` and a `start` node, perform iterative DFS and return nodes in visit order.",
@@ -591,7 +671,7 @@
     "prompt": "Given `numCourses` and `prerequisites` as `[[1,0],[2,1]]` (course 1 needs 0), return a valid course order or empty list if impossible.",
     "expectedCode": "from collections import defaultdict, deque\ngraph = defaultdict(list)\nin_degree = [0] * numCourses\nfor course, pre in prerequisites:\n    graph[pre].append(course)\n    in_degree[course] += 1\nqueue = deque(i for i in range(numCourses) if in_degree[i] == 0)\norder = []\nwhile queue:\n    node = queue.popleft()\n    order.append(node)\n    for neighbor in graph[node]:\n        in_degree[neighbor] -= 1\n        if in_degree[neighbor] == 0:\n            queue.append(neighbor)\nreturn order if len(order) == numCourses else []",
     "alternatives": [],
-    "explanation": "Kahn's algorithm: BFS starting from nodes with in-degree 0 (no prerequisites).\n\n1. Build graph + count in-degrees\n2. Seed queue with all zero-in-degree nodes\n3. Process: for each neighbor, decrement in-degree. If it reaches 0, enqueue.\n4. If `len(order) < numCourses`, there's a cycle \u2192 impossible\n\nThis is the standard topological sort for DAGs. Time: O(V + E).\n\nAlternative: DFS-based topo sort with a stack (post-order reverse). Both are valid in interviews.",
+    "explanation": "Kahn's algorithm: BFS starting from nodes with in-degree 0 (no prerequisites).\n\n1. Build graph + count in-degrees\n2. Seed queue with all zero-in-degree nodes\n3. Process: for each neighbor, decrement in-degree. If it reaches 0, enqueue.\n4. If `len(order) < numCourses`, there's a cycle → impossible\n\nThis is the standard topological sort for DAGs. Time: O(V + E).\n\nAlternative: DFS-based topo sort with a stack (post-order reverse). Both are valid in interviews.",
     "tags": [
       "graph",
       "topological sort",
@@ -601,7 +681,7 @@
     ]
   },
   {
-    "title": "heapq basics \u2014 push and pop",
+    "title": "heapq basics — push and pop",
     "category": "Heap / Priority Queue",
     "level": 1,
     "prompt": "Create a min-heap, push values 5, 1, 3, then pop the smallest element.",
@@ -609,13 +689,17 @@
     "alternatives": [
       "import heapq\nheap = [5, 1, 3]\nheapq.heapify(heap)\nsmallest = heapq.heappop(heap)  # 1"
     ],
-    "explanation": "Python's `heapq` is a MIN-heap. `heappush` adds in O(log n), `heappop` removes the smallest in O(log n).\n\n`heapify(list)` converts a list to a heap in-place in O(n) \u2014 faster than n pushes if you have all elements upfront.\n\n`heap[0]` peeks at the smallest without removing (O(1)).\n\nThere is NO max-heap in Python's stdlib. Use the negative trick: push `-val`, pop and negate.",
+    "explanation": "Python's `heapq` is a MIN-heap. `heappush` adds in O(log n), `heappop` removes the smallest in O(log n).\n\n`heapify(list)` converts a list to a heap in-place in O(n) — faster than n pushes if you have all elements upfront.\n\n`heap[0]` peeks at the smallest without removing (O(1)).\n\nThere is NO max-heap in Python's stdlib. Use the negative trick: push `-val`, pop and negate.",
     "tags": [
       "heap",
       "heapq",
       "min-heap",
       "push",
       "pop"
+    ],
+    "distractors": [
+      "import heapq\nheap = []\nheapq.heappush(heap, 5)\nheapq.heappush(heap, 1)\nheapq.heappush(heap, 3)\nsmallest = heap[0]  # 1",
+      "import heapq\nheap = [5, 1, 3]\nsmallest = heapq.heappop(heap)  # 1"
     ]
   },
   {
@@ -630,6 +714,10 @@
       "heap",
       "max-heap",
       "negative trick"
+    ],
+    "distractors": [
+      "import heapq\nmax_heap = []\nheapq.heappush(max_heap, 5)\nheapq.heappush(max_heap, 1)\nheapq.heappush(max_heap, 3)\nlargest = heapq.heappop(max_heap)  # 5",
+      "import heapq\nmax_heap = []\nheapq.heappush(max_heap, -5)\nheapq.heappush(max_heap, -1)\nheapq.heappush(max_heap, -3)\nlargest = heapq.heappop(max_heap)  # -5"
     ]
   },
   {
@@ -641,7 +729,7 @@
     "alternatives": [
       "from collections import Counter\ncount = Counter(nums)\nreturn [x for x, _ in count.most_common(k)]"
     ],
-    "explanation": "`heapq.nlargest(k, iterable, key=)` returns the k largest elements. Under the hood it uses a min-heap of size k \u2192 O(n log k).\n\n`Counter.most_common(k)` does the same thing and is more concise for frequency problems.\n\nFor the O(n) solution: bucket sort \u2014 create `freq[i]` = list of elements with count `i`, then iterate from the end. This is the optimal approach but `nlargest` is fine for interviews.",
+    "explanation": "`heapq.nlargest(k, iterable, key=)` returns the k largest elements. Under the hood it uses a min-heap of size k → O(n log k).\n\n`Counter.most_common(k)` does the same thing and is more concise for frequency problems.\n\nFor the O(n) solution: bucket sort — create `freq[i]` = list of elements with count `i`, then iterate from the end. This is the optimal approach but `nlargest` is fine for interviews.",
     "tags": [
       "heap",
       "Counter",
@@ -656,7 +744,7 @@
     "prompt": "Given a list of `k` sorted linked lists, merge them into one sorted list. Use a min-heap.",
     "expectedCode": "import heapq\ndummy = ListNode(0)\ncurr = dummy\nheap = []\nfor i, l in enumerate(lists):\n    if l:\n        heapq.heappush(heap, (l.val, i, l))\nwhile heap:\n    val, i, node = heapq.heappop(heap)\n    curr.next = node\n    curr = curr.next\n    if node.next:\n        heapq.heappush(heap, (node.next.val, i, node.next))\nreturn dummy.next",
     "alternatives": [],
-    "explanation": "Push the head of each list onto the heap. Pop the smallest, append to result, push the next node from that list.\n\nThe tuple `(val, i, node)` uses `i` as a tiebreaker \u2014 without it, Python tries to compare `ListNode` objects when values are equal, causing an error.\n\nHeap always has at most `k` elements \u2192 each operation is O(log k). Total: O(n log k) where n is total nodes.\n\nThis is the canonical heap problem in interviews.",
+    "explanation": "Push the head of each list onto the heap. Pop the smallest, append to result, push the next node from that list.\n\nThe tuple `(val, i, node)` uses `i` as a tiebreaker — without it, Python tries to compare `ListNode` objects when values are equal, causing an error.\n\nHeap always has at most `k` elements → each operation is O(log k). Total: O(n log k) where n is total nodes.\n\nThis is the canonical heap problem in interviews.",
     "tags": [
       "heap",
       "merge",
@@ -665,17 +753,21 @@
     ]
   },
   {
-    "title": "Backtracking template \u2014 subsets",
+    "title": "Backtracking template — subsets",
     "category": "Backtracking",
     "level": 1,
     "prompt": "Given a list of distinct integers `nums`, return all possible subsets (the power set).",
     "expectedCode": "result = []\ndef backtrack(start, path):\n    result.append(path[:])\n    for i in range(start, len(nums)):\n        path.append(nums[i])\n        backtrack(i + 1, path)\n        path.pop()\nbacktrack(0, [])\nreturn result",
     "alternatives": [],
-    "explanation": "The backtracking template:\n1. Add current state to result\n2. Loop through choices starting from `start`\n3. Make a choice (`append`)\n4. Recurse\n5. Undo the choice (`pop`)\n\n`path[:]` creates a copy \u2014 without it, all entries in `result` would reference the same (empty) list.\n\n`start = i + 1` ensures we don't reuse elements and don't generate duplicates like `[1,2]` and `[2,1]`.\n\nSubsets is the simplest backtracking problem. Master this template first.",
+    "explanation": "The backtracking template:\n1. Add current state to result\n2. Loop through choices starting from `start`\n3. Make a choice (`append`)\n4. Recurse\n5. Undo the choice (`pop`)\n\n`path[:]` creates a copy — without it, all entries in `result` would reference the same (empty) list.\n\n`start = i + 1` ensures we don't reuse elements and don't generate duplicates like `[1,2]` and `[2,1]`.\n\nSubsets is the simplest backtracking problem. Master this template first.",
     "tags": [
       "backtracking",
       "subsets",
       "template"
+    ],
+    "distractors": [
+      "result = []\ndef backtrack(start, path):\n    result.append(path)\n    for i in range(start, len(nums)):\n        path.append(nums[i])\n        backtrack(i + 1, path)\n        path.pop()\nbacktrack(0, [])\nreturn result",
+      "result = []\ndef backtrack(start, path):\n    result.append(path[:])\n    for i in range(start, len(nums)):\n        backtrack(i + 1, path + [nums[i]])\nbacktrack(0, [])\nreturn result"
     ]
   },
   {
@@ -685,11 +777,15 @@
     "prompt": "Given a list of distinct integers `nums`, return all possible permutations.",
     "expectedCode": "result = []\ndef backtrack(path, used):\n    if len(path) == len(nums):\n        result.append(path[:])\n        return\n    for i in range(len(nums)):\n        if i in used:\n            continue\n        used.add(i)\n        path.append(nums[i])\n        backtrack(path, used)\n        path.pop()\n        used.remove(i)\nbacktrack([], set())\nreturn result",
     "alternatives": [],
-    "explanation": "Permutations differ from subsets: order matters, and we use ALL elements.\n\nKey differences from subsets template:\n- No `start` parameter \u2014 we can pick any unused element\n- `used` set tracks which INDICES are already in the path\n- Base case: `len(path) == len(nums)` (used all elements)\n\n`used.add(i)` / `used.remove(i)` is the backtracking \u2014 mark as used, recurse, unmark.\n\nTime: O(n! * n) \u2014 n! permutations, each takes O(n) to copy.",
+    "explanation": "Permutations differ from subsets: order matters, and we use ALL elements.\n\nKey differences from subsets template:\n- No `start` parameter — we can pick any unused element\n- `used` set tracks which INDICES are already in the path\n- Base case: `len(path) == len(nums)` (used all elements)\n\n`used.add(i)` / `used.remove(i)` is the backtracking — mark as used, recurse, unmark.\n\nTime: O(n! * n) — n! permutations, each takes O(n) to copy.",
     "tags": [
       "backtracking",
       "permutations",
       "used set"
+    ],
+    "distractors": [
+      "result = []\ndef backtrack(path, used):\n    if len(path) == len(nums):\n        result.append(path[:])\n        return\n    for i in range(len(nums)):\n        if i in used:\n            continue\n        used.add(i)\n        path.append(nums[i])\n        backtrack(path, used)\n        used.remove(i)\nbacktrack([], set())\nreturn result",
+      "result = []\ndef backtrack(path, used):\n    if len(path) == len(nums):\n        result.append(path)\n        return\n    for i in range(len(nums)):\n        if i in used:\n            continue\n        used.add(i)\n        path.append(nums[i])\n        backtrack(path, used)\n        path.pop()\n        used.remove(i)\nbacktrack([], set())\nreturn result"
     ]
   },
   {
@@ -701,7 +797,7 @@
     "alternatives": [
       "result = []\ndef backtrack(start, path):\n    if len(path) == k:\n        result.append(path[:])\n        return\n    for i in range(start, n + 1):\n        path.append(i)\n        backtrack(i + 1, path)\n        path.pop()\nbacktrack(1, [])\nreturn result"
     ],
-    "explanation": "Same as subsets but with a fixed length `k`. The base case appends when `len(path) == k`.\n\nThe pruning optimization: `range(start, n - (k - len(path)) + 2)`. If we need `k - len(path)` more elements and only `n - i + 1` remain, stop early.\n\nWithout pruning (alternative version), it still works but explores dead-end branches.\n\nPruning matters for large inputs \u2014 reduces time significantly.",
+    "explanation": "Same as subsets but with a fixed length `k`. The base case appends when `len(path) == k`.\n\nThe pruning optimization: `range(start, n - (k - len(path)) + 2)`. If we need `k - len(path)` more elements and only `n - i + 1` remain, stop early.\n\nWithout pruning (alternative version), it still works but explores dead-end branches.\n\nPruning matters for large inputs — reduces time significantly.",
     "tags": [
       "backtracking",
       "combinations",
@@ -709,13 +805,13 @@
     ]
   },
   {
-    "title": "Subsets II \u2014 skip duplicates",
+    "title": "Subsets II — skip duplicates",
     "category": "Backtracking",
     "level": 2,
     "prompt": "Given a list `nums` that may contain duplicates, return all unique subsets. The result must not contain duplicate subsets.",
     "expectedCode": "nums.sort()\nresult = []\ndef backtrack(start, path):\n    result.append(path[:])\n    for i in range(start, len(nums)):\n        if i > start and nums[i] == nums[i - 1]:\n            continue\n        path.append(nums[i])\n        backtrack(i + 1, path)\n        path.pop()\nbacktrack(0, [])\nreturn result",
     "alternatives": [],
-    "explanation": "Two changes from basic subsets:\n1. `nums.sort()` \u2014 group duplicates together\n2. `if i > start and nums[i] == nums[i-1]: continue` \u2014 skip duplicate choices at the same level\n\nThe condition `i > start` is crucial: we CAN use a duplicate if it's the first choice at this level (`i == start`), just not the second/third/etc.\n\nThis same dedup pattern applies to: combination sum II, permutations II. Sort + skip is the universal duplicate handling strategy.",
+    "explanation": "Two changes from basic subsets:\n1. `nums.sort()` — group duplicates together\n2. `if i > start and nums[i] == nums[i-1]: continue` — skip duplicate choices at the same level\n\nThe condition `i > start` is crucial: we CAN use a duplicate if it's the first choice at this level (`i == start`), just not the second/third/etc.\n\nThis same dedup pattern applies to: combination sum II, permutations II. Sort + skip is the universal duplicate handling strategy.",
     "tags": [
       "backtracking",
       "subsets",
@@ -732,16 +828,20 @@
     "alternatives": [
       "memo = {}\ndef fib(n):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fib(n - 1) + fib(n - 2)\n    return memo[n]"
     ],
-    "explanation": "`@cache` (Python 3.9+) automatically memoizes function results. Equivalent to `@lru_cache(maxsize=None)`.\n\nWithout memoization, Fibonacci is O(2^n). With it: O(n) time, O(n) space.\n\nManual alternative: use a dict as the memo table. Check if the result exists before computing.\n\n`@cache` is the fastest way to convert any recursive solution to top-down DP. Just add the decorator \u2014 no other code changes needed.\n\nCaveat: on LeetCode, call `fib.cache_clear()` between test cases to avoid stale state.",
+    "explanation": "`@cache` (Python 3.9+) automatically memoizes function results. Equivalent to `@lru_cache(maxsize=None)`.\n\nWithout memoization, Fibonacci is O(2^n). With it: O(n) time, O(n) space.\n\nManual alternative: use a dict as the memo table. Check if the result exists before computing.\n\n`@cache` is the fastest way to convert any recursive solution to top-down DP. Just add the decorator — no other code changes needed.\n\nCaveat: on LeetCode, call `fib.cache_clear()` between test cases to avoid stale state.",
     "tags": [
       "DP",
       "memoization",
       "cache",
       "fibonacci"
+    ],
+    "distractors": [
+      "from functools import cache\n\n@cache\ndef fib(n):\n    if n <= 1:\n        return n\n    return fib(n - 1) + fib(n - 2)\nfib.cache_clear()",
+      "from functools import lru_cache\n\n@lru_cache\ndef fib(n):\n    if n <= 0:\n        return 0\n    return fib(n - 1) + fib(n - 2)"
     ]
   },
   {
-    "title": "1D tabulation \u2014 climbing stairs",
+    "title": "1D tabulation — climbing stairs",
     "category": "1-D Dynamic Programming",
     "level": 1,
     "prompt": "You can climb 1 or 2 stairs at a time. Given `n` stairs, how many distinct ways can you reach the top? Use bottom-up DP.",
@@ -749,22 +849,26 @@
     "alternatives": [
       "prev, curr = 1, 1\nfor _ in range(2, n + 1):\n    prev, curr = curr, prev + curr\nreturn curr"
     ],
-    "explanation": "Bottom-up DP: fill a table from base cases forward.\n\n`dp[i]` = ways to reach stair `i`. Base: `dp[0] = dp[1] = 1`. Recurrence: `dp[i] = dp[i-1] + dp[i-2]` (arrive from 1 or 2 stairs below).\n\nSpace optimization: since we only need the last 2 values, use two variables instead of an array \u2192 O(1) space.\n\nThis is identical to Fibonacci. The key insight with DP: define what `dp[i]` means, find the recurrence, identify base cases.",
+    "explanation": "Bottom-up DP: fill a table from base cases forward.\n\n`dp[i]` = ways to reach stair `i`. Base: `dp[0] = dp[1] = 1`. Recurrence: `dp[i] = dp[i-1] + dp[i-2]` (arrive from 1 or 2 stairs below).\n\nSpace optimization: since we only need the last 2 values, use two variables instead of an array → O(1) space.\n\nThis is identical to Fibonacci. The key insight with DP: define what `dp[i]` means, find the recurrence, identify base cases.",
     "tags": [
       "DP",
       "tabulation",
       "1D",
       "climbing stairs"
+    ],
+    "distractors": [
+      "dp = [0] * (n + 1)\ndp[0] = 1\nfor i in range(1, n + 1):\n    dp[i] = dp[i - 1] + dp[i - 2]\nreturn dp[n]",
+      "dp = [0] * (n + 1)\ndp[0] = 0\ndp[1] = 1\nfor i in range(2, n + 1):\n    dp[i] = dp[i - 1] + dp[i - 2]\nreturn dp[n]"
     ]
   },
   {
-    "title": "2D DP \u2014 unique paths",
+    "title": "2D DP — unique paths",
     "category": "2-D Dynamic Programming",
     "level": 2,
     "prompt": "Given an `m x n` grid, count unique paths from top-left to bottom-right. You can only move right or down.",
     "expectedCode": "dp = [[1] * n for _ in range(m)]\nfor i in range(1, m):\n    for j in range(1, n):\n        dp[i][j] = dp[i - 1][j] + dp[i][j - 1]\nreturn dp[m - 1][n - 1]",
     "alternatives": [],
-    "explanation": "`dp[i][j]` = number of paths to reach cell `(i, j)`. Base: first row and first column are all 1 (only one way: straight right or straight down).\n\nRecurrence: `dp[i][j] = dp[i-1][j] + dp[i][j-1]` \u2014 come from above or from the left.\n\n`[[1] * n for _ in range(m)]` initializes the grid. Use list comprehension, NOT `[[1]*n]*m` \u2014 that creates m references to the SAME row.\n\nThis pattern extends to: minimum path sum, dungeon game, edit distance.",
+    "explanation": "`dp[i][j]` = number of paths to reach cell `(i, j)`. Base: first row and first column are all 1 (only one way: straight right or straight down).\n\nRecurrence: `dp[i][j] = dp[i-1][j] + dp[i][j-1]` — come from above or from the left.\n\n`[[1] * n for _ in range(m)]` initializes the grid. Use list comprehension, NOT `[[1]*n]*m` — that creates m references to the SAME row.\n\nThis pattern extends to: minimum path sum, dungeon game, edit distance.",
     "tags": [
       "DP",
       "2D",
@@ -779,7 +883,7 @@
     "prompt": "Given `weights` and `values` of `n` items and a knapsack `capacity`, find the maximum value. Each item can be used at most once. Use 1D DP.",
     "expectedCode": "dp = [0] * (capacity + 1)\nfor i in range(n):\n    for w in range(capacity, weights[i] - 1, -1):\n        dp[w] = max(dp[w], dp[w - weights[i]] + values[i])\nreturn dp[capacity]",
     "alternatives": [],
-    "explanation": "1D optimization of 2D knapsack. `dp[w]` = max value achievable with capacity `w`.\n\nCritical: iterate `w` in REVERSE (`range(capacity, weights[i]-1, -1)`). This ensures each item is used at most once (0/1 constraint).\n\nIf you iterate forward, `dp[w - weights[i]]` might already include item `i` \u2192 effectively unlimited use (unbounded knapsack).\n\nThis pattern appears in: subset sum, partition equal subset, target sum, coin change (unbounded version iterates forward).",
+    "explanation": "1D optimization of 2D knapsack. `dp[w]` = max value achievable with capacity `w`.\n\nCritical: iterate `w` in REVERSE (`range(capacity, weights[i]-1, -1)`). This ensures each item is used at most once (0/1 constraint).\n\nIf you iterate forward, `dp[w - weights[i]]` might already include item `i` → effectively unlimited use (unbounded knapsack).\n\nThis pattern appears in: subset sum, partition equal subset, target sum, coin change (unbounded version iterates forward).",
     "tags": [
       "DP",
       "knapsack",
@@ -796,16 +900,20 @@
     "alternatives": [
       "sorted_intervals = sorted(intervals, key=lambda x: x[1])"
     ],
-    "explanation": "`.sort()` sorts in-place, `sorted()` returns a new list. Both accept a `key` function.\n\n`lambda x: x[1]` extracts the end time for comparison. You can sort by multiple keys: `key=lambda x: (x[1], x[0])` \u2014 sort by end time, then start time for ties.\n\n`.sort()` is slightly faster (no copy). Use `sorted()` when you need the original list preserved.\n\nSorting by end time is the foundation of interval scheduling / activity selection problems.",
+    "explanation": "`.sort()` sorts in-place, `sorted()` returns a new list. Both accept a `key` function.\n\n`lambda x: x[1]` extracts the end time for comparison. You can sort by multiple keys: `key=lambda x: (x[1], x[0])` — sort by end time, then start time for ties.\n\n`.sort()` is slightly faster (no copy). Use `sorted()` when you need the original list preserved.\n\nSorting by end time is the foundation of interval scheduling / activity selection problems.",
     "tags": [
       "greedy",
       "sort",
       "lambda",
       "intervals"
+    ],
+    "distractors": [
+      "intervals.sort(key=lambda x: x[0])",
+      "intervals.sort(key=lambda x: x[1], reverse=True)"
     ]
   },
   {
-    "title": "Interval scheduling \u2014 maximum non-overlapping",
+    "title": "Interval scheduling — maximum non-overlapping",
     "category": "Greedy",
     "level": 1,
     "prompt": "Given a list of `intervals` as `[[start, end], ...]`, find the maximum number of non-overlapping intervals.",
@@ -817,16 +925,20 @@
       "intervals",
       "scheduling",
       "sort"
+    ],
+    "distractors": [
+      "intervals.sort(key=lambda x: x[1])\ncount = 0\nend = float('-inf')\nfor s, e in intervals:\n    if s > end:\n        count += 1\n        end = e\nreturn count",
+      "intervals.sort(key=lambda x: x[0])\ncount = 0\nend = float('-inf')\nfor s, e in intervals:\n    if s >= end:\n        count += 1\n        end = e\nreturn count"
     ]
   },
   {
-    "title": "Jump game \u2014 can you reach the end?",
+    "title": "Jump game — can you reach the end?",
     "category": "Greedy",
     "level": 2,
     "prompt": "Given a list `nums` where `nums[i]` is the max jump length from position `i`, determine if you can reach the last index.",
     "expectedCode": "max_reach = 0\nfor i in range(len(nums)):\n    if i > max_reach:\n        return False\n    max_reach = max(max_reach, i + nums[i])\nreturn True",
     "alternatives": [],
-    "explanation": "Track the farthest index reachable so far. At each position:\n- If `i > max_reach`, we can't even get here \u2192 return False\n- Otherwise, update `max_reach` with `i + nums[i]` (farthest we can reach from here)\n\nIf we finish the loop without returning False, the end is reachable.\n\nThis is greedy because we make locally optimal decisions (always consider the farthest reach) without backtracking.\n\nO(n) time, O(1) space. DP solution exists but is O(n\u00b2).",
+    "explanation": "Track the farthest index reachable so far. At each position:\n- If `i > max_reach`, we can't even get here → return False\n- Otherwise, update `max_reach` with `i + nums[i]` (farthest we can reach from here)\n\nIf we finish the loop without returning False, the end is reachable.\n\nThis is greedy because we make locally optimal decisions (always consider the farthest reach) without backtracking.\n\nO(n) time, O(1) space. DP solution exists but is O(n²).",
     "tags": [
       "greedy",
       "jump game",
@@ -842,7 +954,7 @@
     "alternatives": [
       "count = {}\nfor c in s:\n    count[c] = count.get(c, 0) + 1\nmajority = [c for c, freq in count.items() if freq > len(s) // 2]"
     ],
-    "explanation": "Use `Counter` when: you need to count things from an iterable. It gives you `.most_common()`, arithmetic operations (`counter1 - counter2`), and automatic zero-defaults.\n\nUse `defaultdict(int)` when: you need a dict with a default value but aren't specifically counting.\n\nUse manual `.get()` when: you want no dependency imports, or need custom initialization logic.\n\nAll three are O(n) for counting. `Counter` is the most expressive for frequency problems. For this specific problem, `Counter.most_common(1)` is even more direct.\n\nBoyer-Moore voting algorithm solves majority element in O(1) space \u2014 but knowing Counter is more broadly useful.",
+    "explanation": "Use `Counter` when: you need to count things from an iterable. It gives you `.most_common()`, arithmetic operations (`counter1 - counter2`), and automatic zero-defaults.\n\nUse `defaultdict(int)` when: you need a dict with a default value but aren't specifically counting.\n\nUse manual `.get()` when: you want no dependency imports, or need custom initialization logic.\n\nAll three are O(n) for counting. `Counter` is the most expressive for frequency problems. For this specific problem, `Counter.most_common(1)` is even more direct.\n\nBoyer-Moore voting algorithm solves majority element in O(1) space — but knowing Counter is more broadly useful.",
     "tags": [
       "Counter",
       "defaultdict",
@@ -851,13 +963,13 @@
     ]
   },
   {
-    "title": "set vs dict for lookups \u2014 when each",
+    "title": "set vs dict for lookups — when each",
     "category": "Arrays & Hashing",
     "level": 3,
     "prompt": "You need to check if any element in list `a` also appears in list `b`. Then separately, you need to find what value in `b` each element of `a` maps to. Which structure for each?",
-    "expectedCode": "# Existence check \u2192 set\nset_b = set(b)\nexists = any(x in set_b for x in a)\n\n# Mapping lookup \u2192 dict\ndict_b = {item.key: item.val for item in b}\nvalues = [dict_b.get(x) for x in a]",
+    "expectedCode": "# Existence check → set\nset_b = set(b)\nexists = any(x in set_b for x in a)\n\n# Mapping lookup → dict\ndict_b = {item.key: item.val for item in b}\nvalues = [dict_b.get(x) for x in a]",
     "alternatives": [],
-    "explanation": "Use `set` when: you only need existence checks (`x in s`). Sets are ~20% faster than dicts for membership tests and use less memory.\n\nUse `dict` when: you need to associate keys with values. Dicts store key-value pairs; sets only store keys.\n\n`any()` with a generator is short-circuit \u2014 stops at the first match. More efficient than building a full intersection.\n\n`.get(x)` returns `None` for missing keys instead of raising `KeyError`. Use `.get(x, default)` when you need a specific default.\n\nBoth are O(1) average for lookups, O(n) to build.",
+    "explanation": "Use `set` when: you only need existence checks (`x in s`). Sets are ~20% faster than dicts for membership tests and use less memory.\n\nUse `dict` when: you need to associate keys with values. Dicts store key-value pairs; sets only store keys.\n\n`any()` with a generator is short-circuit — stops at the first match. More efficient than building a full intersection.\n\n`.get(x)` returns `None` for missing keys instead of raising `KeyError`. Use `.get(x, default)` when you need a specific default.\n\nBoth are O(1) average for lookups, O(n) to build.",
     "tags": [
       "set",
       "dict",
@@ -872,7 +984,7 @@
     "prompt": "Find the longest palindromic substring in string `s`. Use expand-from-center approach. When would you prefer DP instead?",
     "expectedCode": "def expand(l, r):\n    while l >= 0 and r < len(s) and s[l] == s[r]:\n        l -= 1\n        r += 1\n    return s[l+1:r]\n\nresult = ''\nfor i in range(len(s)):\n    odd = expand(i, i)\n    even = expand(i, i + 1)\n    if len(odd) > len(result):\n        result = odd\n    if len(even) > len(result):\n        result = even\nreturn result",
     "alternatives": [],
-    "explanation": "Expand-from-center: try each index as a palindrome center (both odd and even length). Expand outward while characters match. O(n\u00b2) time, O(1) space.\n\nDP approach: `dp[i][j] = True if s[i:j+1] is a palindrome`. O(n\u00b2) time AND space. Useful when you need to know ALL palindromic substrings (not just the longest), e.g., palindrome partitioning.\n\nExpand-from-center is better for:\n- \"Find the longest\" (simpler, less space)\n- Interview settings (easier to code)\n\nDP is better for:\n- \"Count all palindromic substrings\"\n- \"Partition into palindromes\" (need the dp table as preprocessing)\n\nManacher's algorithm does it in O(n) but is rarely expected in interviews.",
+    "explanation": "Expand-from-center: try each index as a palindrome center (both odd and even length). Expand outward while characters match. O(n²) time, O(1) space.\n\nDP approach: `dp[i][j] = True if s[i:j+1] is a palindrome`. O(n²) time AND space. Useful when you need to know ALL palindromic substrings (not just the longest), e.g., palindrome partitioning.\n\nExpand-from-center is better for:\n- \"Find the longest\" (simpler, less space)\n- Interview settings (easier to code)\n\nDP is better for:\n- \"Count all palindromic substrings\"\n- \"Partition into palindromes\" (need the dp table as preprocessing)\n\nManacher's algorithm does it in O(n) but is rarely expected in interviews.",
     "tags": [
       "two pointers",
       "palindrome",
@@ -885,9 +997,9 @@
     "category": "Two Pointers",
     "level": 3,
     "prompt": "Given a list of `intervals`, you need to find if any two overlap. Compare the sort+scan approach vs hash-based approach. When is each better?",
-    "expectedCode": "# Sort approach \u2014 O(n log n), clean and simple\nintervals.sort()\nfor i in range(1, len(intervals)):\n    if intervals[i][0] < intervals[i - 1][1]:\n        return True\nreturn False",
+    "expectedCode": "# Sort approach — O(n log n), clean and simple\nintervals.sort()\nfor i in range(1, len(intervals)):\n    if intervals[i][0] < intervals[i - 1][1]:\n        return True\nreturn False",
     "alternatives": [],
-    "explanation": "Sort + scan: O(n log n) time, O(1) extra space (if in-place sort). After sorting by start, any overlap must be between adjacent intervals. Simple to code and debug.\n\nHash-based: theoretically O(n) but only works for discrete intervals (e.g., integer ranges). You'd bucket each time slot \u2014 impractical for large ranges.\n\nSort wins when:\n- Intervals can be any real numbers\n- You need the result in order (merge, schedule)\n- Space is constrained\n\nHash wins when:\n- Values are small integers (like a meeting room time grid)\n- You need O(n) and the range is bounded\n\nIn interviews, sort+scan is almost always the expected approach for interval problems.",
+    "explanation": "Sort + scan: O(n log n) time, O(1) extra space (if in-place sort). After sorting by start, any overlap must be between adjacent intervals. Simple to code and debug.\n\nHash-based: theoretically O(n) but only works for discrete intervals (e.g., integer ranges). You'd bucket each time slot — impractical for large ranges.\n\nSort wins when:\n- Intervals can be any real numbers\n- You need the result in order (merge, schedule)\n- Space is constrained\n\nHash wins when:\n- Values are small integers (like a meeting room time grid)\n- You need O(n) and the range is bounded\n\nIn interviews, sort+scan is almost always the expected approach for interval problems.",
     "tags": [
       "two pointers",
       "sort",
@@ -896,13 +1008,13 @@
     ]
   },
   {
-    "title": "Shrink window condition \u2014 what to track",
+    "title": "Shrink window condition — what to track",
     "category": "Sliding Window",
     "level": 3,
     "prompt": "You're solving a sliding window problem. How do you decide WHEN to shrink the window? Compare 'invalid window' vs 'window exceeds size' approaches.",
-    "expectedCode": "# Pattern 1: Shrink when window becomes INVALID\n# (variable-size window)\nl = 0\nfor r in range(len(s)):\n    # expand: update window state\n    while window_is_invalid():\n        # shrink: undo state for s[l]\n        l += 1\n    # window is valid \u2014 update answer\n\n# Pattern 2: Shrink when window EXCEEDS size k\n# (fixed-size window)\nfor r in range(len(nums)):\n    # expand: add nums[r]\n    if r >= k:\n        # shrink: remove nums[r - k]\n    if r >= k - 1:\n        # window is exactly size k \u2014 update answer",
+    "expectedCode": "# Pattern 1: Shrink when window becomes INVALID\n# (variable-size window)\nl = 0\nfor r in range(len(s)):\n    # expand: update window state\n    while window_is_invalid():\n        # shrink: undo state for s[l]\n        l += 1\n    # window is valid — update answer\n\n# Pattern 2: Shrink when window EXCEEDS size k\n# (fixed-size window)\nfor r in range(len(nums)):\n    # expand: add nums[r]\n    if r >= k:\n        # shrink: remove nums[r - k]\n    if r >= k - 1:\n        # window is exactly size k — update answer",
     "alternatives": [],
-    "explanation": "Two distinct sliding window patterns:\n\n**Variable-size (condition-based):** Shrink when the window violates a constraint. Examples: substring with at most k distinct chars, minimum window substring. The `while` loop shrinks until valid.\n\n**Fixed-size (size-based):** Shrink when window exceeds `k`. Examples: max sum of size k, sliding window maximum. No `while` needed \u2014 just one removal per step.\n\nCommon mistake: using `if` instead of `while` for variable-size windows. If removing one element doesn't fix the constraint, you need to keep shrinking.\n\nThe window state (what you track) depends on the problem: set for uniqueness, Counter for frequency, sum for totals, deque for order-sensitive queries.",
+    "explanation": "Two distinct sliding window patterns:\n\n**Variable-size (condition-based):** Shrink when the window violates a constraint. Examples: substring with at most k distinct chars, minimum window substring. The `while` loop shrinks until valid.\n\n**Fixed-size (size-based):** Shrink when window exceeds `k`. Examples: max sum of size k, sliding window maximum. No `while` needed — just one removal per step.\n\nCommon mistake: using `if` instead of `while` for variable-size windows. If removing one element doesn't fix the constraint, you need to keep shrinking.\n\nThe window state (what you track) depends on the problem: set for uniqueness, Counter for frequency, sum for totals, deque for order-sensitive queries.",
     "tags": [
       "sliding window",
       "shrink condition",
@@ -917,7 +1029,7 @@
     "prompt": "Using `bisect_left` and `bisect_right`, implement three operations on a sorted list: (1) check if value exists, (2) find insertion point, (3) count occurrences.",
     "expectedCode": "from bisect import bisect_left, bisect_right\n\n# 1. Check existence\ni = bisect_left(nums, target)\nexists = i < len(nums) and nums[i] == target\n\n# 2. Insertion point (bisect_left IS the insertion point)\ninsert_pos = bisect_left(nums, target)\n\n# 3. Count occurrences\ncount = bisect_right(nums, target) - bisect_left(nums, target)",
     "alternatives": [],
-    "explanation": "`bisect_left` returns the leftmost valid insertion point. If the element exists, this is the index of its first occurrence.\n\nExistence check: after getting the index, verify `nums[i] == target` (the element might not exist \u2014 bisect just gives where it WOULD go). Also check `i < len(nums)` to avoid index error.\n\nCount: `bisect_right - bisect_left` gives the range of equal elements. This is O(log n) \u2014 much better than `list.count()` which is O(n).\n\nWhen to use manual binary search instead: when you need custom comparison logic or are searching on an implicit array (answer space problems).",
+    "explanation": "`bisect_left` returns the leftmost valid insertion point. If the element exists, this is the index of its first occurrence.\n\nExistence check: after getting the index, verify `nums[i] == target` (the element might not exist — bisect just gives where it WOULD go). Also check `i < len(nums)` to avoid index error.\n\nCount: `bisect_right - bisect_left` gives the range of equal elements. This is O(log n) — much better than `list.count()` which is O(n).\n\nWhen to use manual binary search instead: when you need custom comparison logic or are searching on an implicit array (answer space problems).",
     "tags": [
       "binary search",
       "bisect",
@@ -942,13 +1054,13 @@
     ]
   },
   {
-    "title": "BFS vs DFS \u2014 when to choose which",
+    "title": "BFS vs DFS — when to choose which",
     "category": "Graphs",
     "level": 3,
     "prompt": "Given an unweighted graph, should you use BFS or DFS to find the shortest path? What about detecting if a path exists? Explain the trade-offs.",
     "expectedCode": "# BFS for shortest path (unweighted)\nfrom collections import deque\ndef shortest_path(graph, start, end):\n    queue = deque([(start, 0)])\n    visited = {start}\n    while queue:\n        node, dist = queue.popleft()\n        if node == end:\n            return dist\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append((neighbor, dist + 1))\n    return -1",
     "alternatives": [],
-    "explanation": "BFS guarantees shortest path in unweighted graphs because it explores level by level. DFS does NOT \u2014 it follows one path to the end, which may be the longest path.\n\nUse BFS for:\n- Shortest path (unweighted)\n- Level-order traversal\n- Finding nearest/minimum distance\n\nUse DFS for:\n- Path existence (either works, DFS is simpler recursively)\n- Cycle detection\n- Topological sort\n- Connected components\n- Exhaustive search / backtracking\n\nSpace comparison:\n- BFS: O(width of graph) \u2014 can be O(n) for wide graphs\n- DFS: O(depth of graph) \u2014 can be O(n) for deep graphs, but often smaller\n\nFor grid problems, BFS is usually preferred (shortest path is common).",
+    "explanation": "BFS guarantees shortest path in unweighted graphs because it explores level by level. DFS does NOT — it follows one path to the end, which may be the longest path.\n\nUse BFS for:\n- Shortest path (unweighted)\n- Level-order traversal\n- Finding nearest/minimum distance\n\nUse DFS for:\n- Path existence (either works, DFS is simpler recursively)\n- Cycle detection\n- Topological sort\n- Connected components\n- Exhaustive search / backtracking\n\nSpace comparison:\n- BFS: O(width of graph) — can be O(n) for wide graphs\n- DFS: O(depth of graph) — can be O(n) for deep graphs, but often smaller\n\nFor grid problems, BFS is usually preferred (shortest path is common).",
     "tags": [
       "graph",
       "BFS",
@@ -966,7 +1078,7 @@
     "alternatives": [
       "# Sort approach: O(n log n)\nresult = sorted(stream)[:k]\n\n# Quickselect: O(n) average\nimport random\n# ... partition logic"
     ],
-    "explanation": "Heap (size k): O(n log k) time, O(k) space. Use a MAX-heap of size k \u2014 if new element is smaller than the max, replace it.\n\n`heapreplace(heap, val)` = pop + push in one operation (more efficient than separate calls).\n\nSort: O(n log n) time, O(n) space. Simpler code but slower when k << n.\n\nQuickselect: O(n) average, O(n\u00b2) worst. Best asymptotically but hard to implement correctly in interviews.\n\nUse heap when:\n- k << n (e.g., top 10 from millions)\n- Data is streaming (don't have all elements upfront)\n- You need running top-k\n\nUse sort when:\n- k \u2248 n\n- Simplicity matters\n- You already need sorted output",
+    "explanation": "Heap (size k): O(n log k) time, O(k) space. Use a MAX-heap of size k — if new element is smaller than the max, replace it.\n\n`heapreplace(heap, val)` = pop + push in one operation (more efficient than separate calls).\n\nSort: O(n log n) time, O(n) space. Simpler code but slower when k << n.\n\nQuickselect: O(n) average, O(n²) worst. Best asymptotically but hard to implement correctly in interviews.\n\nUse heap when:\n- k << n (e.g., top 10 from millions)\n- Data is streaming (don't have all elements upfront)\n- You need running top-k\n\nUse sort when:\n- k ≈ n\n- Simplicity matters\n- You already need sorted output",
     "tags": [
       "heap",
       "sort",
@@ -976,13 +1088,13 @@
     ]
   },
   {
-    "title": "Subsets vs permutations vs combinations \u2014 which template",
+    "title": "Subsets vs permutations vs combinations — which template",
     "category": "Backtracking",
     "level": 3,
     "prompt": "Compare when to use each backtracking template. Given a problem, how do you identify which pattern applies?",
-    "expectedCode": "# Subsets: order doesn't matter, any length, use 'start'\n# [1,2] and [2,1] are same \u2192 need 'start' to avoid duplicates\n# No length constraint \u2192 append at every recursion level\n\n# Permutations: order matters, fixed length = n, use 'used' set\n# [1,2] and [2,1] are different \u2192 no 'start', check all indices\n# Fixed length \u2192 append only when len(path) == n\n\n# Combinations: order doesn't matter, fixed length = k, use 'start'\n# Like subsets but stop at length k\n# [1,2] and [2,1] are same \u2192 need 'start'",
+    "expectedCode": "# Subsets: order doesn't matter, any length, use 'start'\n# [1,2] and [2,1] are same → need 'start' to avoid duplicates\n# No length constraint → append at every recursion level\n\n# Permutations: order matters, fixed length = n, use 'used' set\n# [1,2] and [2,1] are different → no 'start', check all indices\n# Fixed length → append only when len(path) == n\n\n# Combinations: order doesn't matter, fixed length = k, use 'start'\n# Like subsets but stop at length k\n# [1,2] and [2,1] are same → need 'start'",
     "alternatives": [],
-    "explanation": "The decision tree:\n\n1. Does order matter?\n   - No \u2192 Subsets/Combinations (use `start` parameter)\n   - Yes \u2192 Permutations (use `used` set)\n\n2. Is there a length constraint?\n   - No \u2192 Subsets (collect at every level)\n   - Yes, length k \u2192 Combinations (collect at level k)\n   - Yes, length n (all elements) \u2192 Permutations\n\n3. Are there duplicates in input?\n   - Yes \u2192 Sort first + skip `if i > start and nums[i] == nums[i-1]`\n   - No \u2192 Standard template\n\n4. Can elements be reused?\n   - No \u2192 `backtrack(i + 1, ...)` (move forward)\n   - Yes \u2192 `backtrack(i, ...)` (stay at current index)\n\nEvery backtracking problem maps to one of these four templates.",
+    "explanation": "The decision tree:\n\n1. Does order matter?\n   - No → Subsets/Combinations (use `start` parameter)\n   - Yes → Permutations (use `used` set)\n\n2. Is there a length constraint?\n   - No → Subsets (collect at every level)\n   - Yes, length k → Combinations (collect at level k)\n   - Yes, length n (all elements) → Permutations\n\n3. Are there duplicates in input?\n   - Yes → Sort first + skip `if i > start and nums[i] == nums[i-1]`\n   - No → Standard template\n\n4. Can elements be reused?\n   - No → `backtrack(i + 1, ...)` (move forward)\n   - Yes → `backtrack(i, ...)` (stay at current index)\n\nEvery backtracking problem maps to one of these four templates.",
     "tags": [
       "backtracking",
       "subsets",
@@ -992,13 +1104,13 @@
     ]
   },
   {
-    "title": "Top-down vs bottom-up DP \u2014 when each",
+    "title": "Top-down vs bottom-up DP — when each",
     "category": "1-D Dynamic Programming",
     "level": 3,
     "prompt": "Compare memoization (top-down) vs tabulation (bottom-up) for the coin change problem. When is each approach better?",
     "expectedCode": "# Top-down (memoization)\nfrom functools import cache\n\n@cache\ndef dp(amount):\n    if amount == 0: return 0\n    if amount < 0: return float('inf')\n    return 1 + min(dp(amount - c) for c in coins)\n\n# Bottom-up (tabulation)\ndp = [float('inf')] * (amount + 1)\ndp[0] = 0\nfor i in range(1, amount + 1):\n    for c in coins:\n        if c <= i:\n            dp[i] = min(dp[i], dp[i - c] + 1)\nreturn dp[amount] if dp[amount] != float('inf') else -1",
     "alternatives": [],
-    "explanation": "Top-down (memoization):\n+ Easier to write \u2014 start with recursive solution, add `@cache`\n+ Only computes needed subproblems (might skip some)\n- Python recursion limit (~1000)\n- Function call overhead\n\nBottom-up (tabulation):\n+ No recursion limit\n+ Usually faster (no function call overhead)\n+ Easier to optimize space (rolling array)\n- Must determine iteration order\n- Computes ALL subproblems (even unnecessary ones)\n\nStart interviews with top-down if unsure. Interviewers often ask for bottom-up as follow-up.\n\nFor problems with small state space: top-down is fine. For problems hitting recursion limits (large n): must use bottom-up.",
+    "explanation": "Top-down (memoization):\n+ Easier to write — start with recursive solution, add `@cache`\n+ Only computes needed subproblems (might skip some)\n- Python recursion limit (~1000)\n- Function call overhead\n\nBottom-up (tabulation):\n+ No recursion limit\n+ Usually faster (no function call overhead)\n+ Easier to optimize space (rolling array)\n- Must determine iteration order\n- Computes ALL subproblems (even unnecessary ones)\n\nStart interviews with top-down if unsure. Interviewers often ask for bottom-up as follow-up.\n\nFor problems with small state space: top-down is fine. For problems hitting recursion limits (large n): must use bottom-up.",
     "tags": [
       "DP",
       "memoization",
@@ -1008,7 +1120,7 @@
     ]
   },
   {
-    "title": "Greedy vs DP \u2014 how to identify",
+    "title": "Greedy vs DP — how to identify",
     "category": "Greedy",
     "level": 3,
     "prompt": "How do you determine if a problem has a greedy solution vs requiring DP? Illustrate with the coin change problem.",
@@ -1030,7 +1142,7 @@
     "prompt": "Find the length of the longest substring with at most `k` distinct characters.",
     "expectedCode": "from collections import defaultdict\nchar_count = defaultdict(int)\nl = 0\nmax_len = 0\nfor r in range(len(s)):\n    char_count[s[r]] += 1\n    while len(char_count) > k:\n        char_count[s[l]] -= 1\n        if char_count[s[l]] == 0:\n            del char_count[s[l]]\n        l += 1\n    max_len = max(max_len, r - l + 1)\nreturn max_len",
     "alternatives": [],
-    "explanation": "Combines variable-size sliding window with a frequency map. The window is invalid when `len(char_count) > k` (more than k distinct characters).\n\nCritical: `del char_count[s[l]]` when count hits 0 \u2014 otherwise `len(char_count)` stays inflated with zero-count keys.\n\nThis pattern extends to:\n- Longest substring with exactly k distinct: compute `atMost(k) - atMost(k-1)`\n- Fruit into baskets (k=2)\n- Subarrays with k different integers",
+    "explanation": "Combines variable-size sliding window with a frequency map. The window is invalid when `len(char_count) > k` (more than k distinct characters).\n\nCritical: `del char_count[s[l]]` when count hits 0 — otherwise `len(char_count)` stays inflated with zero-count keys.\n\nThis pattern extends to:\n- Longest substring with exactly k distinct: compute `atMost(k) - atMost(k-1)`\n- Fruit into baskets (k=2)\n- Subarrays with k different integers",
     "tags": [
       "sliding window",
       "hash map",
@@ -1047,7 +1159,7 @@
     "alternatives": [
       "seen = set()\ncount = 0\nfor num in nums:\n    if num - diff in seen:\n        count += 1\n    seen.add(num)\nreturn count"
     ],
-    "explanation": "For each element, binary search for its complement. `bisect_left(nums, target, i+1)` searches only to the right of index i.\n\nThe third argument `lo=i+1` restricts the search range \u2014 avoids counting pairs twice.\n\nHash set alternative is simpler and O(n), but the binary search version demonstrates the combination technique and works when you need index pairs specifically.\n\nL4 skill: recognizing when two techniques compose. Here, the sorted array suggests both two-pointer and binary search approaches.",
+    "explanation": "For each element, binary search for its complement. `bisect_left(nums, target, i+1)` searches only to the right of index i.\n\nThe third argument `lo=i+1` restricts the search range — avoids counting pairs twice.\n\nHash set alternative is simpler and O(n), but the binary search version demonstrates the combination technique and works when you need index pairs specifically.\n\nL4 skill: recognizing when two techniques compose. Here, the sorted array suggests both two-pointer and binary search approaches.",
     "tags": [
       "two pointers",
       "binary search",
@@ -1056,7 +1168,7 @@
     ]
   },
   {
-    "title": "Stack + linked list \u2014 flatten nested structure",
+    "title": "Stack + linked list — flatten nested structure",
     "category": "Stack",
     "level": 4,
     "prompt": "Implement a flatten function for a nested list iterator. The input is a nested list like `[1,[2,[3]],4]`. Use a stack to iterate elements in order.",
@@ -1072,7 +1184,7 @@
     ]
   },
   {
-    "title": "Tree + hash map \u2014 path sum III",
+    "title": "Tree + hash map — path sum III",
     "category": "Trees",
     "level": 4,
     "prompt": "Given a binary tree and a target sum, count the number of paths that sum to target. Paths go top-down but don't need to start at root or end at leaf. Use prefix sums.",
@@ -1089,13 +1201,13 @@
     ]
   },
   {
-    "title": "Graph + heap \u2014 Dijkstra's shortest path",
+    "title": "Graph + heap — Dijkstra's shortest path",
     "category": "Graphs",
     "level": 4,
     "prompt": "Given a weighted directed graph as an adjacency list `graph[u] = [(v, weight), ...]`, find the shortest distance from `start` to all nodes using Dijkstra's algorithm.",
     "expectedCode": "import heapq\ndef dijkstra(graph, start, n):\n    dist = [float('inf')] * n\n    dist[start] = 0\n    heap = [(0, start)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        if d > dist[u]:\n            continue\n        for v, w in graph[u]:\n            if dist[u] + w < dist[v]:\n                dist[v] = dist[u] + w\n                heapq.heappush(heap, (dist[v], v))\n    return dist",
     "alternatives": [],
-    "explanation": "Dijkstra's combines BFS structure with a min-heap for weighted edges.\n\n`if d > dist[u]: continue` \u2014 lazy deletion. If we've already found a shorter path, skip this stale entry.\n\nRelaxation: `if dist[u] + w < dist[v]` \u2014 can we improve the path to v through u?\n\nWith binary heap: O((V + E) log V). With Fibonacci heap: O(V log V + E) but impractical.\n\nLimitation: doesn't work with negative edge weights (use Bellman-Ford for that).\n\nThis combines graph traversal + heap + greedy relaxation \u2014 a canonical L4 multi-concept problem.",
+    "explanation": "Dijkstra's combines BFS structure with a min-heap for weighted edges.\n\n`if d > dist[u]: continue` — lazy deletion. If we've already found a shorter path, skip this stale entry.\n\nRelaxation: `if dist[u] + w < dist[v]` — can we improve the path to v through u?\n\nWith binary heap: O((V + E) log V). With Fibonacci heap: O(V log V + E) but impractical.\n\nLimitation: doesn't work with negative edge weights (use Bellman-Ford for that).\n\nThis combines graph traversal + heap + greedy relaxation — a canonical L4 multi-concept problem.",
     "tags": [
       "graph",
       "heap",
@@ -1106,7 +1218,7 @@
     ]
   },
   {
-    "title": "Heap + two pointers \u2014 meeting rooms II",
+    "title": "Heap + two pointers — meeting rooms II",
     "category": "Heap / Priority Queue",
     "level": 4,
     "prompt": "Given a list of meeting `intervals` as `[[start, end], ...]`, find the minimum number of conference rooms required.",
@@ -1124,13 +1236,13 @@
     ]
   },
   {
-    "title": "Backtracking + trie \u2014 word search II",
+    "title": "Backtracking + trie — word search II",
     "category": "Backtracking",
     "level": 4,
     "prompt": "Given a 2D board of characters and a list of words, find all words that can be formed by adjacent cells (no cell reuse per word). Use a trie to optimize.",
     "expectedCode": "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.word = None\n\ndef findWords(board, words):\n    root = TrieNode()\n    for w in words:\n        node = root\n        for c in w:\n            if c not in node.children:\n                node.children[c] = TrieNode()\n            node = node.children[c]\n        node.word = w\n    \n    result = []\n    rows, cols = len(board), len(board[0])\n    def dfs(r, c, node):\n        if r < 0 or r >= rows or c < 0 or c >= cols:\n            return\n        char = board[r][c]\n        if char not in node.children:\n            return\n        child = node.children[char]\n        if child.word:\n            result.append(child.word)\n            child.word = None\n        board[r][c] = '#'\n        for dr, dc in [(0,1),(0,-1),(1,0),(-1,0)]:\n            dfs(r + dr, c + dc, child)\n        board[r][c] = char\n    \n    for r in range(rows):\n        for c in range(cols):\n            dfs(r, c, root)\n    return result",
     "alternatives": [],
-    "explanation": "Without a trie: search for each word independently \u2192 O(words * m*n * 4^L). With a trie: search all words simultaneously \u2192 O(m*n * 4^L) total.\n\nThe trie acts as a prefix filter \u2014 if no word starts with the current path, prune immediately.\n\n`board[r][c] = '#'` marks visited (backtrack by restoring). Cheaper than a visited set.\n\n`child.word = None` after finding prevents duplicates.\n\nCombines: trie (prefix matching) + grid DFS + backtracking (visited state). This is a hard problem that tests multiple data structures working together.",
+    "explanation": "Without a trie: search for each word independently → O(words * m*n * 4^L). With a trie: search all words simultaneously → O(m*n * 4^L) total.\n\nThe trie acts as a prefix filter — if no word starts with the current path, prune immediately.\n\n`board[r][c] = '#'` marks visited (backtrack by restoring). Cheaper than a visited set.\n\n`child.word = None` after finding prevents duplicates.\n\nCombines: trie (prefix matching) + grid DFS + backtracking (visited state). This is a hard problem that tests multiple data structures working together.",
     "tags": [
       "backtracking",
       "trie",
@@ -1140,7 +1252,7 @@
     ]
   },
   {
-    "title": "DP + binary search \u2014 longest increasing subsequence",
+    "title": "DP + binary search — longest increasing subsequence",
     "category": "1-D Dynamic Programming",
     "level": 4,
     "prompt": "Find the length of the longest increasing subsequence in `nums`. Use the O(n log n) approach with patience sorting.",
@@ -1148,7 +1260,7 @@
     "alternatives": [
       "# O(n^2) DP version\ndp = [1] * len(nums)\nfor i in range(1, len(nums)):\n    for j in range(i):\n        if nums[j] < nums[i]:\n            dp[i] = max(dp[i], dp[j] + 1)\nreturn max(dp)"
     ],
-    "explanation": "`tails[i]` = smallest tail element for an increasing subsequence of length `i+1`.\n\nFor each number: binary search for its position in `tails`.\n- If it's larger than all tails \u2192 extend LIS (`append`)\n- Otherwise \u2192 replace the first tail >= num (`tails[pos] = num`)\n\n`tails` is always sorted (invariant maintained by the algorithm), so `bisect_left` works.\n\nO(n log n) vs the DP version's O(n\u00b2). The key insight: we don't need the actual subsequence contents, just the optimal tails.\n\nCombines DP thinking (optimal substructure) with binary search (efficient position finding).",
+    "explanation": "`tails[i]` = smallest tail element for an increasing subsequence of length `i+1`.\n\nFor each number: binary search for its position in `tails`.\n- If it's larger than all tails → extend LIS (`append`)\n- Otherwise → replace the first tail >= num (`tails[pos] = num`)\n\n`tails` is always sorted (invariant maintained by the algorithm), so `bisect_left` works.\n\nO(n log n) vs the DP version's O(n²). The key insight: we don't need the actual subsequence contents, just the optimal tails.\n\nCombines DP thinking (optimal substructure) with binary search (efficient position finding).",
     "tags": [
       "DP",
       "binary search",
@@ -1158,7 +1270,7 @@
     ]
   },
   {
-    "title": "Greedy + stack \u2014 largest number removal",
+    "title": "Greedy + stack — largest number removal",
     "category": "Greedy",
     "level": 4,
     "prompt": "Given a non-negative integer represented as a string `num` and an integer `k`, remove `k` digits to make the smallest possible number.",
@@ -1174,7 +1286,7 @@
     ]
   },
   {
-    "title": "2D grid DP \u2014 minimum path sum",
+    "title": "2D grid DP — minimum path sum",
     "category": "2-D Dynamic Programming",
     "level": 1,
     "prompt": "Given a `grid` of non-negative integers (m x n), write the DP recurrence to find the minimum path sum from top-left to bottom-right (only move right or down).",
@@ -1185,6 +1297,10 @@
       "2D DP",
       "grid",
       "minimum path"
+    ],
+    "distractors": [
+      "dp = [[0] * n for _ in range(m)]\ndp[0][0] = grid[0][0]\nfor i in range(m):\n    for j in range(n):\n        if i == 0 and j == 0:\n            continue\n        top = dp[i-1][j] if i > 0 else float('inf')\n        left = dp[i][j-1] if j > 0 else float('inf')\n        dp[i][j] = min(top, left)",
+      "dp = [[0] * n for _ in range(m)]\nfor i in range(m):\n    for j in range(n):\n        top = dp[i-1][j] if i > 0 else 0\n        left = dp[i][j-1] if j > 0 else 0\n        dp[i][j] = grid[i][j] + min(top, left)"
     ]
   },
   {
@@ -1194,7 +1310,7 @@
     "prompt": "Given two strings `text1` and `text2`, write the 2D DP to find the length of their longest common subsequence.",
     "expectedCode": "m, n = len(text1), len(text2)\ndp = [[0] * (n + 1) for _ in range(m + 1)]\nfor i in range(1, m + 1):\n    for j in range(1, n + 1):\n        if text1[i-1] == text2[j-1]:\n            dp[i][j] = dp[i-1][j-1] + 1\n        else:\n            dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
     "alternatives": [],
-    "explanation": "`dp[i][j]` = LCS length of `text1[:i]` and `text2[:j]`. If characters match, extend the diagonal. Otherwise, take the max of skipping one character from either string.\n\nBase case: `dp[0][j] = dp[i][0] = 0` (empty string has LCS 0). Time: O(m*n), Space: O(m*n) \u2014 can reduce to O(min(m,n)) with rolling array.",
+    "explanation": "`dp[i][j]` = LCS length of `text1[:i]` and `text2[:j]`. If characters match, extend the diagonal. Otherwise, take the max of skipping one character from either string.\n\nBase case: `dp[0][j] = dp[i][0] = 0` (empty string has LCS 0). Time: O(m*n), Space: O(m*n) — can reduce to O(min(m,n)) with rolling array.",
     "tags": [
       "2D DP",
       "LCS",
@@ -1202,13 +1318,13 @@
     ]
   },
   {
-    "title": "Edit distance \u2014 insert, delete, replace",
+    "title": "Edit distance — insert, delete, replace",
     "category": "2-D Dynamic Programming",
     "level": 3,
     "prompt": "Write the 2D DP for edit distance between `word1` and `word2` (insert/delete/replace cost 1 each).",
     "expectedCode": "m, n = len(word1), len(word2)\ndp = [[0] * (n + 1) for _ in range(m + 1)]\nfor i in range(m + 1):\n    dp[i][0] = i\nfor j in range(n + 1):\n    dp[0][j] = j\nfor i in range(1, m + 1):\n    for j in range(1, n + 1):\n        if word1[i-1] == word2[j-1]:\n            dp[i][j] = dp[i-1][j-1]\n        else:\n            dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])",
     "alternatives": [],
-    "explanation": "`dp[i][j]` = min operations to convert `word1[:i]` to `word2[:j]`. Three choices when chars differ: insert (`dp[i][j-1]+1`), delete (`dp[i-1][j]+1`), replace (`dp[i-1][j-1]+1`). If chars match, no cost \u2014 carry diagonal.\n\nBase cases: converting empty string to length j costs j insertions, length i to empty costs i deletions.",
+    "explanation": "`dp[i][j]` = min operations to convert `word1[:i]` to `word2[:j]`. Three choices when chars differ: insert (`dp[i][j-1]+1`), delete (`dp[i-1][j]+1`), replace (`dp[i-1][j-1]+1`). If chars match, no cost — carry diagonal.\n\nBase cases: converting empty string to length j costs j insertions, length i to empty costs i deletions.",
     "tags": [
       "2D DP",
       "edit distance",
@@ -1216,7 +1332,7 @@
     ]
   },
   {
-    "title": "2D DP space optimization \u2014 rolling array",
+    "title": "2D DP space optimization — rolling array",
     "category": "2-D Dynamic Programming",
     "level": 4,
     "prompt": "Optimize the unique paths 2D DP from O(m*n) space to O(n) using a 1D array. Show the optimized version.",
@@ -1230,7 +1346,7 @@
     ]
   },
   {
-    "title": "House robber \u2014 skip adjacent",
+    "title": "House robber — skip adjacent",
     "category": "1-D Dynamic Programming",
     "level": 2,
     "prompt": "Given `nums` (house values), write the DP to find max amount you can rob without robbing two adjacent houses.",
@@ -1246,13 +1362,13 @@
     ]
   },
   {
-    "title": "Coin change \u2014 minimum coins",
+    "title": "Coin change — minimum coins",
     "category": "1-D Dynamic Programming",
     "level": 3,
     "prompt": "Given `coins` and `amount`, write the DP to find the fewest coins needed to make that amount (return -1 if impossible).",
     "expectedCode": "dp = [float('inf')] * (amount + 1)\ndp[0] = 0\nfor a in range(1, amount + 1):\n    for c in coins:\n        if c <= a:\n            dp[a] = min(dp[a], dp[a - c] + 1)\nreturn dp[amount] if dp[amount] != float('inf') else -1",
     "alternatives": [],
-    "explanation": "`dp[a]` = minimum coins to make amount `a`. For each amount, try every coin \u2014 if it fits, check if using it gives fewer coins than the current best.\n\nBase case: `dp[0] = 0` (zero coins for amount 0). Initialize rest to infinity (unreachable). This is unbounded knapsack \u2014 each coin can be used unlimited times.\n\nTime: O(amount * len(coins)). Space: O(amount).",
+    "explanation": "`dp[a]` = minimum coins to make amount `a`. For each amount, try every coin — if it fits, check if using it gives fewer coins than the current best.\n\nBase case: `dp[0] = 0` (zero coins for amount 0). Initialize rest to infinity (unreachable). This is unbounded knapsack — each coin can be used unlimited times.\n\nTime: O(amount * len(coins)). Space: O(amount).",
     "tags": [
       "1D DP",
       "coin change",
@@ -1260,13 +1376,13 @@
     ]
   },
   {
-    "title": "Word break \u2014 DP with string slicing",
+    "title": "Word break — DP with string slicing",
     "category": "1-D Dynamic Programming",
     "level": 4,
     "prompt": "Given string `s` and a list `wordDict`, write DP to determine if `s` can be segmented into words from `wordDict`.",
     "expectedCode": "word_set = set(wordDict)\ndp = [False] * (len(s) + 1)\ndp[0] = True\nfor i in range(1, len(s) + 1):\n    for j in range(i):\n        if dp[j] and s[j:i] in word_set:\n            dp[i] = True\n            break",
     "alternatives": [],
-    "explanation": "`dp[i]` = True if `s[:i]` can be segmented. For each position i, check all possible last words `s[j:i]` \u2014 if the prefix `s[:j]` is valid AND `s[j:i]` is in the dictionary, then `s[:i]` is valid.\n\nConverting wordDict to a set makes the lookup O(1). The `break` short-circuits once we find any valid split.",
+    "explanation": "`dp[i]` = True if `s[:i]` can be segmented. For each position i, check all possible last words `s[j:i]` — if the prefix `s[:j]` is valid AND `s[j:i]` is in the dictionary, then `s[:i]` is valid.\n\nConverting wordDict to a set makes the lookup O(1). The `break` short-circuits once we find any valid split.",
     "tags": [
       "1D DP",
       "word break",
@@ -1280,11 +1396,15 @@
     "prompt": "Write a Union-Find (disjoint set) class with `find` (path compression) and `union` (union by rank).",
     "expectedCode": "class UnionFind:\n    def __init__(self, n):\n        self.parent = list(range(n))\n        self.rank = [0] * n\n\n    def find(self, x):\n        if self.parent[x] != x:\n            self.parent[x] = self.find(self.parent[x])\n        return self.parent[x]\n\n    def union(self, x, y):\n        px, py = self.find(x), self.find(y)\n        if px == py:\n            return False\n        if self.rank[px] < self.rank[py]:\n            px, py = py, px\n        self.parent[py] = px\n        if self.rank[px] == self.rank[py]:\n            self.rank[px] += 1\n        return True",
     "alternatives": [],
-    "explanation": "Union-Find tracks connected components. `find` with path compression flattens the tree so future lookups are nearly O(1). `union` by rank keeps trees balanced \u2014 attach the shorter tree under the taller one.\n\nCommon uses: connected components, cycle detection in undirected graphs, Kruskal's MST. Returns False from union if already connected (useful for cycle detection).",
+    "explanation": "Union-Find tracks connected components. `find` with path compression flattens the tree so future lookups are nearly O(1). `union` by rank keeps trees balanced — attach the shorter tree under the taller one.\n\nCommon uses: connected components, cycle detection in undirected graphs, Kruskal's MST. Returns False from union if already connected (useful for cycle detection).",
     "tags": [
       "Union-Find",
       "disjoint set",
       "path compression"
+    ],
+    "distractors": [
+      "class UnionFind:\n    def __init__(self, n):\n        self.parent = list(range(n))\n\n    def find(self, x):\n        while self.parent[x] != x:\n            x = self.parent[x]\n        return x\n\n    def union(self, x, y):\n        px, py = self.find(x), self.find(y)\n        self.parent[py] = px\n        return px != py",
+      "class UnionFind:\n    def __init__(self, n):\n        self.parent = list(range(n))\n        self.rank = [0] * n\n\n    def find(self, x):\n        if self.parent[x] != x:\n            self.parent[x] = self.find(self.parent[x])\n        return self.parent[x]\n\n    def union(self, x, y):\n        px, py = self.find(x), self.find(y)\n        if px == py:\n            return False\n        self.parent[py] = px\n        return True"
     ]
   },
   {
@@ -1294,7 +1414,7 @@
     "prompt": "Given an adjacency list `graph` (dict mapping node to list of (neighbor, weight) tuples), write Dijkstra's algorithm to find shortest distances from `src` to all nodes.",
     "expectedCode": "import heapq\n\ndef dijkstra(graph, src):\n    dist = {node: float('inf') for node in graph}\n    dist[src] = 0\n    heap = [(0, src)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        if d > dist[u]:\n            continue\n        for v, w in graph[u]:\n            if dist[u] + w < dist[v]:\n                dist[v] = dist[u] + w\n                heapq.heappush(heap, (dist[v], v))\n    return dist",
     "alternatives": [],
-    "explanation": "Dijkstra processes nodes in order of shortest known distance. The `if d > dist[u]: continue` skip is critical \u2014 it's the lazy deletion pattern (we may push the same node multiple times; skip stale entries).\n\nTime: O((V+E) log V) with binary heap. Only works with non-negative edge weights. For negative weights, use Bellman-Ford.",
+    "explanation": "Dijkstra processes nodes in order of shortest known distance. The `if d > dist[u]: continue` skip is critical — it's the lazy deletion pattern (we may push the same node multiple times; skip stale entries).\n\nTime: O((V+E) log V) with binary heap. Only works with non-negative edge weights. For negative weights, use Bellman-Ford.",
     "tags": [
       "Dijkstra",
       "heapq",
@@ -1309,7 +1429,7 @@
     "prompt": "Given a list of `edges` as (weight, u, v) tuples and `n` nodes, write Kruskal's algorithm to find the minimum spanning tree cost.",
     "expectedCode": "edges.sort()\nuf = UnionFind(n)\nmst_cost = 0\nedges_used = 0\nfor w, u, v in edges:\n    if uf.union(u, v):\n        mst_cost += w\n        edges_used += 1\n        if edges_used == n - 1:\n            break\nreturn mst_cost if edges_used == n - 1 else -1",
     "alternatives": [],
-    "explanation": "Kruskal's: sort all edges by weight, greedily add the cheapest edge that doesn't create a cycle (checked via Union-Find). An MST with n nodes has exactly n-1 edges.\n\nEarly termination: once we have n-1 edges, we're done. Return -1 if the graph is disconnected (can't form MST). Time: O(E log E) for sort + O(E * \u03b1(V)) for union-find operations.",
+    "explanation": "Kruskal's: sort all edges by weight, greedily add the cheapest edge that doesn't create a cycle (checked via Union-Find). An MST with n nodes has exactly n-1 edges.\n\nEarly termination: once we have n-1 edges, we're done. Return -1 if the graph is disconnected (can't form MST). Time: O(E log E) for sort + O(E * α(V)) for union-find operations.",
     "tags": [
       "Kruskal",
       "MST",
@@ -1339,11 +1459,15 @@
     "alternatives": [
       "is_power = bin(n).count('1') == 1"
     ],
-    "explanation": "`n & (n - 1)` clears the lowest set bit. Powers of 2 have exactly one set bit, so clearing it gives 0.\n\nExample: 8 = 1000, 7 = 0111, 8 & 7 = 0000. But 6 = 0110, 5 = 0101, 6 & 5 = 0100 \u2260 0.\n\nThis is the most fundamental bit trick \u2014 memorize `n & (n-1)` as 'clear lowest set bit'.",
+    "explanation": "`n & (n - 1)` clears the lowest set bit. Powers of 2 have exactly one set bit, so clearing it gives 0.\n\nExample: 8 = 1000, 7 = 0111, 8 & 7 = 0000. But 6 = 0110, 5 = 0101, 6 & 5 = 0100 ≠ 0.\n\nThis is the most fundamental bit trick — memorize `n & (n-1)` as 'clear lowest set bit'.",
     "tags": [
       "bits",
       "power of 2",
       "n & (n-1)"
+    ],
+    "distractors": [
+      "is_power = n & (n + 1) == 0",
+      "is_power = n % 2 == 0"
     ]
   },
   {
@@ -1355,11 +1479,15 @@
     "alternatives": [
       "count = bin(n).count('1')"
     ],
-    "explanation": "Each `n &= n - 1` clears one set bit (the lowest). Loop until n is 0 \u2014 the number of iterations equals the number of set bits.\n\nThis is O(k) where k = number of set bits, not O(32). Much faster for sparse bit patterns. The string version is Pythonic but doesn't teach bit manipulation.",
+    "explanation": "Each `n &= n - 1` clears one set bit (the lowest). Loop until n is 0 — the number of iterations equals the number of set bits.\n\nThis is O(k) where k = number of set bits, not O(32). Much faster for sparse bit patterns. The string version is Pythonic but doesn't teach bit manipulation.",
     "tags": [
       "bits",
       "Kernighan",
       "popcount"
+    ],
+    "distractors": [
+      "count = 0\nwhile n:\n    n >>= 1\n    count += 1",
+      "count = 0\nwhile n:\n    n &= n - 1\n    count += n"
     ]
   },
   {
@@ -1393,13 +1521,13 @@
     ]
   },
   {
-    "title": "Bitmask DP vs XOR \u2014 when each",
+    "title": "Bitmask DP vs XOR — when each",
     "category": "Bit Manipulation",
     "level": 3,
     "prompt": "Explain when to use bitmask DP (track subsets as integers) vs XOR tricks. Give an example scenario for each.",
-    "expectedCode": "# Bitmask DP: when tracking which items are used\n# State: dp[mask] where mask is a subset of n items\n# Example: Traveling Salesman \u2014 dp[mask][i] = min cost visiting cities in mask, ending at i\n# Use when: n <= 20, need to track subset membership\n\n# XOR tricks: when items cancel in pairs\n# Example: find the single number that doesn't have a pair\n# Use when: looking for unpaired/missing elements, no state needed",
+    "expectedCode": "# Bitmask DP: when tracking which items are used\n# State: dp[mask] where mask is a subset of n items\n# Example: Traveling Salesman — dp[mask][i] = min cost visiting cities in mask, ending at i\n# Use when: n <= 20, need to track subset membership\n\n# XOR tricks: when items cancel in pairs\n# Example: find the single number that doesn't have a pair\n# Use when: looking for unpaired/missing elements, no state needed",
     "alternatives": [],
-    "explanation": "Bitmask DP uses integers as compact set representations. Bit i = 1 means item i is included. `dp[mask]` stores the answer for that subset. Limited to ~20 items (2^20 = 1M states).\n\nXOR is for pair-cancellation problems \u2014 not a DP technique, more of an algebraic trick. If the problem is about finding missing/unique elements where duplicates cancel, think XOR. If it's about optimal subset selection, think bitmask DP.",
+    "explanation": "Bitmask DP uses integers as compact set representations. Bit i = 1 means item i is included. `dp[mask]` stores the answer for that subset. Limited to ~20 items (2^20 = 1M states).\n\nXOR is for pair-cancellation problems — not a DP technique, more of an algebraic trick. If the problem is about finding missing/unique elements where duplicates cancel, think XOR. If it's about optimal subset selection, think bitmask DP.",
     "tags": [
       "bitmask DP",
       "XOR",
@@ -1407,7 +1535,7 @@
     ]
   },
   {
-    "title": "Bitmask subsets \u2014 enumerate all subsets of a mask",
+    "title": "Bitmask subsets — enumerate all subsets of a mask",
     "category": "Bit Manipulation",
     "level": 4,
     "prompt": "Given a bitmask `mask`, write code to enumerate all subsets of that mask (including empty set and mask itself).",
@@ -1431,11 +1559,15 @@
     "alternatives": [
       "intervals.sort()  # sorts by first element by default"
     ],
-    "explanation": "Sorting by start time is the foundation of almost every interval problem. After sorting, two intervals overlap if the current start is \u2264 the previous end.\n\nPython's default tuple sort works here since it sorts by first element, then second \u2014 but using `key=lambda x: x[0]` is more explicit and readable.",
+    "explanation": "Sorting by start time is the foundation of almost every interval problem. After sorting, two intervals overlap if the current start is ≤ the previous end.\n\nPython's default tuple sort works here since it sorts by first element, then second — but using `key=lambda x: x[0]` is more explicit and readable.",
     "tags": [
       "intervals",
       "sort",
       "overlap check"
+    ],
+    "distractors": [
+      "intervals.sort(key=lambda x: x[1])\n# Two consecutive intervals overlap if:\noverlap = intervals[i][0] < intervals[i-1][1]",
+      "intervals.sort(key=lambda x: x[0])\n# Two consecutive intervals overlap if:\noverlap = intervals[i][0] < intervals[i-1][0]"
     ]
   },
   {
@@ -1445,7 +1577,7 @@
     "prompt": "Given a list of `intervals`, merge all overlapping intervals and return the merged list.",
     "expectedCode": "intervals.sort()\nmerged = [intervals[0]]\nfor start, end in intervals[1:]:\n    if start <= merged[-1][1]:\n        merged[-1][1] = max(merged[-1][1], end)\n    else:\n        merged.append([start, end])\nreturn merged",
     "alternatives": [],
-    "explanation": "Sort by start, then iterate. If current interval overlaps with the last merged one (start \u2264 last_end), extend the end to max(last_end, current_end). Otherwise, it's a new group.\n\nKey insight: after sorting by start, you only need to compare with the last merged interval \u2014 no need to look further back. Time: O(n log n) for sort.",
+    "explanation": "Sort by start, then iterate. If current interval overlaps with the last merged one (start ≤ last_end), extend the end to max(last_end, current_end). Otherwise, it's a new group.\n\nKey insight: after sorting by start, you only need to compare with the last merged interval — no need to look further back. Time: O(n log n) for sort.",
     "tags": [
       "intervals",
       "merge",
@@ -1467,7 +1599,7 @@
     ]
   },
   {
-    "title": "Meeting rooms \u2014 min rooms with sweep line",
+    "title": "Meeting rooms — min rooms with sweep line",
     "category": "Intervals",
     "level": 4,
     "prompt": "Given meeting `intervals`, find the minimum number of conference rooms needed. Use the sweep line approach.",
@@ -1475,7 +1607,7 @@
     "alternatives": [
       "import heapq\nintervals.sort()\nheap = []\nfor start, end in intervals:\n    if heap and heap[0] <= start:\n        heapq.heappop(heap)\n    heapq.heappush(heap, end)\nreturn len(heap)"
     ],
-    "explanation": "Sweep line: decompose intervals into +1 (start) and -1 (end) events. Sort by time, process in order \u2014 the running sum is the number of concurrent meetings. The max of this sum is the answer.\n\nTie-breaking: if a meeting ends and another starts at the same time, the end (-1) should come first (room freed before needed). The tuple sort `(time, delta)` handles this since -1 < 1.\n\nAlternative: min-heap tracking end times of active meetings.",
+    "explanation": "Sweep line: decompose intervals into +1 (start) and -1 (end) events. Sort by time, process in order — the running sum is the number of concurrent meetings. The max of this sum is the answer.\n\nTie-breaking: if a meeting ends and another starts at the same time, the end (-1) should come first (room freed before needed). The tuple sort `(time, delta)` handles this since -1 < 1.\n\nAlternative: min-heap tracking end times of active meetings.",
     "tags": [
       "intervals",
       "sweep line",
@@ -1496,6 +1628,10 @@
       "math",
       "GCD",
       "LCM"
+    ],
+    "distractors": [
+      "from math import gcd\ng = gcd(a, b)\nlcm = a + b // g",
+      "from math import gcd\ng = gcd(a, b)\nlcm = (a * b) % g"
     ]
   },
   {
@@ -1505,21 +1641,25 @@
     "prompt": "Compute `(a * b) % MOD` and `pow(a, b, MOD)` where `MOD = 10**9 + 7`. Why use modular arithmetic in competitive programming?",
     "expectedCode": "MOD = 10**9 + 7\nresult = (a * b) % MOD\nmod_pow = pow(a, b, MOD)  # efficient modular exponentiation",
     "alternatives": [],
-    "explanation": "Large numbers overflow in other languages. Python handles big ints natively, but modular results are still needed for answer format.\n\n`pow(a, b, MOD)` uses fast exponentiation (binary exponentiation) \u2014 O(log b) multiplications, much faster than `(a**b) % MOD`.\n\nKey rule: `(a * b) % M = ((a % M) * (b % M)) % M`. Apply mod at each step to keep numbers small.",
+    "explanation": "Large numbers overflow in other languages. Python handles big ints natively, but modular results are still needed for answer format.\n\n`pow(a, b, MOD)` uses fast exponentiation (binary exponentiation) — O(log b) multiplications, much faster than `(a**b) % MOD`.\n\nKey rule: `(a * b) % M = ((a % M) * (b % M)) % M`. Apply mod at each step to keep numbers small.",
     "tags": [
       "math",
       "modular arithmetic",
       "pow"
+    ],
+    "distractors": [
+      "MOD = 10**9 + 7\nresult = (a * b) // MOD\nmod_pow = pow(a, b) % MOD",
+      "MOD = 10**9 + 7\nresult = (a + b) % MOD\nmod_pow = pow(a, b, MOD)"
     ]
   },
   {
-    "title": "Rotate a matrix 90\u00b0 clockwise",
+    "title": "Rotate a matrix 90° clockwise",
     "category": "Math & Geometry",
     "level": 2,
-    "prompt": "Rotate an n\u00d7n `matrix` 90\u00b0 clockwise in-place. Two-step approach: transpose then reverse rows.",
+    "prompt": "Rotate an n×n `matrix` 90° clockwise in-place. Two-step approach: transpose then reverse rows.",
     "expectedCode": "n = len(matrix)\n# Transpose\nfor i in range(n):\n    for j in range(i + 1, n):\n        matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]\n# Reverse each row\nfor row in matrix:\n    row.reverse()",
     "alternatives": [],
-    "explanation": "90\u00b0 clockwise = transpose + reverse rows. 90\u00b0 counter-clockwise = transpose + reverse columns (or reverse rows + transpose).\n\nTranspose swaps `matrix[i][j]` with `matrix[j][i]`. Only swap upper triangle (`j > i`) to avoid double-swapping. Then reverse each row.\n\nAlternative: use `matrix[i][j] \u2192 matrix[j][n-1-i]` directly with a temp variable rotating 4 cells at once, but the two-step approach is easier to remember.",
+    "explanation": "90° clockwise = transpose + reverse rows. 90° counter-clockwise = transpose + reverse columns (or reverse rows + transpose).\n\nTranspose swaps `matrix[i][j]` with `matrix[j][i]`. Only swap upper triangle (`j > i`) to avoid double-swapping. Then reverse each row.\n\nAlternative: use `matrix[i][j] → matrix[j][n-1-i]` directly with a temp variable rotating 4 cells at once, but the two-step approach is easier to remember.",
     "tags": [
       "matrix",
       "rotation",
@@ -1533,7 +1673,7 @@
     "prompt": "Generate all primes up to `n` using the Sieve of Eratosthenes.",
     "expectedCode": "is_prime = [True] * (n + 1)\nis_prime[0] = is_prime[1] = False\nfor i in range(2, int(n**0.5) + 1):\n    if is_prime[i]:\n        for j in range(i*i, n + 1, i):\n            is_prime[j] = False\nprimes = [i for i in range(2, n + 1) if is_prime[i]]",
     "alternatives": [],
-    "explanation": "Start by assuming all numbers are prime. For each prime i, mark all multiples starting at i\u00b2 (smaller multiples already handled by smaller primes).\n\nOptimization: only sieve up to \u221an \u2014 any composite \u2264 n has a factor \u2264 \u221an. Time: O(n log log n). Space: O(n).\n\nUseful for: count primes, prime factorization, problems needing fast primality checks.",
+    "explanation": "Start by assuming all numbers are prime. For each prime i, mark all multiples starting at i² (smaller multiples already handled by smaller primes).\n\nOptimization: only sieve up to √n — any composite ≤ n has a factor ≤ √n. Time: O(n log log n). Space: O(n).\n\nUseful for: count primes, prime factorization, problems needing fast primality checks.",
     "tags": [
       "math",
       "sieve",
@@ -1547,7 +1687,7 @@
     "prompt": "Given n points on a 2D plane, find the max number of points on the same line. What's the key math insight?",
     "expectedCode": "from collections import defaultdict\nfrom math import gcd\n\ndef max_points(points):\n    n = len(points)\n    if n <= 2:\n        return n\n    best = 2\n    for i in range(n):\n        slopes = defaultdict(int)\n        for j in range(i + 1, n):\n            dx = points[j][0] - points[i][0]\n            dy = points[j][1] - points[i][1]\n            g = gcd(abs(dx), abs(dy))\n            slope = (dx // g, dy // g)\n            if slope[0] < 0:\n                slope = (-slope[0], -slope[1])\n            elif slope[0] == 0:\n                slope = (0, abs(slope[1]))\n            slopes[slope] += 1\n        best = max(best, max(slopes.values()) + 1)\n    return best",
     "alternatives": [],
-    "explanation": "Key insight: use slope as a hash key. But avoid floating point \u2014 represent slope as reduced fraction (dx/gcd, dy/gcd) with consistent sign.\n\nFor each point, compute slopes to all other points, group by slope, find the largest group. The +1 accounts for the anchor point itself.\n\nNormalization: ensure dx is non-negative (or zero with positive dy) to avoid (-1,2) and (1,-2) being different keys for the same slope.",
+    "explanation": "Key insight: use slope as a hash key. But avoid floating point — represent slope as reduced fraction (dx/gcd, dy/gcd) with consistent sign.\n\nFor each point, compute slopes to all other points, group by slope, find the largest group. The +1 accounts for the anchor point itself.\n\nNormalization: ensure dx is non-negative (or zero with positive dy) to avoid (-1,2) and (1,-2) being different keys for the same slope.",
     "tags": [
       "math",
       "geometry",
@@ -1559,7 +1699,7 @@
     "title": "Spiral matrix traversal",
     "category": "Math & Geometry",
     "level": 4,
-    "prompt": "Given an m\u00d7n `matrix`, return all elements in spiral order.",
+    "prompt": "Given an m×n `matrix`, return all elements in spiral order.",
     "expectedCode": "result = []\ntop, bottom, left, right = 0, len(matrix) - 1, 0, len(matrix[0]) - 1\nwhile top <= bottom and left <= right:\n    for j in range(left, right + 1):\n        result.append(matrix[top][j])\n    top += 1\n    for i in range(top, bottom + 1):\n        result.append(matrix[i][right])\n    right -= 1\n    if top <= bottom:\n        for j in range(right, left - 1, -1):\n            result.append(matrix[bottom][j])\n        bottom -= 1\n    if left <= right:\n        for i in range(bottom, top - 1, -1):\n            result.append(matrix[i][left])\n        left += 1\nreturn result",
     "alternatives": [],
     "explanation": "Four boundaries: top, bottom, left, right. Each iteration walks one full layer: right across top, down right side, left across bottom, up left side. Then shrink boundaries inward.\n\nThe `if top <= bottom` and `if left <= right` guards prevent double-counting on the last layer when the remaining area is a single row or column.",
@@ -1570,28 +1710,32 @@
     ]
   },
   {
-    "title": "Implement a Trie \u2014 insert and search",
+    "title": "Implement a Trie — insert and search",
     "category": "Tries",
     "level": 1,
     "prompt": "Implement a Trie class with `insert(word)` and `search(word)` methods.",
     "expectedCode": "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.is_end = False\n\nclass Trie:\n    def __init__(self):\n        self.root = TrieNode()\n\n    def insert(self, word):\n        node = self.root\n        for c in word:\n            if c not in node.children:\n                node.children[c] = TrieNode()\n            node = node.children[c]\n        node.is_end = True\n\n    def search(self, word):\n        node = self.root\n        for c in word:\n            if c not in node.children:\n                return False\n            node = node.children[c]\n        return node.is_end",
     "alternatives": [],
-    "explanation": "A trie stores strings character-by-character in a tree. Each node has a dict of children and an `is_end` flag.\n\n`insert`: walk down creating nodes as needed, mark the last node as end of word.\n`search`: walk down \u2014 return False if any character is missing, True only if we reach a node marked as end.\n\nTime: O(m) for both operations where m = word length. Space: O(total characters across all words).",
+    "explanation": "A trie stores strings character-by-character in a tree. Each node has a dict of children and an `is_end` flag.\n\n`insert`: walk down creating nodes as needed, mark the last node as end of word.\n`search`: walk down — return False if any character is missing, True only if we reach a node marked as end.\n\nTime: O(m) for both operations where m = word length. Space: O(total characters across all words).",
     "tags": [
       "trie",
       "prefix tree",
       "insert",
       "search"
+    ],
+    "distractors": [
+      "class TrieNode:\n    def __init__(self):\n        self.children = {}\n        self.is_end = False\n\nclass Trie:\n    def __init__(self):\n        self.root = TrieNode()\n\n    def insert(self, word):\n        node = self.root\n        for c in word:\n            if c not in node.children:\n                node.children[c] = TrieNode()\n            node = node.children[c]\n        node.is_end = True\n\n    def search(self, word):\n        node = self.root\n        for c in word:\n            if c not in node.children:\n                return False\n            node = node.children[c]\n        return True",
+      "class Trie:\n    def __init__(self):\n        self.words = set()\n\n    def insert(self, word):\n        self.words.add(word)\n\n    def search(self, word):\n        return word in self.words"
     ]
   },
   {
-    "title": "Trie \u2014 startsWith (prefix search)",
+    "title": "Trie — startsWith (prefix search)",
     "category": "Tries",
     "level": 2,
     "prompt": "Add a `startsWith(prefix)` method to the Trie. How does it differ from `search`?",
     "expectedCode": "def startsWith(self, prefix):\n    node = self.root\n    for c in prefix:\n        if c not in node.children:\n            return False\n        node = node.children[c]\n    return True  # don't check is_end",
     "alternatives": [],
-    "explanation": "`startsWith` is identical to `search` except the last line: it returns True as long as we can walk the full prefix \u2014 we don't care if it's a complete word or not.\n\n`search('app')` \u2192 True only if 'app' was inserted. `startsWith('app')` \u2192 True if any word starts with 'app' (e.g., 'apple', 'application').\n\nThis is why prefix trees are useful: prefix operations are O(m) regardless of how many words are stored.",
+    "explanation": "`startsWith` is identical to `search` except the last line: it returns True as long as we can walk the full prefix — we don't care if it's a complete word or not.\n\n`search('app')` → True only if 'app' was inserted. `startsWith('app')` → True if any word starts with 'app' (e.g., 'apple', 'application').\n\nThis is why prefix trees are useful: prefix operations are O(m) regardless of how many words are stored.",
     "tags": [
       "trie",
       "prefix",
@@ -1599,13 +1743,13 @@
     ]
   },
   {
-    "title": "Trie vs hash set \u2014 when to use each",
+    "title": "Trie vs hash set — when to use each",
     "category": "Tries",
     "level": 3,
     "prompt": "When should you use a Trie over a hash set for string lookups? Give specific problem scenarios.",
     "expectedCode": "# Use Trie when:\n# 1. Prefix matching needed (autocomplete, startsWith)\n# 2. Character-by-character processing (word search in grid)\n# 3. Early termination on prefix mismatch saves work\n\n# Use hash set when:\n# 1. Only exact match needed (word in set)\n# 2. Simpler code, less memory overhead\n# 3. No prefix operations required\n\n# Example Trie problems:\n# - Word Search II (backtracking + trie for pruning)\n# - Autocomplete system\n# - Longest word with all prefixes valid",
     "alternatives": [],
-    "explanation": "Hash set: O(m) lookup per query, simple, but no prefix operations. Trie: O(m) for exact match AND prefix match, with character-level control.\n\nThe key advantage of tries is pruning: in Word Search II, you can abandon a path as soon as no trie child exists for the next character \u2014 a hash set can't short-circuit mid-word.\n\nMemory: tries use more memory for short word lists but can be more efficient for many words with shared prefixes.",
+    "explanation": "Hash set: O(m) lookup per query, simple, but no prefix operations. Trie: O(m) for exact match AND prefix match, with character-level control.\n\nThe key advantage of tries is pruning: in Word Search II, you can abandon a path as soon as no trie child exists for the next character — a hash set can't short-circuit mid-word.\n\nMemory: tries use more memory for short word lists but can be more efficient for many words with shared prefixes.",
     "tags": [
       "trie",
       "hash set",
@@ -1614,13 +1758,13 @@
     ]
   },
   {
-    "title": "Trie + DFS \u2014 word search II pattern",
+    "title": "Trie + DFS — word search II pattern",
     "category": "Tries",
     "level": 4,
     "prompt": "Describe the pattern for using a Trie to solve \"find all words from a dictionary that exist in a character grid\" (Word Search II). Write the key DFS loop with trie pruning.",
     "expectedCode": "def findWords(board, words):\n    trie = Trie()\n    for w in words:\n        trie.insert(w)\n    \n    result = set()\n    m, n = len(board), len(board[0])\n    \n    def dfs(i, j, node, path):\n        if node.is_end:\n            result.add(path)\n            node.is_end = False  # avoid duplicates\n        if i < 0 or i >= m or j < 0 or j >= n:\n            return\n        c = board[i][j]\n        if c not in node.children:\n            return  # prune: no word continues this way\n        board[i][j] = '#'  # mark visited\n        for di, dj in [(0,1),(0,-1),(1,0),(-1,0)]:\n            dfs(i+di, j+dj, node.children[c], path + c)\n        board[i][j] = c  # restore\n    \n    for i in range(m):\n        for j in range(n):\n            dfs(i, j, trie.root, '')",
     "alternatives": [],
-    "explanation": "Insert all dictionary words into a trie. DFS from every cell, walking the trie simultaneously. If the current character has no trie child \u2192 prune (no dictionary word goes this way).\n\nKey optimizations: (1) `node.is_end = False` after finding a word to avoid duplicate results, (2) in-place board marking with `#` for visited cells, (3) trie pruning eliminates most DFS branches early.\n\nWithout trie: you'd need a separate DFS per word \u2014 O(words * m*n * 4^L). With trie: one DFS pass with shared prefix elimination.",
+    "explanation": "Insert all dictionary words into a trie. DFS from every cell, walking the trie simultaneously. If the current character has no trie child → prune (no dictionary word goes this way).\n\nKey optimizations: (1) `node.is_end = False` after finding a word to avoid duplicate results, (2) in-place board marking with `#` for visited cells, (3) trie pruning eliminates most DFS branches early.\n\nWithout trie: you'd need a separate DFS per word — O(words * m*n * 4^L). With trie: one DFS pass with shared prefix elimination.",
     "tags": [
       "trie",
       "DFS",
@@ -1635,7 +1779,7 @@
     "prompt": "Explain: when do you reach for a monotonic stack vs a regular stack? Give one problem example for each.",
     "expectedCode": "# Regular stack: matching/nesting problems\n# - Valid parentheses: push open, pop on matching close\n# - Evaluate expression: push operands, pop on operator\n# Key signal: need to match or undo previous elements\n\n# Monotonic stack: next-greater/smaller element problems\n# - Daily temperatures: find next warmer day for each day\n# - Largest rectangle in histogram\n# Key signal: for each element, find the nearest larger/smaller\n\n# Monotonic decreasing stack template:\nstack = []\nfor i, val in enumerate(nums):\n    while stack and nums[stack[-1]] < val:\n        idx = stack.pop()\n        result[idx] = val  # val is the next greater\n    stack.append(i)",
     "alternatives": [],
-    "explanation": "Regular stack: elements are pushed and popped in LIFO order for matching (brackets, undo, evaluation). The stack maintains context.\n\nMonotonic stack: maintains a sorted invariant (all increasing or all decreasing). When a new element violates the invariant, pop until restored \u2014 each pop resolves one 'next greater/smaller' query.\n\nBoth are O(n) since each element is pushed and popped at most once.",
+    "explanation": "Regular stack: elements are pushed and popped in LIFO order for matching (brackets, undo, evaluation). The stack maintains context.\n\nMonotonic stack: maintains a sorted invariant (all increasing or all decreasing). When a new element violates the invariant, pop until restored — each pop resolves one 'next greater/smaller' query.\n\nBoth are O(n) since each element is pushed and popped at most once.",
     "tags": [
       "stack",
       "monotonic stack",
@@ -1643,7 +1787,7 @@
     ]
   },
   {
-    "title": "DFS return value vs DFS with nonlocal \u2014 when each",
+    "title": "DFS return value vs DFS with nonlocal — when each",
     "category": "Trees",
     "level": 3,
     "prompt": "When should you return a value from DFS (bottom-up) vs use a nonlocal variable (side-effect)? Give an example of each.",
@@ -1658,13 +1802,13 @@
     ]
   },
   {
-    "title": "Binary search + greedy \u2014 split array largest sum",
+    "title": "Binary search + greedy — split array largest sum",
     "category": "Binary Search",
     "level": 4,
     "prompt": "Binary search on answer space: given `nums` and `k`, minimize the largest sum when splitting nums into k subarrays. Write the binary search + feasibility check.",
     "expectedCode": "def canSplit(nums, k, max_sum):\n    count = 1\n    curr = 0\n    for n in nums:\n        if curr + n > max_sum:\n            count += 1\n            curr = n\n        else:\n            curr += n\n    return count <= k\n\nlo, hi = max(nums), sum(nums)\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if canSplit(nums, k, mid):\n        hi = mid\n    else:\n        lo = mid + 1\nreturn lo",
     "alternatives": [],
-    "explanation": "Binary search on the answer: the answer (max subarray sum) is between max(nums) and sum(nums). For each candidate `mid`, greedily check if we can split into \u2264 k parts where each part's sum \u2264 mid.\n\nThe greedy check is O(n): keep adding to current partition, start a new one when adding would exceed mid. If we need > k partitions, mid is too small.\n\nThis 'binary search on answer + greedy feasibility check' pattern applies to many min-max optimization problems.",
+    "explanation": "Binary search on the answer: the answer (max subarray sum) is between max(nums) and sum(nums). For each candidate `mid`, greedily check if we can split into ≤ k parts where each part's sum ≤ mid.\n\nThe greedy check is O(n): keep adding to current partition, start a new one when adding would exceed mid. If we need > k partitions, mid is too small.\n\nThis 'binary search on answer + greedy feasibility check' pattern applies to many min-max optimization problems.",
     "tags": [
       "binary search",
       "answer space",
@@ -1672,7 +1816,7 @@
     ]
   },
   {
-    "title": "LRU Cache \u2014 hash map + doubly linked list",
+    "title": "LRU Cache — hash map + doubly linked list",
     "category": "Linked List",
     "level": 4,
     "prompt": "Describe the data structure combination for O(1) LRU Cache. Write the key operations: get and put.",
@@ -1690,18 +1834,22 @@
     "title": "Character to frequency index",
     "category": "Arrays & Hashing",
     "level": 1,
-    "prompt": "Map a lowercase character `c` to an integer index 0\u201325 (`'a'` \u2192 0, `'b'` \u2192 1, \u2026, `'z'` \u2192 25).",
+    "prompt": "Map a lowercase character `c` to an integer index 0–25 (`'a'` → 0, `'b'` → 1, …, `'z'` → 25).",
     "expectedCode": "ord(c) - ord('a')",
     "alternatives": [
       "ord(c) - 97"
     ],
-    "explanation": "`ord(c)` returns the Unicode code point of `c`. Subtracting `ord('a')` (97) gives a 0-based index.\n\n`ord(c) - 97` is identical \u2014 hard-coded 97 works but `ord('a')` is self-documenting.\n\nJava equivalent: `c - 'a'` (chars subtract directly). C++: same, `c - 'a'`.",
+    "explanation": "`ord(c)` returns the Unicode code point of `c`. Subtracting `ord('a')` (97) gives a 0-based index.\n\n`ord(c) - 97` is identical — hard-coded 97 works but `ord('a')` is self-documenting.\n\nJava equivalent: `c - 'a'` (chars subtract directly). C++: same, `c - 'a'`.",
     "tags": [
       "ord",
       "char index",
       "Group Anagrams",
       "Valid Anagram",
       "Ransom Note"
+    ],
+    "distractors": [
+      "chr(c) - ord('a')",
+      "ord(c) - ord('A')"
     ]
   },
   {
@@ -1713,12 +1861,16 @@
     "alternatives": [
       "freq = [0 for _ in range(26)]"
     ],
-    "explanation": "`[0] * 26` creates a new list with 26 zero elements via list multiplication. It's the idiomatic Python way to initialize a fixed-size array.\n\nThe list comprehension `[0 for _ in range(26)]` is equivalent but more verbose \u2014 use it when you need to compute each element.\n\nJava equivalent: `int[] freq = new int[26];` (zero-initialized by default). C++: `int freq[26] = {};`",
+    "explanation": "`[0] * 26` creates a new list with 26 zero elements via list multiplication. It's the idiomatic Python way to initialize a fixed-size array.\n\nThe list comprehension `[0 for _ in range(26)]` is equivalent but more verbose — use it when you need to compute each element.\n\nJava equivalent: `int[] freq = new int[26];` (zero-initialized by default). C++: `int freq[26] = {};`",
     "tags": [
       "list multiplication",
       "frequency array",
       "Group Anagrams",
       "Valid Anagram"
+    ],
+    "distractors": [
+      "freq = [0] * 25",
+      "freq = [None] * 26"
     ]
   },
   {
@@ -1748,11 +1900,15 @@
     "alternatives": [
       "key = tuple(freq[:])"
     ],
-    "explanation": "Lists are mutable and not hashable \u2014 you can't use a list as a dict key. `tuple(freq)` creates an immutable, hashable copy.\n\nTwo anagram strings produce identical `freq` arrays, so `tuple(freq)` is a collision-free key for grouping.\n\nJava equivalent: `Arrays.toString(freq)` (produces a string key). C++: `std::string(freq.begin(), freq.end())` or convert to `std::tuple`.",
+    "explanation": "Lists are mutable and not hashable — you can't use a list as a dict key. `tuple(freq)` creates an immutable, hashable copy.\n\nTwo anagram strings produce identical `freq` arrays, so `tuple(freq)` is a collision-free key for grouping.\n\nJava equivalent: `Arrays.toString(freq)` (produces a string key). C++: `std::string(freq.begin(), freq.end())` or convert to `std::tuple`.",
     "tags": [
       "tuple",
       "hashable",
       "Group Anagrams"
+    ],
+    "distractors": [
+      "key = list(freq)",
+      "key = str(freq)"
     ]
   },
   {
@@ -1764,7 +1920,7 @@
     "alternatives": [
       "anagram_map[tuple(freq)] += [word]"
     ],
-    "explanation": "`tuple(freq)` is the anagram key \u2014 same for all anagrams of each other. `defaultdict(list)` auto-creates an empty list on first access, so no `if key not in map` guard needed.\n\n`.append()` is O(1) amortized. `+= [word]` creates a new list each time \u2014 avoid it in hot loops.\n\nJava: `map.computeIfAbsent(key, k -> new ArrayList<>()).add(word);`",
+    "explanation": "`tuple(freq)` is the anagram key — same for all anagrams of each other. `defaultdict(list)` auto-creates an empty list on first access, so no `if key not in map` guard needed.\n\n`.append()` is O(1) amortized. `+= [word]` creates a new list each time — avoid it in hot loops.\n\nJava: `map.computeIfAbsent(key, k -> new ArrayList<>()).add(word);`",
     "tags": [
       "defaultdict",
       "tuple",
@@ -1780,7 +1936,7 @@
     "alternatives": [
       "return [group for group in anagram_map.values()]"
     ],
-    "explanation": "`.values()` returns a dict_values view \u2014 not subscriptable. Wrap in `list()` to get a plain list of lists.\n\nThe comprehension `[group for group in ...values()]` is equivalent but adds no transformation \u2014 use it only if you need to filter or transform groups.\n\nJava: `new ArrayList<>(map.values())`.",
+    "explanation": "`.values()` returns a dict_values view — not subscriptable. Wrap in `list()` to get a plain list of lists.\n\nThe comprehension `[group for group in ...values()]` is equivalent but adds no transformation — use it only if you need to filter or transform groups.\n\nJava: `new ArrayList<>(map.values())`.",
     "tags": [
       "dict values",
       "defaultdict",
@@ -1788,15 +1944,15 @@
     ]
   },
   {
-    "title": "Anagram key: freq array \u2192 tuple (composition)",
+    "title": "Anagram key: freq array → tuple (composition)",
     "category": "Arrays & Hashing",
     "level": 3,
-    "prompt": "Write a standalone function `anagram_key(word)` that returns the 26-element character frequency tuple for a lowercase string \u2014 the key used to group anagrams.",
+    "prompt": "Write a standalone function `anagram_key(word)` that returns the 26-element character frequency tuple for a lowercase string — the key used to group anagrams.",
     "expectedCode": "def anagram_key(word):\n    freq = [0] * 26\n    for c in word:\n        freq[ord(c) - ord('a')] += 1\n    return tuple(freq)",
     "alternatives": [
       "def anagram_key(word):\n    freq = [0] * 26\n    for c in word:\n        freq[ord(c) - 97] += 1\n    return tuple(freq)"
     ],
-    "explanation": "Composes three atoms: (1) `[0]*26` zero-init, (2) `ord(c)-ord('a')` index, (3) `tuple()` for hashability.\n\nThis function appears verbatim inside Group Anagrams. Recognizing it as a self-contained unit makes L4 decomposition easier.\n\nAlternative one-liner: `tuple(sorted(word))` \u2014 simpler but O(n log n) vs O(n) for the freq approach. Use freq when performance matters or when you need the counts themselves.",
+    "explanation": "Composes three atoms: (1) `[0]*26` zero-init, (2) `ord(c)-ord('a')` index, (3) `tuple()` for hashability.\n\nThis function appears verbatim inside Group Anagrams. Recognizing it as a self-contained unit makes L4 decomposition easier.\n\nAlternative one-liner: `tuple(sorted(word))` — simpler but O(n log n) vs O(n) for the freq approach. Use freq when performance matters or when you need the counts themselves.",
     "tags": [
       "ord",
       "frequency array",
@@ -1811,7 +1967,7 @@
     ]
   },
   {
-    "title": "Group Anagrams \u2014 full implementation",
+    "title": "Group Anagrams — full implementation",
     "category": "Arrays & Hashing",
     "level": 4,
     "prompt": "Implement `groupAnagrams(strs)`: given a list of strings, group all anagrams together. Return a list of groups (order within groups does not matter).",
@@ -1819,7 +1975,7 @@
     "alternatives": [
       "from collections import defaultdict\n\ndef groupAnagrams(strs):\n    anagram_map = defaultdict(list)\n    for word in strs:\n        anagram_map[tuple(sorted(word))].append(word)\n    return list(anagram_map.values())"
     ],
-    "explanation": "Two atoms drive this solution: a character frequency signature (O(n) per word) and `defaultdict(list)` grouping.\n\nWhy freq array over sorted key: `tuple(sorted(word))` works and is simpler \u2014 O(n log n) per word. The freq approach is O(n) per word, O(n*k) overall (k = avg word length). At interview scale either is fine; mention the tradeoff.\n\nWhy defaultdict: avoids `if key not in map` boilerplate. The same pattern (build key \u2192 append to group \u2192 return groups) appears in Valid Anagram, Ransom Note, Find All Anagrams, and Minimum Window Substring.\n\nJava: `Map<String, List<String>> map = new HashMap<>();` + `Arrays.toString(freq)` as key.",
+    "explanation": "Two atoms drive this solution: a character frequency signature (O(n) per word) and `defaultdict(list)` grouping.\n\nWhy freq array over sorted key: `tuple(sorted(word))` works and is simpler — O(n log n) per word. The freq approach is O(n) per word, O(n*k) overall (k = avg word length). At interview scale either is fine; mention the tradeoff.\n\nWhy defaultdict: avoids `if key not in map` boilerplate. The same pattern (build key → append to group → return groups) appears in Valid Anagram, Ransom Note, Find All Anagrams, and Minimum Window Substring.\n\nJava: `Map<String, List<String>> map = new HashMap<>();` + `Arrays.toString(freq)` as key.",
     "tags": [
       "Group Anagrams",
       "defaultdict",
@@ -1837,13 +1993,13 @@
     "title": "Group strings by digit frequency",
     "category": "Arrays & Hashing",
     "level": 5,
-    "prompt": "Given a list of strings `strs` containing only digits `'0'`\u2013`'9'`, group strings that are digit-anagrams of each other. Return a list of groups (order doesn't matter).\n\nExample: `['123', '321', '456', '654', '111']` \u2192 `[['123', '321'], ['456', '654'], ['111']]`",
+    "prompt": "Given a list of strings `strs` containing only digits `'0'`–`'9'`, group strings that are digit-anagrams of each other. Return a list of groups (order doesn't matter).\n\nExample: `['123', '321', '456', '654', '111']` → `[['123', '321'], ['456', '654'], ['111']]`",
     "expectedCode": "from collections import defaultdict\n\ndef groupByDigitFreq(strs):\n    groups = defaultdict(list)\n    for s in strs:\n        freq = [0] * 10\n        for c in s:\n            freq[int(c)] += 1\n        groups[tuple(freq)].append(s)\n    return list(groups.values())",
     "alternatives": [
       "from collections import defaultdict\n\ndef groupByDigitFreq(strs):\n    groups = defaultdict(list)\n    for s in strs:\n        freq = [0] * 10\n        for c in s:\n            freq[ord(c) - ord('0')] += 1\n        groups[tuple(freq)].append(s)\n    return list(groups.values())",
       "from collections import Counter, defaultdict\n\ndef groupByDigitFreq(strs):\n    groups = defaultdict(list)\n    for s in strs:\n        key = tuple(sorted(Counter(s).items()))\n        groups[key].append(s)\n    return list(groups.values())"
     ],
-    "explanation": "Same pattern as Group Anagrams but with digits instead of letters. Instead of a 26-slot frequency array, use 10 slots (one per digit 0\u20139). The key insight: the grouping pattern (frequency \u2192 tuple \u2192 defaultdict) is the same \u2014 only the alphabet size changes.\n\nJava equivalent: `int[] freq = new int[10]` with `c - '0'` index.\nC++ equivalent: `array<int, 10> freq{}`.",
+    "explanation": "Same pattern as Group Anagrams but with digits instead of letters. Instead of a 26-slot frequency array, use 10 slots (one per digit 0–9). The key insight: the grouping pattern (frequency → tuple → defaultdict) is the same — only the alphabet size changes.\n\nJava equivalent: `int[] freq = new int[10]` with `c - '0'` index.\nC++ equivalent: `array<int, 10> freq{}`.",
     "tags": [
       "Group Anagrams",
       "frequency array",
@@ -1879,12 +2035,12 @@
     "title": "Group strings by vowel-only signature",
     "category": "Arrays & Hashing",
     "level": 5,
-    "prompt": "Given a list of lowercase strings `strs`, group strings that share the same vowel pattern \u2014 i.e., they contain the same vowels (`a, e, i, o, u`) with the same frequencies, ignoring consonants. Return a list of groups.\n\nExample: `['bat', 'tab', 'bet', 'ate', 'teb']` \u2192 `[['bat', 'tab', 'ate'], ['bet', 'teb']]`",
+    "prompt": "Given a list of lowercase strings `strs`, group strings that share the same vowel pattern — i.e., they contain the same vowels (`a, e, i, o, u`) with the same frequencies, ignoring consonants. Return a list of groups.\n\nExample: `['bat', 'tab', 'bet', 'ate', 'teb']` → `[['bat', 'tab', 'ate'], ['bet', 'teb']]`",
     "expectedCode": "from collections import defaultdict\n\ndef groupByVowels(strs):\n    vowels = set('aeiou')\n    groups = defaultdict(list)\n    for s in strs:\n        freq = [0] * 5  # a, e, i, o, u\n        for c in s:\n            if c in vowels:\n                freq[\"aeiou\".index(c)] += 1\n        groups[tuple(freq)].append(s)\n    return list(groups.values())",
     "alternatives": [
       "from collections import defaultdict\n\ndef groupByVowels(strs):\n    vowel_idx = {'a': 0, 'e': 1, 'i': 2, 'o': 3, 'u': 4}\n    groups = defaultdict(list)\n    for s in strs:\n        freq = [0] * 5\n        for c in s:\n            if c in vowel_idx:\n                freq[vowel_idx[c]] += 1\n        groups[tuple(freq)].append(s)\n    return list(groups.values())"
     ],
-    "explanation": "Variation on frequency-array grouping: instead of counting all 26 letters, count only the 5 vowels. The key pattern is identical \u2014 build a frequency tuple as a hashable dict key, group with defaultdict. Only the \"what to count\" changes.\n\nUnderstanding: the grouping pattern (extract feature \u2192 tuple \u2192 defaultdict) is a reusable template. Recognizing when to apply it to novel constraints is the L5 skill.",
+    "explanation": "Variation on frequency-array grouping: instead of counting all 26 letters, count only the 5 vowels. The key pattern is identical — build a frequency tuple as a hashable dict key, group with defaultdict. Only the \"what to count\" changes.\n\nUnderstanding: the grouping pattern (extract feature → tuple → defaultdict) is a reusable template. Recognizing when to apply it to novel constraints is the L5 skill.",
     "tags": [
       "Group Anagrams",
       "frequency array",
@@ -1920,12 +2076,12 @@
     "title": "Group numbers by digit-sum",
     "category": "Arrays & Hashing",
     "level": 5,
-    "prompt": "Given a list of non-negative integers `nums`, group numbers that have the same digit sum. Return a list of groups (each containing the original integers).\n\nExample: `[18, 27, 36, 13, 31]` \u2192 `[[18, 27, 36], [13, 31]]`\n(18\u21929, 27\u21929, 36\u21929 share a group; 13\u21924, 31\u21924 share a group)",
+    "prompt": "Given a list of non-negative integers `nums`, group numbers that have the same digit sum. Return a list of groups (each containing the original integers).\n\nExample: `[18, 27, 36, 13, 31]` → `[[18, 27, 36], [13, 31]]`\n(18→9, 27→9, 36→9 share a group; 13→4, 31→4 share a group)",
     "expectedCode": "from collections import defaultdict\n\ndef groupByDigitSum(nums):\n    groups = defaultdict(list)\n    for n in nums:\n        digit_sum = sum(int(d) for d in str(n))\n        groups[digit_sum].append(n)\n    return list(groups.values())",
     "alternatives": [
       "from collections import defaultdict\n\ndef groupByDigitSum(nums):\n    groups = defaultdict(list)\n    for n in nums:\n        s = 0\n        x = n\n        while x > 0:\n            s += x % 10\n            x //= 10\n        groups[s].append(n)\n    return list(groups.values())"
     ],
-    "explanation": "Simpler variant: the \"key\" is a single integer (digit sum) rather than a tuple. The grouping pattern is the same \u2014 compute a key, append to defaultdict. This tests whether you can adapt the pattern when the key extraction step is different.\n\nNote: when the key is a simple hashable value (int, string) rather than a tuple, you skip the tuple() step. The defaultdict pattern remains identical.",
+    "explanation": "Simpler variant: the \"key\" is a single integer (digit sum) rather than a tuple. The grouping pattern is the same — compute a key, append to defaultdict. This tests whether you can adapt the pattern when the key extraction step is different.\n\nNote: when the key is a simple hashable value (int, string) rather than a tuple, you skip the tuple() step. The defaultdict pattern remains identical.",
     "tags": [
       "Group Anagrams",
       "defaultdict",

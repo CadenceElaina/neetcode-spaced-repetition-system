@@ -421,10 +421,13 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
 
   useEffect(() => { fetchDrills(); }, [fetchDrills]);
 
-  // Pre-warm Pyodide when entering drill mode (background download)
+  // Pre-warm Pyodide + show tour when entering drill mode
   useEffect(() => {
     if (listMode === "drills") {
       getPyodide().init();
+      if (shouldShowTour()) {
+        setShowDrillTour(true);
+      }
     }
   }, [listMode]);
 
@@ -652,11 +655,6 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       : allDrills;
     const sessionDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
     if (sessionDrills.length === 0) return;
-
-    // Show tour on first visit
-    if (shouldShowTour()) {
-      setShowDrillTour(true);
-    }
 
     setDrillCombo(0);
     setDrillAutoContinue(false);

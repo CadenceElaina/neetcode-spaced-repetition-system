@@ -217,6 +217,7 @@ export const syntaxDrills = pgTable("syntax_drill", {
   tags: text("tags").array(),
   promptVariants: text("prompt_variants").array(),
   testCases: jsonb("test_cases"),
+  distractors: text("distractors").array(),
 });
 
 /* ── User Drill State (SRS state per drill per user) ── */
