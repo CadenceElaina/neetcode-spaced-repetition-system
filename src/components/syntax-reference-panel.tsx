@@ -166,48 +166,47 @@ export function SyntaxReferencePanel() {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ── Search + filter header ── */}
-      <div className="shrink-0 border-b border-border/50 pb-3 mb-3">
-        {/* Header row: label + toggle chevron */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-            Search &amp; Filter
-          </span>
-          <button
-            onClick={() => setSearchOpen((o) => !o)}
-            className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            title={searchOpen ? "Collapse search" : "Expand search"}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      <div className="shrink-0 border-b border-border/50 pb-3 mb-3 space-y-2">
+        {/* Search — always visible */}
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search syntax… (e.g. defaultdict, heapq)"
+          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
+        />
+
+        {/* Category filter — collapsible */}
+        {ALL_CATEGORIES.length > 1 && (
+          <div>
+            <button
+              onClick={() => setSearchOpen((o) => !o)}
+              className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 hover:text-muted-foreground transition-colors mb-1"
+              title={searchOpen ? "Hide filters" : "Show filters"}
             >
-              {searchOpen ? (
-                <polyline points="18 15 12 9 6 15" />
-              ) : (
-                <polyline points="6 9 12 15 18 9" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {searchOpen ? (
+                  <polyline points="18 15 12 9 6 15" />
+                ) : (
+                  <polyline points="6 9 12 15 18 9" />
+                )}
+              </svg>
+              Filter
+              {activeCategory && (
+                <span className="text-accent">: {activeCategory}</span>
               )}
-            </svg>
-          </button>
-        </div>
-
-        {searchOpen && (
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search syntax… (e.g. defaultdict, heapq)"
-              className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
-            />
-
-            {ALL_CATEGORIES.length > 1 && (
+            </button>
+            {searchOpen && (
               <div className="flex flex-wrap gap-1">
                 <button
                   onClick={() => setActiveCategory(null)}
