@@ -8,6 +8,10 @@ import { DifficultyBadge } from "@/components/difficulty-badge";
 import { ImportClient } from "@/app/import/import-client";
 import { LogAttemptModal, type LogModalProblem, type LogModalResult } from "@/components/log-attempt-modal";
 import { DrillCard } from "@/components/drill-card";
+import { SessionHeader } from "@/components/session-header";
+import { SessionSummary } from "@/components/session-summary";
+import { DrillTour, shouldShowTour } from "@/components/drill-tour";
+import { getMutedPref, setMutedPref, playSound } from "@/lib/sounds";
 import { DEMO_DRILLS, DEMO_FLUENCY_STATS, type DemoDrill, type DrillConfidence, type DemoFluencyCategory } from "@/app/dashboard/demo-data";
 
 /* ── Types ── */
@@ -336,6 +340,13 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [singleDrill, setSingleDrill] = useState<DemoDrill | null>(null);
   const [showDrillOnboarding, setShowDrillOnboarding] = useState(true);
 
+  // Phase 2 — session UX state
+  const [drillMuted, setDrillMuted] = useState(() => getMutedPref());
+  const [drillAutoContinue, setDrillAutoContinue] = useState(false);
+  const [drillCombo, setDrillCombo] = useState(0);
+  const [showDrillTour, setShowDrillTour] = useState(false);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+
   const activityData = useMemo(() => {
     if (activityRange === "14d") return data.attemptHistory;
     if (activityRange === "all") return data.fullAttemptHistory;
@@ -633,6 +644,15 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       : allDrills;
     const sessionDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
     if (sessionDrills.length === 0) return;
+
+    // Show tour on first visit
+    if (shouldShowTour()) {
+      setShowDrillTour(true);
+    }
+
+    setDrillCombo(0);
+    setDrillAutoContinue(false);
+    setShowSessionSummary(false);
     setDrillSession({ active: true, drills: sessionDrills, current: 0, results: [], categoryLabel: categoryFilter });
     setSelectedCategory(null);
     setSingleDrill(null);
@@ -673,6 +693,15 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     const currentDrill = drillSession.drills[drillSession.current];
     const newResults = [...drillSession.results, confidence];
 
+    // Update combo streak
+    const newCombo = confidence >= 3 ? drillCombo + 1 : 0;
+    setDrillCombo(newCombo);
+
+    // Play milestone sound at streak thresholds (5, 10, 25)
+    if ([5, 10, 25].includes(newCombo)) {
+      playSound("milestone", drillMuted);
+    }
+
     // POST attempt to API for authenticated users
     if (!isDemo && currentDrill) {
       const sessionPosition = drillSession.current + 1; // 1-indexed
@@ -691,11 +720,17 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     }
 
     if (drillSession.current + 1 >= drillSession.drills.length) {
-      // Session complete — show summary
+      // Session complete — show summary modal
       setDrillSession({ ...drillSession, results: newResults, active: false });
+      setShowSessionSummary(true);
     } else {
       setDrillSession({ ...drillSession, current: drillSession.current + 1, results: newResults });
     }
+  }
+
+  function handleDrillPrevious() {
+    if (!drillSession || drillSession.current === 0) return;
+    setDrillSession({ ...drillSession, current: drillSession.current - 1 });
   }
 
   function handleLoggedFromModal(result: LogModalResult) {
@@ -1140,33 +1175,29 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     key={singleDrill.id}
                     drill={singleDrill}
                     onRate={handleSingleDrillRate}
+                    muted={drillMuted}
                   />
                 </div>
               </div>
             ) : drillSession && drillSession.active ? (
               /* Active drill session */
               <div className="space-y-3 flex-1 flex flex-col min-h-0">
-                <div className="flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-foreground">
-                      {drillSession.categoryLabel ? `${drillSession.categoryLabel} Practice` : "Daily Drill"}
-                    </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{drillSession.current + 1}/{drillSession.drills.length}</span>
-                  </div>
-                  <button
-                    onClick={() => setDrillSession(null)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Exit
-                  </button>
-                </div>
-                {/* Progress bar */}
-                <div className="h-1.5 overflow-hidden rounded-full bg-background shrink-0">
-                  <div
-                    className="h-full rounded-full bg-accent transition-all duration-300"
-                    style={{ width: `${((drillSession.current + 1) / drillSession.drills.length) * 100}%` }}
-                  />
-                </div>
+                <SessionHeader
+                  current={drillSession.current}
+                  total={drillSession.drills.length}
+                  combo={drillCombo}
+                  autoContinue={drillAutoContinue}
+                  muted={drillMuted}
+                  onToggleAutoContinue={() => setDrillAutoContinue(prev => !prev)}
+                  onToggleMute={() => {
+                    setDrillMuted(prev => {
+                      setMutedPref(!prev);
+                      return !prev;
+                    });
+                  }}
+                  onExit={() => setDrillSession(null)}
+                  categoryLabel={drillSession.categoryLabel}
+                />
                 {drillSession.current >= 12 && (
                   <p className="text-[10px] text-orange-500">Fatigue note: you&apos;ve done 12+ drills. Quality may decrease — consider stopping.</p>
                 )}
@@ -1175,30 +1206,73 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     key={drillSession.drills[drillSession.current].id}
                     drill={drillSession.drills[drillSession.current]}
                     onRate={handleDrillRate}
+                    onPrevious={drillSession.current > 0 ? handleDrillPrevious : undefined}
+                    muted={drillMuted}
+                    autoContinue={drillAutoContinue}
                     position={drillSession.current + 1}
                     total={drillSession.drills.length}
                   />
                 </div>
+
+                {/* Tour overlay */}
+                {showDrillTour && (
+                  <DrillTour
+                    muted={drillMuted}
+                    onToggleMute={() => {
+                      setDrillMuted(prev => {
+                        setMutedPref(!prev);
+                        return !prev;
+                      });
+                    }}
+                    onDismiss={() => setShowDrillTour(false)}
+                    onClose={() => setShowDrillTour(false)}
+                  />
+                )}
               </div>
             ) : drillSession && !drillSession.active ? (
-              /* Session summary */
+              /* Session complete — SessionSummary modal or fallback */
               <div className="rounded-lg border border-border bg-muted p-4 space-y-3">
                 <h3 className="text-sm font-medium text-foreground">Session Complete!</h3>
                 <p className="text-xs text-muted-foreground">
                   {drillSession.drills.length} drills finished
                   {drillSession.categoryLabel && <> in {drillSession.categoryLabel}</>}
                 </p>
-                <div className="flex gap-3 text-xs">
-                  <span className="text-green-500">{drillSession.results.filter(r => r >= 3).length} Good/Easy</span>
-                  <span className="text-orange-500">{drillSession.results.filter(r => r === 2).length} Hard</span>
-                  <span className="text-red-500">{drillSession.results.filter(r => r === 1).length} Again</span>
-                </div>
                 <button
                   onClick={() => setDrillSession(null)}
                   className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90"
                 >
                   Done
                 </button>
+
+                {showSessionSummary && (
+                  <SessionSummary
+                    results={drillSession.results}
+                    categoryLabel={drillSession.categoryLabel}
+                    onDone={() => {
+                      setShowSessionSummary(false);
+                      setDrillSession(null);
+                    }}
+                    onKeepGoing={() => {
+                      // Re-enter open practice — add more drills to the session
+                      setShowSessionSummary(false);
+                      const pool = drillSession.categoryLabel
+                        ? allDrills.filter(d => d.category === drillSession.categoryLabel)
+                        : allDrills;
+                      const moreDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
+                      if (moreDrills.length > 0) {
+                        setDrillSession({
+                          active: true,
+                          drills: moreDrills,
+                          current: 0,
+                          results: [],
+                          categoryLabel: drillSession.categoryLabel,
+                        });
+                      } else {
+                        setDrillSession(null);
+                      }
+                    }}
+                  />
+                )}
               </div>
             ) : selectedCategory && selectedCategoryDrills ? (
               /* ── Category detail view ── */
