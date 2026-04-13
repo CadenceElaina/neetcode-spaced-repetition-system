@@ -730,17 +730,10 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
             </div>
           </div>
 
-          {/* Next button */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleNext}
-              className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90"
-            >
-              Next →
-            </button>
+          {/* Next button — sticky so it stays visible on long explanations */}
+          <div className="sticky bottom-0 bg-muted pt-2 pb-1 flex items-center justify-between border-t border-border/40 mt-1">
             <span className="text-[10px] text-muted-foreground">
-              Auto-rated:{" "}
-              <span className={
+              Auto-rated: <span className={
                 result.confidence === 4 ? "text-green-500 font-medium" :
                 result.confidence === 3 ? "text-accent font-medium" :
                 result.confidence === 2 ? "text-orange-500 font-medium" :
@@ -748,12 +741,18 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
               }>
                 {result.confidence === 4 ? "Easy" : result.confidence === 3 ? "Good" : result.confidence === 2 ? "Hard" : "Again"}
               </span>
-              {" "}— SRS scheduling based on your accuracy
+              {" — SRS scheduling based on your accuracy"}
             </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground opacity-50">Ctrl+. next · Ctrl+, previous</span>
+              <button
+                onClick={handleNext}
+                className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90"
+              >
+                Next →
+              </button>
+            </div>
           </div>
-
-          {/* Navigation hint */}
-          <p className="text-[10px] text-muted-foreground/60">Ctrl+. next · Ctrl+, previous</p>
         </div>
       )}
     </div>

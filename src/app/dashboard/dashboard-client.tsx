@@ -313,6 +313,8 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const searchParams = useSearchParams();
   const router = useRouter();
   const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string } | null>(null);
+  const drillScrollRef = useRef<HTMLDivElement>(null);
+
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
   const [targetCount, setTargetCount] = useState(150);
   const [showSettings, setShowSettings] = useState(false);
@@ -339,14 +341,26 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [categoryUnlocks, setCategoryUnlocks] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [singleDrill, setSingleDrill] = useState<DemoDrill | null>(null);
-  const [showDrillOnboarding, setShowDrillOnboarding] = useState(true);
-
   // Phase 2 — session UX state
-  const [drillMuted, setDrillMuted] = useState(() => getMutedPref());
+  const [drillMuted, setDrillMuted] = useState(() => {
+    const pref = getMutedPref();
+    // If muted was set but user never completed a drill, they likely toggled
+    // it accidentally during the tour — reset to unmuted.
+    if (pref) {
+      try {
+        const hasReviewed = localStorage.getItem("drills-has-reviewed");
+        if (!hasReviewed) {
+          setMutedPref(false);
+          return false;
+        }
+      } catch { /* ok */ }
+    }
+    return pref;
+  });
   const [drillAutoContinue, setDrillAutoContinue] = useState(false);
   const [drillCombo, setDrillCombo] = useState(0);
   const [showDrillTour, setShowDrillTour] = useState(false);
-  const [showSessionSummary, setShowSessionSummary] = useState(false);
+
 
   const activityData = useMemo(() => {
     if (activityRange === "14d") return data.attemptHistory;
@@ -660,7 +674,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
 
     setDrillCombo(0);
     setDrillAutoContinue(false);
-    setShowSessionSummary(false);
+    
     setDrillSession({ active: true, drills: sessionDrills, current: 0, results: [], categoryLabel: categoryFilter });
     setSelectedCategory(null);
     setSingleDrill(null);
@@ -701,6 +715,9 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     const currentDrill = drillSession.drills[drillSession.current];
     const newResults = [...drillSession.results, confidence];
 
+    // Mark that user has reviewed at least one drill (used for sound pref reset logic)
+    try { localStorage.setItem("drills-has-reviewed", "1"); } catch { /* ok */ }
+
     // Update combo streak
     const newCombo = confidence >= 3 ? drillCombo + 1 : 0;
     setDrillCombo(newCombo);
@@ -730,15 +747,16 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     if (drillSession.current + 1 >= drillSession.drills.length) {
       // Session complete — show summary modal
       setDrillSession({ ...drillSession, results: newResults, active: false });
-      setShowSessionSummary(true);
     } else {
       setDrillSession({ ...drillSession, current: drillSession.current + 1, results: newResults });
+      if (drillScrollRef.current) drillScrollRef.current.scrollTop = 0;
     }
   }
 
   function handleDrillPrevious() {
     if (!drillSession || drillSession.current === 0) return;
     setDrillSession({ ...drillSession, current: drillSession.current - 1 });
+    if (drillScrollRef.current) drillScrollRef.current.scrollTop = 0;
   }
 
   function handleLoggedFromModal(result: LogModalResult) {
@@ -1209,7 +1227,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                 {drillSession.current >= 12 && (
                   <p className="text-[10px] text-orange-500">Fatigue note: you&apos;ve done 12+ drills. Quality may decrease — consider stopping.</p>
                 )}
-                <div className="overflow-y-auto flex-1 min-h-0">
+                <div ref={drillScrollRef} className="overflow-y-auto flex-1 min-h-0">
                   <DrillCard
                     key={drillSession.drills[drillSession.current].id}
                     drill={drillSession.drills[drillSession.current]}
@@ -1224,50 +1242,37 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
 
               </div>
             ) : drillSession && !drillSession.active ? (
-              /* Session complete — SessionSummary modal or fallback */
-              <div className="rounded-lg border border-border bg-muted p-4 space-y-3">
-                <h3 className="text-sm font-medium text-foreground">Session Complete!</h3>
-                <p className="text-xs text-muted-foreground">
-                  {drillSession.drills.length} drills finished
-                  {drillSession.categoryLabel && <> in {drillSession.categoryLabel}</>}
-                </p>
-                <button
-                  onClick={() => setDrillSession(null)}
-                  className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90"
-                >
-                  Done
-                </button>
-
-                {showSessionSummary && (
-                  <SessionSummary
-                    results={drillSession.results}
-                    categoryLabel={drillSession.categoryLabel}
-                    onDone={() => {
-                      setShowSessionSummary(false);
+              /* Session complete — blank backing, modal covers it */
+              <>
+                <div className="flex-1" />
+                <SessionSummary
+                  results={drillSession.results}
+                  categoryLabel={drillSession.categoryLabel}
+                  onDone={() => {
+                    
+                    setDrillSession(null);
+                  }}
+                  onKeepGoing={() => {
+                    
+                    const pool = drillSession.categoryLabel
+                      ? allDrills.filter(d => d.category === drillSession.categoryLabel)
+                      : allDrills;
+                    const moreDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
+                    if (moreDrills.length > 0) {
+                      setDrillCombo(0);
+                      setDrillSession({
+                        active: true,
+                        drills: moreDrills,
+                        current: 0,
+                        results: [],
+                        categoryLabel: drillSession.categoryLabel,
+                      });
+                    } else {
                       setDrillSession(null);
-                    }}
-                    onKeepGoing={() => {
-                      // Re-enter open practice — add more drills to the session
-                      setShowSessionSummary(false);
-                      const pool = drillSession.categoryLabel
-                        ? allDrills.filter(d => d.category === drillSession.categoryLabel)
-                        : allDrills;
-                      const moreDrills = [...pool.filter(d => d.dueStatus === "due"), ...pool.filter(d => d.dueStatus === "new")].slice(0, 8);
-                      if (moreDrills.length > 0) {
-                        setDrillSession({
-                          active: true,
-                          drills: moreDrills,
-                          current: 0,
-                          results: [],
-                          categoryLabel: drillSession.categoryLabel,
-                        });
-                      } else {
-                        setDrillSession(null);
-                      }
-                    }}
-                  />
-                )}
-              </div>
+                    }
+                  }}
+                />
+              </>
             ) : selectedCategory && selectedCategoryDrills ? (
               /* ── Category detail view ── */
               <div className="flex flex-col flex-1 min-h-0 space-y-2">
@@ -1392,28 +1397,6 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     <span className="text-[10px] opacity-70">(~10 min)</span>
                   </button>
                 </div>
-
-                {/* Onboarding card */}
-                {showDrillOnboarding && (
-                  <div className="rounded-lg border border-accent/20 bg-accent/5 p-3 shrink-0">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1 pr-4">
-                        <p className="text-xs font-medium text-foreground">Build Python syntax muscle memory</p>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Each category has 4 levels — basic syntax → variations → when/why → combining patterns.
-                          The SRS system schedules reviews as you progress. <strong>Daily Drill</strong> picks the best 8 drills for today,
-                          or click a category to practice a specific topic.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowDrillOnboarding(false)}
-                        className="text-muted-foreground hover:text-foreground text-xs shrink-0 mt-0.5"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Error / Loading states */}
                 {drillsError ? (
