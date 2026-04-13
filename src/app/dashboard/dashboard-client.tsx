@@ -1222,20 +1222,6 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                   />
                 </div>
 
-                {/* Tour overlay */}
-                {showDrillTour && (
-                  <DrillTour
-                    muted={drillMuted}
-                    onToggleMute={() => {
-                      setDrillMuted(prev => {
-                        setMutedPref(!prev);
-                        return !prev;
-                      });
-                    }}
-                    onDismiss={() => setShowDrillTour(false)}
-                    onClose={() => setShowDrillTour(false)}
-                  />
-                )}
               </div>
             ) : drillSession && !drillSession.active ? (
               /* Session complete — SessionSummary modal or fallback */
@@ -1508,6 +1494,21 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                 )}
               </div>
             )
+          )}
+
+          {/* Tour overlay — rendered at drills tab level so it shows on tab entry */}
+          {listMode === "drills" && showDrillTour && (
+            <DrillTour
+              muted={drillMuted}
+              onToggleMute={() => {
+                setDrillMuted(prev => {
+                  setMutedPref(!prev);
+                  return !prev;
+                });
+              }}
+              onDismiss={() => setShowDrillTour(false)}
+              onClose={() => setShowDrillTour(false)}
+            />
           )}
         </section>
       </div>

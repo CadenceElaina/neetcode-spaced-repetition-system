@@ -182,6 +182,9 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
   // L5 Pyodide test results
   const [testResults, setTestResults] = useState<TestCaseResult[] | null>(null);
 
+  // MC selected option (click to select, submit button to confirm)
+  const [selectedMcOption, setSelectedMcOption] = useState<string | null>(null);
+
   // Shuffled MC options: 1 correct answer + distractors (wrong answers)
   const mcOptions = useMemo(
     () => shuffle([drill.expectedCode, ...(drill.distractors ?? [])]),
@@ -289,16 +292,21 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
     }
   }, [userCode, drill, muted, enterResult]);
 
-  /** MC option click (L1, MC path) */
+  /** MC option click — select only, don't submit */
   const handleMcClick = useCallback(
     (option: string) => {
-      // Check if the selected option is the correct answer (or an alternative)
-      const match = checkCode(option, drill.expectedCode, drill.alternatives ?? [], drill.level);
-      setUserCode(option);
-      enterResult(match, option);
+      setSelectedMcOption(option);
     },
-    [drill, enterResult],
+    [],
   );
+
+  /** MC submit — check selected option */
+  const handleMcSubmit = useCallback(() => {
+    if (!selectedMcOption) return;
+    const match = checkCode(selectedMcOption, drill.expectedCode, drill.alternatives ?? [], drill.level);
+    setUserCode(selectedMcOption);
+    enterResult(match, selectedMcOption);
+  }, [selectedMcOption, drill, enterResult]);
 
   /** Second attempt submit (retry phase) */
   const handleRetrySubmit = useCallback(() => {
@@ -352,11 +360,18 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isL1Mc]);
 
-  // Keyboard shortcuts: Ctrl+. (advance) · Ctrl+, (previous)
+  // Keyboard shortcuts: Ctrl+. (advance) · Ctrl+, (previous) · Ctrl+Shift+Enter (submit)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const inTextarea = target.tagName === "TEXTAREA";
+
+      // Ctrl+Shift+Enter — submit MC selection
+      if (e.ctrlKey && e.shiftKey && e.key === "Enter" && phase === "prompt" && isL1Mc && selectedMcOption) {
+        e.preventDefault();
+        handleMcSubmit();
+        return;
+      }
 
       if (e.ctrlKey && !e.shiftKey && e.key === ".") {
         e.preventDefault();
@@ -377,7 +392,7 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [phase, result, userCode, handleNext, onRate, onPrevious]);
+  }, [phase, result, userCode, handleNext, onRate, onPrevious, isL1Mc, selectedMcOption, handleMcSubmit]);
 
   return (
     <div className="rounded-lg border border-border bg-muted p-4 space-y-3">
@@ -421,11 +436,25 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
                   <button
                     key={i}
                     onClick={() => handleMcClick(opt)}
-                    className="w-full text-left rounded-lg border border-border bg-card px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-accent/50 hover:bg-accent/5"
+                    className={`w-full text-left rounded-lg border px-3 py-2 font-mono text-sm text-foreground transition-colors ${
+                      selectedMcOption === opt
+                        ? "border-accent bg-accent/10"
+                        : "border-border bg-card hover:border-accent/50 hover:bg-accent/5"
+                    }`}
                   >
                     <pre className="whitespace-pre-wrap">{opt}</pre>
                   </button>
                 ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMcSubmit}
+                  disabled={!selectedMcOption}
+                  className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Check Answer
+                </button>
+                <span className="text-[10px] text-muted-foreground">Ctrl+Shift+Enter</span>
               </div>
               <p className="text-[10px] text-muted-foreground">
                 Tab to switch to free-type mode
