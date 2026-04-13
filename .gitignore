@@ -33,3 +33,6 @@ npm-debug.log*
 # drizzle migrations (generated)
 drizzle/
 .vercel
+
+scripts/seed-drills.js
+src/db/schema.js
