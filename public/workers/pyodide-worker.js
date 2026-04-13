@@ -115,6 +115,8 @@ json.dumps({"actual": repr(_result), "passed": bool(_passed)})
 
 /**
  * Run arbitrary user code and capture stdout.
+ * If code contains bare `return` statements (outside a function), wrap it in
+ * a function so it doesn't cause "SyntaxError: 'return' outside function".
  */
 async function runCode(id, code) {
   if (!pyodide) {
@@ -134,7 +136,19 @@ _capture_stdout = io.StringIO()
 sys.stdout = _capture_stdout
 `);
 
-    await pyodide.runPythonAsync(code);
+    // Detect bare `return` at top-level indentation and wrap in a function
+    let execCode = code;
+    const lines = code.split("\n");
+    const hasBareReturn = lines.some(
+      (l) => /^return\b/.test(l.trimStart()) && (l.length - l.trimStart().length === 0)
+    );
+    if (hasBareReturn) {
+      // Indent all lines inside a wrapper function, call it, and print the result
+      const indented = lines.map((l) => "    " + l).join("\n");
+      execCode = `def _user_fn():\n${indented}\n_result = _user_fn()\nif _result is not None:\n    print(_result)`;
+    }
+
+    await pyodide.runPythonAsync(execCode);
     clearTimeout(timeoutId);
 
     const output = await pyodide.runPythonAsync(`

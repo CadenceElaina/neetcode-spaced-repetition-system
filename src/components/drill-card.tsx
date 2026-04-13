@@ -162,6 +162,9 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
   // Inline discard prompt (shown when Ctrl+. is pressed with dirty editor)
   const [showDiscardPrompt, setShowDiscardPrompt] = useState(false);
 
+  // Result phase: toggle between user code and expected code
+  const [showUserCode, setShowUserCode] = useState(false);
+
   // Verdict animation — applied to verdict banner on result entry
   const [verdictAnimClass, setVerdictAnimClass] = useState("");
   // Editor shake animation — wraps CodeEditor on wrong answer in prompt phase
@@ -630,10 +633,33 @@ export function DrillCard({ drill, onRate, onPrevious, muted = false, autoContin
             </div>
           )}
 
-          {/* Expected code */}
+          {/* Expected / Your code toggle */}
           <div>
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Expected</p>
-            <CodeEditor value={drill.expectedCode} onChange={() => {}} readOnly minHeight="auto" />
+            <div className="flex items-center gap-2 mb-1.5">
+              <button
+                onClick={() => setShowUserCode(false)}
+                className={`text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                  !showUserCode ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Expected
+              </button>
+              <span className="text-muted-foreground/30 text-[10px]">|</span>
+              <button
+                onClick={() => setShowUserCode(true)}
+                className={`text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                  showUserCode ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Your code
+              </button>
+            </div>
+            <CodeEditor
+              value={showUserCode ? (firstAttemptCode ?? userCode) : drill.expectedCode}
+              onChange={() => {}}
+              readOnly
+              minHeight="auto"
+            />
           </div>
 
           {/* Explanation */}
