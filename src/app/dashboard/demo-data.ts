@@ -532,7 +532,7 @@ export interface DrillAttemptPayload {
   categoryStreak: number;
 }
 
-export type DemoDrillStatus = "due" | "new" | "mastered";
+export type DemoDrillStatus = "due" | "new" | "learning" | "mastered";
 
 export interface DemoDrill {
   id: number;

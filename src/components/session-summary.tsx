@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 import type { DrillConfidence } from "@/app/dashboard/demo-data";
 
+interface RelatedProblem {
+  id: number;
+  title: string;
+  leetcodeNumber: number | null;
+  difficulty: "Easy" | "Medium" | "Hard";
+  neetcodeUrl: string | null;
+  attempted: boolean;
+}
+
 interface SessionSummaryProps {
   results: DrillConfidence[];
   categoryLabel?: string;
+  relatedProblems?: RelatedProblem[];
   onDone: () => void;
   onKeepGoing: () => void;
 }
@@ -28,7 +38,7 @@ function useCountUp(target: number, durationMs = 600): number {
   return value;
 }
 
-export function SessionSummary({ results, categoryLabel, onDone, onKeepGoing }: SessionSummaryProps) {
+export function SessionSummary({ results, categoryLabel, relatedProblems, onDone, onKeepGoing }: SessionSummaryProps) {
   const correct  = results.filter((r) => r === 4).length;
   const good     = results.filter((r) => r === 3).length;
   const hard     = results.filter((r) => r === 2).length;
@@ -84,6 +94,41 @@ export function SessionSummary({ results, categoryLabel, onDone, onKeepGoing }: 
             <span className="text-base">🔥</span>
             <span className="text-sm font-semibold text-orange-400 tabular-nums">{displayStreak}</span>
             <span className="text-xs text-muted-foreground">best streak</span>
+          </div>
+        )}
+
+        {/* Problems bridge */}
+        {relatedProblems && relatedProblems.length > 0 && (
+          <div>
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Ready to try these problems?
+            </p>
+            <div className="rounded-lg border border-border overflow-hidden">
+              {relatedProblems.map((p) => (
+                <a
+                  key={p.id}
+                  href={p.neetcodeUrl ?? `/problems/${p.id}`}
+                  target={p.neetcodeUrl ? "_blank" : undefined}
+                  rel={p.neetcodeUrl ? "noopener noreferrer" : undefined}
+                  className="flex items-center gap-2.5 px-3 py-2 border-b border-border last:border-b-0 hover:bg-muted/80 transition-colors"
+                >
+                  {p.leetcodeNumber && (
+                    <span className="text-[10px] text-muted-foreground w-7 shrink-0 tabular-nums">{p.leetcodeNumber}</span>
+                  )}
+                  <span className="text-sm text-foreground truncate flex-1">{p.title}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                      p.difficulty === "Easy" ? "bg-green-500/15 text-green-500" :
+                      p.difficulty === "Medium" ? "bg-amber-500/15 text-amber-500" :
+                      "bg-red-500/15 text-red-500"
+                    }`}>{p.difficulty}</span>
+                    {p.attempted && (
+                      <span className="text-[10px] text-muted-foreground">✓</span>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 

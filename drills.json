@@ -1580,19 +1580,26 @@
     ]
   },
   {
-    "title": "Subsets vs permutations vs combinations \u2014 which template",
+    "title": "Combinations \u2014 backtracking with start index",
     "category": "Backtracking",
     "level": 3,
-    "prompt": "Compare when to use each backtracking template. Given a problem, how do you identify which pattern applies?",
-    "expectedCode": "# Subsets: order doesn't matter, any length, use 'start'\n# [1,2] and [2,1] are same \u2192 need 'start' to avoid duplicates\n# No length constraint \u2192 append at every recursion level\n\n# Permutations: order matters, fixed length = n, use 'used' set\n# [1,2] and [2,1] are different \u2192 no 'start', check all indices\n# Fixed length \u2192 append only when len(path) == n\n\n# Combinations: order doesn't matter, fixed length = k, use 'start'\n# Like subsets but stop at length k\n# [1,2] and [2,1] are same \u2192 need 'start'",
+    "prompt": "Return all combinations of `k` numbers from `1..n`. Use backtracking with a `start` index to avoid duplicates (order doesn't matter, so `[1,2]` and `[2,1]` are the same).",
+    "expectedCode": "result = []\ndef backtrack(start, path):\n    if len(path) == k:\n        result.append(path[:])\n        return\n    for i in range(start, n + 1):\n        path.append(i)\n        backtrack(i + 1, path)\n        path.pop()\nbacktrack(1, [])\nreturn result",
     "alternatives": [],
-    "explanation": "The decision tree:\n\n1. Does order matter?\n   - No \u2192 Subsets/Combinations (use `start` parameter)\n   - Yes \u2192 Permutations (use `used` set)\n\n2. Is there a length constraint?\n   - No \u2192 Subsets (collect at every level)\n   - Yes, length k \u2192 Combinations (collect at level k)\n   - Yes, length n (all elements) \u2192 Permutations\n\n3. Are there duplicates in input?\n   - Yes \u2192 Sort first + skip `if i > start and nums[i] == nums[i-1]`\n   - No \u2192 Standard template\n\n4. Can elements be reused?\n   - No \u2192 `backtrack(i + 1, ...)` (move forward)\n   - Yes \u2192 `backtrack(i, ...)` (stay at current index)\n\nEvery backtracking problem maps to one of these four templates.",
+    "explanation": "Combinations: order doesn't matter \u2192 pass `start=i+1` so each number is used at most once and we never revisit smaller indices.\n\nContrast:\n- Subsets: append at every level (not just length==k), still use start index\n- Permutations: order matters \u2192 no start index, use a `used` set instead\n\nCovers: Combinations (LC 77)",
     "tags": [
       "backtracking",
-      "subsets",
-      "permutations",
-      "combinations",
-      "decision"
+      "combinations"
+    ],
+    "testCases": [
+      {
+        "setup": "n = 4; k = 2",
+        "check": "sorted([sorted(c) for c in _result]) == [[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]]"
+      },
+      {
+        "setup": "n = 1; k = 1",
+        "check": "_result == [[1]]"
+      }
     ]
   },
   {
@@ -2221,17 +2228,28 @@
     ]
   },
   {
-    "title": "Bitmask DP vs XOR \u2014 when each",
+    "title": "Single number \u2014 XOR trick",
     "category": "Bit Manipulation",
     "level": 3,
-    "prompt": "Explain when to use bitmask DP (track subsets as integers) vs XOR tricks. Give an example scenario for each.",
-    "expectedCode": "# Bitmask DP: when tracking which items are used\n# State: dp[mask] where mask is a subset of n items\n# Example: Traveling Salesman \u2014 dp[mask][i] = min cost visiting cities in mask, ending at i\n# Use when: n <= 20, need to track subset membership\n\n# XOR tricks: when items cancel in pairs\n# Example: find the single number that doesn't have a pair\n# Use when: looking for unpaired/missing elements, no state needed",
-    "alternatives": [],
-    "explanation": "Bitmask DP uses integers as compact set representations. Bit i = 1 means item i is included. `dp[mask]` stores the answer for that subset. Limited to ~20 items (2^20 = 1M states).\n\nXOR is for pair-cancellation problems \u2014 not a DP technique, more of an algebraic trick. If the problem is about finding missing/unique elements where duplicates cancel, think XOR. If it's about optimal subset selection, think bitmask DP.",
+    "prompt": "Every element in `nums` appears exactly twice except one. Return the single non-duplicate. Use XOR \u2014 `a ^ a == 0` and `a ^ 0 == a`, so all pairs cancel.",
+    "expectedCode": "result = 0\nfor n in nums:\n    result ^= n\nreturn result",
+    "alternatives": [
+      "return reduce(lambda x, y: x ^ y, nums)"
+    ],
+    "explanation": "XOR is its own inverse: pairing cancels. Single pass, O(1) space.\n\nUse XOR when: items cancel in pairs, or you need to find the odd-one-out without extra memory.\nUse bitmask DP when: you need to track WHICH items are in a subset (e.g. traveling salesman dp[mask][i]).\n\nCovers: Single Number (LC 136)",
     "tags": [
-      "bitmask DP",
-      "XOR",
-      "when to use"
+      "bit-manipulation",
+      "xor"
+    ],
+    "testCases": [
+      {
+        "setup": "nums = [2, 2, 1]",
+        "check": "_result == 1"
+      },
+      {
+        "setup": "nums = [4, 1, 2, 1, 2]",
+        "check": "_result == 4"
+      }
     ]
   },
   {
@@ -2515,18 +2533,26 @@
     ]
   },
   {
-    "title": "Trie vs hash set \u2014 when to use each",
+    "title": "Word prefix check \u2014 hash set approach",
     "category": "Tries",
     "level": 3,
-    "prompt": "When should you use a Trie over a hash set for string lookups? Give specific problem scenarios.",
-    "expectedCode": "# Use Trie when:\n# 1. Prefix matching needed (autocomplete, startsWith)\n# 2. Character-by-character processing (word search in grid)\n# 3. Early termination on prefix mismatch saves work\n\n# Use hash set when:\n# 1. Only exact match needed (word in set)\n# 2. Simpler code, less memory overhead\n# 3. No prefix operations required\n\n# Example Trie problems:\n# - Word Search II (backtracking + trie for pruning)\n# - Autocomplete system\n# - Longest word with all prefixes valid",
+    "prompt": "Given a list `words` and a `prefix`, return `True` if any word starts with the prefix. Write the one-liner that makes a Trie unnecessary here.",
+    "expectedCode": "return any(w.startswith(prefix) for w in words)",
     "alternatives": [],
-    "explanation": "Hash set: O(m) lookup per query, simple, but no prefix operations. Trie: O(m) for exact match AND prefix match, with character-level control.\n\nThe key advantage of tries is pruning: in Word Search II, you can abandon a path as soon as no trie child exists for the next character \u2014 a hash set can't short-circuit mid-word.\n\nMemory: tries use more memory for short word lists but can be more efficient for many words with shared prefixes.",
+    "explanation": "When you only need startsWith on a small/static word list, a generator expression over the list is simpler than building a Trie.\n\nReach for a Trie when: (1) you need prefix matching on a large dynamic set, (2) you process character-by-character (word search in grid), or (3) early termination on prefix mismatch matters for performance.\n\nCovers: Implement Trie (Prefix Tree) (LC 208)",
     "tags": [
       "trie",
-      "hash set",
-      "comparison",
-      "when to use"
+      "strings"
+    ],
+    "testCases": [
+      {
+        "setup": "words = ['apple', 'app', 'application']; prefix = 'app'",
+        "check": "_result == True"
+      },
+      {
+        "setup": "words = ['dog', 'door', 'dot']; prefix = 'cat'",
+        "check": "_result == False"
+      }
     ]
   },
   {
@@ -2551,22 +2577,31 @@
     ]
   },
   {
-    "title": "When to use monotonic stack vs regular stack",
+    "title": "Valid parentheses \u2014 regular stack",
     "category": "Stack",
     "level": 3,
-    "prompt": "Explain: when do you reach for a monotonic stack vs a regular stack? Give one problem example for each.",
-    "expectedCode": "# Regular stack: matching/nesting problems\n# - Valid parentheses: push open, pop on matching close\n# - Evaluate expression: push operands, pop on operator\n# Key signal: need to match or undo previous elements\n\n# Monotonic stack: next-greater/smaller element problems\n# - Daily temperatures: find next warmer day for each day\n# - Largest rectangle in histogram\n# Key signal: for each element, find the nearest larger/smaller\n\n# Monotonic decreasing stack template:\nstack = []\nfor i, val in enumerate(nums):\n    while stack and nums[stack[-1]] < val:\n        idx = stack.pop()\n        result[idx] = val  # val is the next greater\n    stack.append(i)",
-    "alternatives": [],
-    "explanation": "Regular stack: elements are pushed and popped in LIFO order for matching (brackets, undo, evaluation). The stack maintains context.\n\nMonotonic stack: maintains a sorted invariant (all increasing or all decreasing). When a new element violates the invariant, pop until restored \u2014 each pop resolves one 'next greater/smaller' query.\n\nBoth are O(n) since each element is pushed and popped at most once.",
+    "prompt": "Given a string `s` of brackets `()[]{}`, return `True` if it is valid. Use a stack \u2014 push opens, pop on matching close.",
+    "expectedCode": "stack = []\nfor c in s:\n    if c in '([{':\n        stack.append(c)\n    elif stack and {')':\u2019(\u2019, ']':'[', '}':'{'}[c] == stack[-1]:\n        stack.pop()\n    else:\n        return False\nreturn not stack",
+    "alternatives": [
+      "stack = []\npairs = {')': '(', ']': '[', '}': '{'}\nfor c in s:\n    if c in pairs.values(): stack.append(c)\n    elif c in pairs:\n        if not stack or stack[-1] != pairs[c]: return False\n        stack.pop()\nreturn not stack"
+    ],
+    "explanation": "Regular stack excels at matching/nesting: push opening brackets, pop when you see the matching close.\n\nReach for a monotonic stack when you need 'next greater/smaller element' \u2014 maintain a stack that's always sorted, popping elements that violate the order as you scan.\n\nCovers: Valid Parentheses (LC 20)",
     "tags": [
       "stack",
-      "monotonic stack",
-      "when to use"
+      "strings"
     ],
     "testCases": [
       {
-        "setup": "nums = [2, 1, 4, 3]\nresult = [0] * len(nums)",
-        "check": "result == [4, 4, 0, 0]"
+        "setup": "s = '()[]{}'",
+        "check": "_result == True"
+      },
+      {
+        "setup": "s = '([)]'",
+        "check": "_result == False"
+      },
+      {
+        "setup": "s = '{[]}'",
+        "check": "_result == True"
       }
     ]
   },
@@ -3597,6 +3632,53 @@
       {
         "input": "([[1,2],[2,3]],)",
         "expected": "0"
+      }
+    ]
+  },
+  {
+    "title": "Minimum jumps to reach end",
+    "category": "Greedy",
+    "level": 5,
+    "prompt": "Given `nums` where `nums[i]` is the max jump length from index `i`, return the minimum number of jumps to reach the last index. Greedy: track `current_end` (boundary of current jump) and `farthest` (best reach so far). When `i == current_end`, you must jump \u2014 increment `jumps` and set `current_end = farthest`.",
+    "expectedCode": "jumps = 0\ncurrent_end = 0\nfarthest = 0\nfor i in range(len(nums) - 1):\n    farthest = max(farthest, i + nums[i])\n    if i == current_end:\n        jumps += 1\n        current_end = farthest\nreturn jumps",
+    "alternatives": [],
+    "explanation": "Greedy insight: you don't need to decide exactly where to jump \u2014 just commit to jumping when you reach the current boundary, and always track how far you could go.\n\nKey: loop only goes to `len(nums) - 2` because once `i == current_end` at the last index, the jump to the end was already counted.\n\nContrast with Jump Game I (LC 55) which only asks reachability \u2014 here you need minimum jumps, so you count how many times you're forced to extend your range.\n\nCovers: Jump Game II (LC 45)",
+    "tags": [
+      "greedy",
+      "arrays"
+    ],
+    "testCases": [
+      {
+        "setup": "nums = [2, 3, 1, 1, 4]",
+        "check": "_result == 2"
+      },
+      {
+        "setup": "nums = [2, 3, 0, 1, 4]",
+        "check": "_result == 2"
+      },
+      {
+        "setup": "nums = [1, 1, 1, 1]",
+        "check": "_result == 3"
+      }
+    ]
+  },
+  {
+    "title": "Trie wildcard search \u2014 '.' matches any character",
+    "category": "Tries",
+    "level": 5,
+    "prompt": "Add a `search(self, word, node=None)` method to your Trie that supports `.` as a wildcard matching any single character. When you hit a `.`, recurse into every child. When you hit a letter, advance normally. Return `True` if any path leads to a word.",
+    "expectedCode": "def search(self, word, node=None):\n    if node is None:\n        node = self.root\n    for i, c in enumerate(word):\n        if c == '.':\n            return any(self.search(word[i+1:], child) for child in node.children.values())\n        if c not in node.children:\n            return False\n        node = node.children[c]\n    return node.is_end",
+    "alternatives": [],
+    "explanation": "When `.` is encountered, branch into every child and recurse with the remaining suffix. If any branch returns True, the whole search returns True.\n\nThis pattern \u2014 iterating through children on wildcard, normal traversal otherwise \u2014 also applies to regex-style matching in Tries.\n\nThe `node` parameter lets the recursion start mid-Trie without rebuilding from root each time.\n\nCovers: Design Add and Search Words Data Structure (LC 211)",
+    "tags": [
+      "trie",
+      "dfs",
+      "recursion"
+    ],
+    "testCases": [
+      {
+        "setup": "class TrieNode:\n    def __init__(self): self.children = {}; self.is_end = False\nclass Trie:\n    def __init__(self): self.root = TrieNode()\n    def insert(self, word):\n        node = self.root\n        for c in word: node = node.children.setdefault(c, TrieNode())\n        node.is_end = True\n    def search(self, word, node=None):\n        if node is None: node = self.root\n        for i, c in enumerate(word):\n            if c == '.':\n                return any(self.search(word[i+1:], child) for child in node.children.values())\n            if c not in node.children: return False\n            node = node.children[c]\n        return node.is_end\nt = Trie()\nt.insert('bad'); t.insert('dad'); t.insert('mad')",
+        "check": "t.search('pad') == False and t.search('bad') == True and t.search('.ad') == True and t.search('b..') == True"
       }
     ]
   }

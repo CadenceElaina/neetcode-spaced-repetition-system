@@ -14,7 +14,7 @@ import { DrillTour, shouldShowTour } from "@/components/drill-tour";
 import { SyntaxReferencePanel } from "@/components/syntax-reference-panel";
 import { getMutedPref, setMutedPref, playSound } from "@/lib/sounds";
 import { getPyodide, terminatePyodide } from "@/lib/pyodide";
-import { DEMO_DRILLS, DEMO_FLUENCY_STATS, type DemoDrill, type DrillConfidence, type DemoFluencyCategory } from "@/app/dashboard/demo-data";
+import { DEMO_DRILLS, DEMO_FLUENCY_STATS, type DemoDrill, type DemoDrillStatus, type DrillConfidence, type DemoFluencyCategory } from "@/app/dashboard/demo-data";
 
 /* ── Types ── */
 
@@ -333,7 +333,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [activityRange, setActivityRange] = useState<"14d" | "30d" | "90d" | "all">("14d");
 
   // Drill state
-  const [drillSubTab, setDrillSubTab] = useState<"due" | "new" | "mastered">("due");
+  const [drillSubTab, setDrillSubTab] = useState<"due" | "new" | "learning" | "mastered">("due");
   const [drillSession, setDrillSession] = useState<{ active: boolean; drills: DemoDrill[]; current: number; results: DrillConfidence[]; categoryLabel?: string } | null>(null);
   const [realDrills, setRealDrills] = useState<DemoDrill[] | null>(null);
   const [realFluencyStats, setRealFluencyStats] = useState<{ overallTier: string; categories: DemoFluencyCategory[] } | null>(null);
@@ -403,11 +403,11 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
         }
         const now = new Date();
         const mapped: DemoDrill[] = drills.map((d: { id: number; title: string; category: string; level: number; prompt: string; expectedCode: string; alternatives?: string[]; explanation: string; tags?: string[]; testCases?: Array<{ input: string; expected: string }>; distractors?: string[]; state: { stability: number; lastReviewedAt: string | null; nextReviewAt: string | null; totalAttempts: number; bestConfidence: number | null } | null }) => {
-          let dueStatus: "due" | "new" | "mastered" = "new";
+          let dueStatus: DemoDrillStatus = "new";
           if (d.state) {
             if (d.state.stability > 21) dueStatus = "mastered";
             else if (!d.state.nextReviewAt || new Date(d.state.nextReviewAt) <= now) dueStatus = "due";
-            else dueStatus = "mastered"; // reviewed but not yet due — treat as learning/mastered
+            else dueStatus = "learning"; // reviewed, scheduled for future review
           }
           return {
             id: d.id,
@@ -648,19 +648,21 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const allDrills = isDemo ? DEMO_DRILLS : (realDrills ?? []);
   const dueDrills = useMemo(() => allDrills.filter(d => d.dueStatus === "due"), [allDrills]);
   const newDrills = useMemo(() => allDrills.filter(d => d.dueStatus === "new"), [allDrills]);
+  const learningDrills = useMemo(() => allDrills.filter(d => d.dueStatus === "learning"), [allDrills]);
   const masteredDrills = useMemo(() => allDrills.filter(d => d.dueStatus === "mastered"), [allDrills]);
-  const activeDrillList = drillSubTab === "due" ? dueDrills : drillSubTab === "new" ? newDrills : masteredDrills;
+  const activeDrillList = drillSubTab === "due" ? dueDrills : drillSubTab === "new" ? newDrills : drillSubTab === "learning" ? learningDrills : masteredDrills;
   const fluencyStats = isDemo ? DEMO_FLUENCY_STATS : (realFluencyStats ?? DEMO_FLUENCY_STATS);
 
   // Category summary for grid view
   const drillCategories = useMemo(() => {
-    const catMap = new Map<string, { drills: DemoDrill[]; due: number; new_: number; mastered: number }>();
+    const catMap = new Map<string, { drills: DemoDrill[]; due: number; new_: number; learning: number; mastered: number }>();
     for (const d of allDrills) {
-      if (!catMap.has(d.category)) catMap.set(d.category, { drills: [], due: 0, new_: 0, mastered: 0 });
+      if (!catMap.has(d.category)) catMap.set(d.category, { drills: [], due: 0, new_: 0, learning: 0, mastered: 0 });
       const cat = catMap.get(d.category)!;
       cat.drills.push(d);
       if (d.dueStatus === "due") cat.due++;
       else if (d.dueStatus === "new") cat.new_++;
+      else if (d.dueStatus === "learning") cat.learning++;
       else cat.mastered++;
     }
     return catMap;
@@ -677,6 +679,29 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
     }
     return levels;
   }, [selectedCategory, allDrills]);
+
+  // Map of category → problems to surface as "ready to try" after mastering drills
+  const problemsByCategory = useMemo(() => {
+    const map = new Map<string, { id: number; title: string; leetcodeNumber: number | null; difficulty: "Easy" | "Medium" | "Hard"; neetcodeUrl: string | null; attempted: boolean }[]>();
+    for (const p of data.newProblems) {
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push({ id: p.id, title: p.title, leetcodeNumber: p.leetcodeNumber, difficulty: p.difficulty, neetcodeUrl: p.neetcodeUrl, attempted: false });
+    }
+    const addedIds = new Set<number>();
+    for (const p of data.reviewQueue) {
+      if (addedIds.has(p.problemId)) continue;
+      addedIds.add(p.problemId);
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push({ id: p.problemId, title: p.title, leetcodeNumber: p.leetcodeNumber, difficulty: p.difficulty, neetcodeUrl: p.neetcodeUrl, attempted: true });
+    }
+    for (const p of data.completedProblems) {
+      if (addedIds.has(p.problemId)) continue;
+      addedIds.add(p.problemId);
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push({ id: p.problemId, title: p.title, leetcodeNumber: p.leetcodeNumber, difficulty: p.difficulty, neetcodeUrl: null, attempted: true });
+    }
+    return map;
+  }, [data.newProblems, data.reviewQueue, data.completedProblems]);
 
   function toggleDrillCategory(cat: string) {
     setExcludedDrillCategories(prev => {
@@ -1276,6 +1301,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                 <SessionSummary
                   results={drillSession.results}
                   categoryLabel={drillSession.categoryLabel}
+                  relatedProblems={drillSession.categoryLabel ? (problemsByCategory.get(drillSession.categoryLabel) ?? []).slice(0, 4) : []}
                   onDone={() => {
                     
                     setDrillSession(null);
@@ -1380,6 +1406,9 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                                 {drill.dueStatus === "new" && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/15 text-accent font-medium">New</span>
                                 )}
+                                {drill.dueStatus === "learning" && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-medium">Learning</span>
+                                )}
                                 {drill.dueStatus === "mastered" && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-500 font-medium">✓</span>
                                 )}
@@ -1390,6 +1419,53 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                       </div>
                     );
                   })}
+
+                  {/* Problems bridge — show relevant LC problems for this category */}
+                  {(() => {
+                    const catProblems = problemsByCategory.get(selectedCategory) ?? [];
+                    if (catProblems.length === 0) return null;
+                    const unattempted = catProblems.filter(p => !p.attempted).slice(0, 5);
+                    const attempted = catProblems.filter(p => p.attempted).slice(0, 3);
+                    const toShow = unattempted.length > 0 ? unattempted : attempted;
+                    return (
+                      <div>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1">
+                          Problems to Tackle
+                        </p>
+                        <div className="rounded-lg border border-border overflow-hidden">
+                          {toShow.map((p) => (
+                            <a
+                              key={p.id}
+                              href={p.neetcodeUrl ?? `/problems/${p.id}`}
+                              target={p.neetcodeUrl ? "_blank" : undefined}
+                              rel={p.neetcodeUrl ? "noopener noreferrer" : undefined}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/80 transition-colors duration-150"
+                            >
+                              {p.leetcodeNumber && (
+                                <span className="text-[10px] text-muted-foreground w-7 shrink-0 tabular-nums">{p.leetcodeNumber}</span>
+                              )}
+                              <span className="text-sm font-medium text-foreground truncate flex-1">{p.title}</span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                  p.difficulty === "Easy" ? "bg-green-500/15 text-green-500" :
+                                  p.difficulty === "Medium" ? "bg-amber-500/15 text-amber-500" :
+                                  "bg-red-500/15 text-red-500"
+                                }`}>{p.difficulty}</span>
+                                {p.attempted && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/15 text-accent font-medium">Attempted</span>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                        {catProblems.length > toShow.length && (
+                          <p className="text-[10px] text-muted-foreground px-1 mt-1">
+                            +{catProblems.length - toShow.length} more in this category
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ) : (
@@ -1409,6 +1485,12 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                       className={`text-xs px-2 py-0.5 rounded transition-colors ${drillSubTab === "new" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       New {newDrills.length > 0 && <span className="ml-0.5 text-[10px]">({newDrills.length})</span>}
+                    </button>
+                    <button
+                      onClick={() => setDrillSubTab("learning")}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${drillSubTab === "learning" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Learning {learningDrills.length > 0 && <span className="ml-0.5 text-[10px]">({learningDrills.length})</span>}
                     </button>
                     <button
                       onClick={() => setDrillSubTab("mastered")}
@@ -1511,7 +1593,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                         const fluency = fluencyCat?.fluency ?? 0;
                         const hasDue = cat.due > 0;
                         // Filter by sub-tab
-                        const relevantCount = drillSubTab === "due" ? cat.due : drillSubTab === "new" ? cat.new_ : cat.mastered;
+                        const relevantCount = drillSubTab === "due" ? cat.due : drillSubTab === "new" ? cat.new_ : drillSubTab === "learning" ? cat.learning : cat.mastered;
 
                         return (
                           <button
