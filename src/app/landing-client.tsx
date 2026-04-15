@@ -473,7 +473,16 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
               Aurora schedules your next review at the optimal time.
             </p>
 
-            {!isAuthenticated && (
+            {isAuthenticated ? (
+            <div className="pt-2">
+              <Link
+                href="/dashboard"
+                className="inline-flex h-10 items-center rounded-md bg-accent px-6 text-sm font-semibold text-accent-foreground shadow-[0_0_28px_var(--glow)] transition-all duration-150 hover:shadow-[0_0_40px_var(--glow)]"
+              >
+                Go to Dashboard
+              </Link>
+            </div>
+            ) : (
             <div className="flex items-center gap-4 pt-2">
               {authConfigured ? (
                 <Link
@@ -551,9 +560,9 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
             <Link href="/info" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               How it works
             </Link>
-            <Link href="/info#setup" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <a href="https://github.com/CadenceElaina/aurora#getting-started" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Setup guide
-            </Link>
+            </a>
             <Link href="/problems" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Browse problems
             </Link>
