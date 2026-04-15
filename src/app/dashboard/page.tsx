@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { db } from "@/db";
-import { problems, userProblemStates, attempts, pendingSubmissions } from "@/db/schema";
+import { problems, userProblemStates, attempts, pendingSubmissions, users } from "@/db/schema";
 import { auth } from "@/auth";
 import { eq, and, asc, count, sql, sum, avg, gte, lt } from "drizzle-orm";
 import Link from "next/link";
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
   // Parallel data fetching
-  const [allProblems, userStates, attemptDateRows, timeRows, pendingRows, todayAttemptRows] = await Promise.all([
+  const [allProblems, userStates, attemptDateRows, timeRows, pendingRows, todayAttemptRows, userRow] = await Promise.all([
     db.select().from(problems).orderBy(asc(problems.id)),
     db.select().from(userProblemStates).where(eq(userProblemStates.userId, userId)),
     db
@@ -81,14 +81,30 @@ export default async function DashboardPage() {
           lt(attempts.createdAt, tomorrowStart),
         ),
       ),
+    db.select({ autoDeferHards: users.autoDeferHards }).from(users).where(eq(users.id, userId)).limit(1),
   ]);
 
   const stateMap = new Map(userStates.map((s) => [s.problemId, s]));
   const attemptedIds = new Set(userStates.map((s) => s.problemId));
+  const autoDeferHards = userRow[0]?.autoDeferHards ?? false;
 
-  // Review queue: problems due for review
+  // Helper: check if a problem is currently deferred
+  const isDeferred = (s: typeof userStates[number], difficulty?: string) => {
+    // Explicitly deferred with a future date
+    if (s.deferredUntil && s.deferredUntil > now) return true;
+    // Auto-defer hards (only if setting enabled and problem is Hard)
+    if (autoDeferHards && difficulty === "Hard") return true;
+    return false;
+  };
+
+  // Review queue: problems due for review (excluding deferred)
   const reviewQueue = userStates
-    .filter((s) => s.nextReviewAt && s.nextReviewAt <= now)
+    .filter((s) => {
+      if (!s.nextReviewAt || s.nextReviewAt > now) return false;
+      const p = allProblems.find((prob) => prob.id === s.problemId);
+      if (isDeferred(s, p?.difficulty)) return false;
+      return true;
+    })
     .sort((a, b) => a.nextReviewAt!.getTime() - b.nextReviewAt!.getTime())
     .map((s) => {
       const p = allProblems.find((prob) => prob.id === s.problemId);
@@ -128,6 +144,42 @@ export default async function DashboardPage() {
       retrievability: number;
       stability: number;
       lastReviewedAt: string | null;
+    }[];
+
+  // Deferred problems: due for review but deferred
+  const deferredProblems = userStates
+    .filter((s) => {
+      if (!s.nextReviewAt || s.nextReviewAt > now) return false;
+      const p = allProblems.find((prob) => prob.id === s.problemId);
+      return isDeferred(s, p?.difficulty);
+    })
+    .map((s) => {
+      const p = allProblems.find((prob) => prob.id === s.problemId);
+      if (!p) return null;
+      return {
+        stateId: s.id,
+        problemId: s.problemId,
+        title: p.title,
+        leetcodeNumber: p.leetcodeNumber,
+        difficulty: p.difficulty as "Easy" | "Medium" | "Hard",
+        category: p.category,
+        totalAttempts: s.totalAttempts,
+        stability: s.stability,
+        deferredUntil: s.deferredUntil ? s.deferredUntil.toISOString() : null,
+        isAutoDeferred: autoDeferHards && p.difficulty === "Hard" && !(s.deferredUntil && s.deferredUntil > now),
+      };
+    })
+    .filter(Boolean) as {
+      stateId: string;
+      problemId: number;
+      title: string;
+      leetcodeNumber: number | null;
+      difficulty: "Easy" | "Medium" | "Hard";
+      category: string;
+      totalAttempts: number;
+      stability: number;
+      deferredUntil: string | null;
+      isAutoDeferred: boolean;
     }[];
 
   // New (unattempted) problems in curriculum order
@@ -358,6 +410,8 @@ export default async function DashboardPage() {
     <DashboardClient
       data={{
         reviewQueue,
+        deferredProblems,
+        autoDeferHards,
         newProblems,
         completedProblems,
         totalProblems: allProblems.length,

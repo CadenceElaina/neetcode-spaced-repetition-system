@@ -40,7 +40,7 @@ type CompletedItem = {
   bestQuality: string | null;
 };
 
-type ListMode = "review" | "new" | "completed" | "import";
+type ListMode = "review" | "new" | "completed" | "import" | "deferred";
 type ReviewSort = "urgency" | "overdue" | "difficulty" | "category";
 type NewSort = "curriculum" | "hardest";
 type CompletedSort = "retention" | "review-date" | "category";
@@ -100,8 +100,23 @@ type PendingItem = {
   detectedAt: string;
 };
 
+type DeferredItem = {
+  stateId: string;
+  problemId: number;
+  title: string;
+  leetcodeNumber: number | null;
+  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  totalAttempts: number;
+  stability: number;
+  deferredUntil: string | null;
+  isAutoDeferred: boolean;
+};
+
 type DashboardData = {
   reviewQueue: ReviewItem[];
+  deferredProblems: DeferredItem[];
+  autoDeferHards: boolean;
   newProblems: NewProblem[];
   totalProblems: number;
   attemptedCount: number;
@@ -323,6 +338,9 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({});
   const [showOverallPace, setShowOverallPace] = useState(false);
   const [activityRange, setActivityRange] = useState<"14d" | "30d" | "90d" | "all">("14d");
+  const [deferredItems, setDeferredItems] = useState(data.deferredProblems);
+  const [autoDeferHards, setAutoDeferHards] = useState(data.autoDeferHards);
+  const [reviewItems, setReviewItems] = useState(data.reviewQueue);
 
 
   const activityData = useMemo(() => {
@@ -460,7 +478,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const displayCategories = categoryView === "weak" ? weakCategories : data.categoryStats;
 
   const sortedReviewQueue = useMemo(() => {
-    const q = [...data.reviewQueue];
+    const q = [...reviewItems];
     if (reviewSort === "urgency") {
       // Lowest stability first (most fragile), then most overdue as tiebreaker
       q.sort((a, b) => a.stability - b.stability || b.daysOverdue - a.daysOverdue);
@@ -472,7 +490,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       q.sort((a, b) => a.category.localeCompare(b.category) || b.daysOverdue - a.daysOverdue);
     }
     return q;
-  }, [data.reviewQueue, reviewSort]);
+  }, [reviewItems, reviewSort]);
 
   const sortedNewProblems = useMemo(() => {
     const q = [...data.newProblems];
@@ -547,6 +565,56 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       return;
     }
     action();
+  }
+
+  async function handleDefer(problemId: number, until?: string) {
+    const res = await fetch("/api/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ problemId, action: "defer", ...(until && { until }) }),
+    });
+    if (!res.ok) return;
+    const data_resp = await res.json();
+    // Move from review queue to deferred
+    const item = reviewItems.find((r) => r.problemId === problemId);
+    if (item) {
+      setReviewItems((prev) => prev.filter((r) => r.problemId !== problemId));
+      setDeferredItems((prev) => [...prev, {
+        stateId: item.stateId,
+        problemId: item.problemId,
+        title: item.title,
+        leetcodeNumber: item.leetcodeNumber,
+        difficulty: item.difficulty,
+        category: item.category,
+        totalAttempts: item.totalAttempts,
+        stability: item.stability,
+        deferredUntil: data_resp.deferredUntil,
+        isAutoDeferred: false,
+      }]);
+    }
+  }
+
+  async function handleUndefer(problemId: number) {
+    const res = await fetch("/api/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ problemId, action: "undefer" }),
+    });
+    if (!res.ok) return;
+    // Move from deferred back — need to refresh to get full review data
+    setDeferredItems((prev) => prev.filter((d) => d.problemId !== problemId));
+    router.refresh();
+  }
+
+  async function handleToggleAutoDeferHards(enabled: boolean) {
+    const res = await fetch("/api/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggle-auto-defer-hards", enabled }),
+    });
+    if (!res.ok) return;
+    setAutoDeferHards(enabled);
+    router.refresh();
   }
 
   return (
@@ -630,9 +698,9 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                   className={`text-sm px-2.5 py-1 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Review
-                  {data.reviewQueue.length > 0 && (
+                  {reviewItems.length > 0 && (
                     <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "review" ? "bg-accent-foreground/20" : "bg-muted"}`}>
-                      {data.reviewQueue.length}
+                      {reviewItems.length}
                     </span>
                   )}
                 </button>
@@ -658,6 +726,17 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     </span>
                   )}
                 </button>
+                {deferredItems.length > 0 && (
+                  <button
+                    onClick={() => setListMode("deferred")}
+                    className={`text-sm px-2.5 py-1 rounded transition-colors ${listMode === "deferred" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Deferred
+                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "deferred" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                      {deferredItems.length}
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={() => setListMode("import")}
                   className={`text-sm px-2.5 py-1 rounded transition-colors ${listMode === "import" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
@@ -803,6 +882,13 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                           </span>
                           <DifficultyBadge difficulty={item.difficulty} />
                           <button
+                            onClick={() => demoGuard(() => handleDefer(item.problemId))}
+                            className="inline-flex h-7 items-center rounded-md border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="Defer — remove from review queue for 30 days"
+                          >
+                            Defer
+                          </button>
+                          <button
                             onClick={() => demoGuard(() => setLogModalProblem({
                               problemId: item.problemId,
                               title: item.title,
@@ -930,6 +1016,61 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
               attemptedIds={data.importAttemptedIds}
               todayAttemptedIds={data.importTodayAttemptedIds}
             />
+          )}
+
+          {/* Deferred list */}
+          {listMode === "deferred" && (
+            deferredItems.length === 0 ? (
+              <div className="rounded-lg border border-border bg-muted p-6 text-center">
+                <p className="text-sm text-muted-foreground">No deferred problems.</p>
+                <button onClick={() => setListMode("review")} className="mt-2 text-xs text-accent hover:underline">
+                  Back to reviews →
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
+                <div className="px-3 py-2 border-b border-border bg-muted/50 flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {deferredItems.length} problem{deferredItems.length !== 1 ? "s" : ""} deferred from review queue
+                  </p>
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoDeferHards}
+                      onChange={(e) => demoGuard(() => handleToggleAutoDeferHards(e.target.checked))}
+                      className="rounded border-border"
+                    />
+                    Auto-defer Hards
+                  </label>
+                </div>
+                <div className="overflow-y-auto flex-1 min-h-0">
+                  {deferredItems.map((item) => (
+                    <div
+                      key={item.stateId}
+                      className="flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted transition-colors duration-150"
+                    >
+                      <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium text-foreground truncate block">{item.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.category} · {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""}
+                          {item.isAutoDeferred ? " · Auto-deferred (hard)" : item.deferredUntil ? ` · Until ${new Date(item.deferredUntil).toLocaleDateString()}` : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <DifficultyBadge difficulty={item.difficulty} />
+                        <button
+                          onClick={() => demoGuard(() => handleUndefer(item.problemId))}
+                          className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
           )}
 
         </section>
@@ -1202,6 +1343,8 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
               count={targetCount}
               onSave={saveSettings}
               onCancel={() => setShowSettings(false)}
+              autoDeferHards={autoDeferHards}
+              onToggleAutoDeferHards={(v) => demoGuard(() => handleToggleAutoDeferHards(v))}
             />
           )}
         </section>
@@ -1578,11 +1721,15 @@ function SettingsPanel({
   count,
   onSave,
   onCancel,
+  autoDeferHards,
+  onToggleAutoDeferHards,
 }: {
   date: string;
   count: number;
   onSave: (date: string, count: number) => void;
   onCancel: () => void;
+  autoDeferHards: boolean;
+  onToggleAutoDeferHards: (enabled: boolean) => void;
 }) {
   const [d, setD] = useState(date);
   const [c, setC] = useState(count);
@@ -1608,6 +1755,20 @@ function SettingsPanel({
           onChange={(e) => setC(Number(e.target.value))}
           className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
         />
+      </div>
+      <div className="pt-1 border-t border-border">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={autoDeferHards}
+            onChange={(e) => onToggleAutoDeferHards(e.target.checked)}
+            className="rounded border-border"
+          />
+          Auto-defer Hard problems from review queue
+        </label>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5 ml-5">
+          Hards are excluded from reviews until you master the easier problems in each category
+        </p>
       </div>
       <div className="flex gap-2">
         <button

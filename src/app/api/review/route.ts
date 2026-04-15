@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { userProblemStates } from "@/db/schema";
+import { userProblemStates, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 const VALID_SKIP_REASONS = ["too_easy", "wrong_timing", "wrong_category"] as const;
@@ -14,7 +14,19 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { problemId, action } = body;
+  const { action } = body;
+
+  // Toggle auto-defer-hards setting (no problemId needed)
+  if (action === "toggle-auto-defer-hards") {
+    const enabled = body.enabled === true;
+    await db
+      .update(users)
+      .set({ autoDeferHards: enabled, updatedAt: new Date() })
+      .where(eq(users.id, session.user.id));
+    return NextResponse.json({ ok: true, autoDeferHards: enabled });
+  }
+
+  const { problemId } = body;
 
   if (typeof problemId !== "number") {
     return NextResponse.json({ error: "Invalid problemId" }, { status: 400 });
@@ -36,6 +48,37 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
+
+  if (action === "defer") {
+    // Defer until a specific date, or indefinitely (far future)
+    let deferredUntil: Date;
+    if (body.until) {
+      const parsed = new Date(body.until);
+      if (isNaN(parsed.getTime()) || parsed <= now) {
+        return NextResponse.json({ error: "Invalid defer date" }, { status: 400 });
+      }
+      deferredUntil = parsed;
+    } else {
+      // Default: defer for 30 days
+      deferredUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    }
+
+    await db
+      .update(userProblemStates)
+      .set({ deferredUntil, updatedAt: now })
+      .where(eq(userProblemStates.id, state.id));
+
+    return NextResponse.json({ ok: true, deferredUntil: deferredUntil.toISOString() });
+  }
+
+  if (action === "undefer") {
+    await db
+      .update(userProblemStates)
+      .set({ deferredUntil: null, updatedAt: now })
+      .where(eq(userProblemStates.id, state.id));
+
+    return NextResponse.json({ ok: true });
+  }
 
   if (action === "skip") {
     const reason = body.reason;
