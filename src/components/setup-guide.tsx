@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const GITHUB_README = "https://github.com/CadenceElaina/aurora#getting-started";
 const POS_KEY = "aurora_guide_pos";
-const FLOAT_W = 420;
+const FLOAT_W = 660;
 
-type Mode = "closed" | "modal" | "float";
+type Mode = "closed" | "modal" | "float" | "minimized";
 
 /* ── Small reusable primitives ── */
 
@@ -360,19 +360,16 @@ CREATE POLICY "service_role_all" ON "user"
 function GuideContent({ activeIdx, setActiveIdx }: { activeIdx: number; setActiveIdx: (i: number) => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Scroll content to top when section changes
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
   }, [activeIdx]);
 
   return (
     <>
-      {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         {SECTIONS[activeIdx].content()}
       </div>
 
-      {/* Footer nav */}
       <div className="shrink-0 border-t border-border/40 px-5 py-2.5 flex items-center justify-between bg-background/20">
         <div>
           {activeIdx > 0 && (
@@ -396,33 +393,11 @@ function GuideContent({ activeIdx, setActiveIdx }: { activeIdx: number; setActiv
   );
 }
 
-/* ── Float pill nav ── */
-
-function FloatPillNav({ activeIdx, setActiveIdx }: { activeIdx: number; setActiveIdx: (i: number) => void }) {
-  return (
-    <div className="flex gap-1 px-4 pt-3 pb-2 overflow-x-auto shrink-0 border-b border-border/40">
-      {SECTIONS.map((s, i) => (
-        <button
-          key={s.id}
-          onClick={() => setActiveIdx(i)}
-          className={`shrink-0 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
-            i === activeIdx
-              ? "bg-accent/20 text-accent border border-accent/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent"
-          }`}
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ── Modal sidebar nav ── */
+/* ── Sidebar nav — shared between modal and float ── */
 
 function SidebarNav({ activeIdx, setActiveIdx }: { activeIdx: number; setActiveIdx: (i: number) => void }) {
   return (
-    <div className="w-44 shrink-0 border-r border-border/40 flex flex-col py-4 gap-0.5 px-2">
+    <div className="w-36 shrink-0 border-r border-border/40 flex flex-col py-4 gap-0.5 px-2">
       <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest px-2 mb-2">Setup Guide</p>
       {SECTIONS.map((s, i) => (
         <button
@@ -442,6 +417,84 @@ function SidebarNav({ activeIdx, setActiveIdx }: { activeIdx: number; setActiveI
   );
 }
 
+/* ── Panel header — shared between modal and float ── */
+
+interface PanelHeaderProps {
+  onClose: () => void;
+  onPopOut?: () => void;
+  onPopIn?: () => void;
+  onMinimize?: () => void;
+  onDragStart?: (e: React.MouseEvent) => void;
+}
+
+function PanelHeader({ onClose, onPopOut, onPopIn, onMinimize, onDragStart }: PanelHeaderProps) {
+  const draggable = !!onDragStart;
+  return (
+    <div
+      className={`shrink-0 h-11 flex items-center justify-between px-4 border-b border-border/40 bg-background/30 select-none${draggable ? " cursor-grab active:cursor-grabbing" : ""}`}
+      onMouseDown={onDragStart}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        {draggable && (
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor" className="text-muted-foreground/30 shrink-0">
+            <circle cx="2" cy="2.5" r="1.4"/><circle cx="6" cy="2.5" r="1.4"/>
+            <circle cx="2" cy="7" r="1.4"/><circle cx="6" cy="7" r="1.4"/>
+            <circle cx="2" cy="11.5" r="1.4"/><circle cx="6" cy="11.5" r="1.4"/>
+          </svg>
+        )}
+        <span className="text-sm font-semibold text-foreground">Aurora</span>
+        <span className="text-muted-foreground/30 text-sm">·</span>
+        <span className="text-sm text-muted-foreground truncate">Setup Guide</span>
+      </div>
+      <div
+        className="flex items-center gap-1 shrink-0"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {onPopOut && (
+          <button
+            onClick={onPopOut}
+            title="Pop out"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            </svg>
+            Pop out
+          </button>
+        )}
+        {onPopIn && (
+          <button
+            onClick={onPopIn}
+            title="Back to modal"
+            className="rounded-lg px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            ↙ Modal
+          </button>
+        )}
+        {onMinimize && (
+          <button
+            onClick={onMinimize}
+            title="Minimize"
+            className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main component ── */
 
 interface SetupGuideProps {
@@ -455,7 +508,6 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
   const [pos, setPos] = useState({ x: 24, y: 80 });
   const [isDesktop, setIsDesktop] = useState(false);
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, startPosX: 0, startPosY: 0 });
-  // Prevent backdrop click from immediately closing when switching float → modal
   const justSwitchedRef = useRef(false);
 
   useEffect(() => {
@@ -485,8 +537,10 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
   }, [pos, mode]);
 
   useEffect(() => {
-    if (mode === "closed") return;
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setMode("closed"); }
+    if (mode === "closed" || mode === "minimized") return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMode(mode === "float" ? "minimized" : "closed");
+    }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [mode]);
@@ -525,6 +579,10 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
     setTimeout(() => { justSwitchedRef.current = false; }, 150);
   }, []);
 
+  const minimize = useCallback(() => {
+    setMode("minimized");
+  }, []);
+
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target !== e.currentTarget) return;
     if (justSwitchedRef.current) return;
@@ -555,35 +613,10 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             style={{ height: "75vh" }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="shrink-0 h-11 flex items-center justify-between px-4 border-b border-border/40 bg-background/30">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">Aurora</span>
-                <span className="text-muted-foreground/30 text-sm">·</span>
-                <span className="text-sm text-muted-foreground">Setup Guide</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {isDesktop && (
-                  <button
-                    onClick={popOut}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-                    Pop out
-                  </button>
-                )}
-                <button
-                  onClick={close}
-                  className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Body: sidebar + content */}
+            <PanelHeader
+              onClose={close}
+              onPopOut={isDesktop ? popOut : undefined}
+            />
             <div className="flex flex-1 min-h-0">
               <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
               <div className="flex flex-col flex-1 min-h-0">
@@ -594,41 +627,46 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
         </div>
       )}
 
-      {/* Floating panel */}
+      {/* Floating panel — same layout as modal, draggable */}
       {mode === "float" && (
         <div
           className="fixed z-[200] flex flex-col rounded-2xl border border-border/60 bg-muted/95 shadow-2xl overflow-hidden"
           style={{ left: pos.x, top: pos.y, width: FLOAT_W, height: "75vh" }}
         >
-          {/* Drag handle header */}
-          <div
-            className="shrink-0 h-10 flex items-center justify-between px-3 border-b border-border/40 bg-background/30 cursor-grab active:cursor-grabbing select-none"
-            onMouseDown={handleDragStart}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor" className="text-muted-foreground/30 shrink-0">
-                <circle cx="2" cy="2.5" r="1.4"/><circle cx="6" cy="2.5" r="1.4"/>
-                <circle cx="2" cy="7" r="1.4"/><circle cx="6" cy="7" r="1.4"/>
-                <circle cx="2" cy="11.5" r="1.4"/><circle cx="6" cy="11.5" r="1.4"/>
-              </svg>
-              <span className="text-xs font-semibold text-foreground truncate">Aurora Setup Guide</span>
-            </div>
-            <div className="flex items-center gap-1 shrink-0" onMouseDown={(e) => e.stopPropagation()}>
-              <button onClick={popIn} className="rounded-lg px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                ↙ Modal
-              </button>
-              <button onClick={close} className="rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
+          <PanelHeader
+            onClose={close}
+            onPopIn={popIn}
+            onMinimize={minimize}
+            onDragStart={handleDragStart}
+          />
+          <div className="flex flex-1 min-h-0">
+            <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
+            <div className="flex flex-col flex-1 min-h-0">
+              <GuideContent activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
             </div>
           </div>
+        </div>
+      )}
 
-          <FloatPillNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
-          <div className="flex flex-col flex-1 min-h-0">
-            <GuideContent activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
-          </div>
+      {/* Minimized tab — bottom-right pill */}
+      {mode === "minimized" && (
+        <div className="fixed bottom-4 right-4 z-[200] flex items-center gap-1">
+          <button
+            onClick={() => setMode("float")}
+            className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/95 shadow-lg px-4 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <span className="text-muted-foreground/70">{Icons.wrench}</span>
+            Setup Guide
+          </button>
+          <button
+            onClick={close}
+            title="Dismiss"
+            className="rounded-full p-2 border border-border/50 bg-muted/90 shadow-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
       )}
     </>

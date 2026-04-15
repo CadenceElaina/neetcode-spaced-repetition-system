@@ -145,7 +145,7 @@ export function Nav({ isAuthenticated = false, authConfigured = true, isDemo = f
         )}
       </div>
       <div className="flex items-center gap-2">
-        {!isLanding && <SetupGuide />}
+        <SetupGuide />
         {isAuthenticated && !isLanding && <GitHubSyncDropdown />}
         {isDemo && !isLanding && <DemoGitHubBadge />}
         {greeting && !isLanding && (

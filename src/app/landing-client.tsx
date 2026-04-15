@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { SetupGuide } from "@/components/setup-guide";
 
 /* ── Types ── */
 
@@ -561,14 +560,7 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
             <Link href="/info" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               How it works
             </Link>
-            <SetupGuide
-              trigger={({ onClick }) => (
-                <button onClick={onClick} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  Setup guide
-                </button>
-              )}
-            />
-            <Link href="/problems" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+<Link href="/problems" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Browse problems
             </Link>
           </div>
