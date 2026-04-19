@@ -150,6 +150,9 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
   const modal = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Log attempt"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Backdrop */}
@@ -169,7 +172,7 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-500 font-medium shrink-0">Review</span>
             )}
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm ml-2 shrink-0">✕</button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm ml-2 shrink-0" aria-label="Close">✕</button>
         </div>
 
         {/* Body */}

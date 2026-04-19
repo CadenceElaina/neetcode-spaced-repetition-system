@@ -139,6 +139,7 @@ export function ReviewQueueClient({ initialQueue, isDemo = false }: Props) {
                   <button
                     onClick={() => setFeedbackId(feedbackId === item.stateId ? null : item.stateId)}
                     className="inline-flex h-8 items-center rounded-md px-2 text-xs text-muted-foreground transition-colors duration-150 hover:bg-background hover:text-foreground"
+                    aria-label="Give timing feedback"
                     title="Give timing feedback"
                   >
                     ⟳

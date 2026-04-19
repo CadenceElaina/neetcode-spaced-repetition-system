@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 const GITHUB_README = "https://github.com/CadenceElaina/aurora#getting-started";
 const POS_KEY = "aurora_guide_pos";
@@ -598,14 +599,21 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
     </button>
   );
 
+  // Portal target — renders modal/float/minimized outside the nav's stacking context
+  // (backdrop-blur on the nav creates a new containing block that traps fixed children)
+  const portalTarget = typeof document !== "undefined" ? document.body : null;
+
   return (
     <>
       {trigger ? trigger({ onClick: open }) : defaultTrigger}
 
-      {/* Modal */}
-      {mode === "modal" && (
+      {/* Modal — portaled to body to escape nav's containing block */}
+      {mode === "modal" && portalTarget && createPortal(
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Setup Guide"
           onMouseDown={handleBackdropClick}
         >
           <div
@@ -624,11 +632,12 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        portalTarget
       )}
 
-      {/* Floating panel — same layout as modal, draggable */}
-      {mode === "float" && (
+      {/* Floating panel — portaled to body */}
+      {mode === "float" && portalTarget && createPortal(
         <div
           className="fixed z-[200] flex flex-col rounded-2xl border border-border/60 bg-muted/95 shadow-2xl overflow-hidden"
           style={{ left: pos.x, top: pos.y, width: FLOAT_W, height: "75vh" }}
@@ -645,11 +654,12 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
               <GuideContent activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
             </div>
           </div>
-        </div>
+        </div>,
+        portalTarget
       )}
 
-      {/* Minimized tab — bottom-right pill */}
-      {mode === "minimized" && (
+      {/* Minimized tab — portaled to body */}
+      {mode === "minimized" && portalTarget && createPortal(
         <div className="fixed bottom-4 right-4 z-[200] flex items-center gap-1">
           <button
             onClick={() => setMode("float")}
@@ -667,7 +677,8 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
-        </div>
+        </div>,
+        portalTarget
       )}
     </>
   );

@@ -254,7 +254,7 @@ export function Onboarding() {
   const statsRect = rects.stats;
 
   return createPortal(
-    <div className="fixed inset-0 z-[60]" style={{ pointerEvents: "none" }}>
+    <div className="fixed inset-0 z-[60]" style={{ pointerEvents: "none" }} role="dialog" aria-modal="true" aria-label="Onboarding tour">
       {/* Backdrop with spotlight cutout */}
       <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "auto" }}>
         <defs>

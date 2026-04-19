@@ -170,7 +170,7 @@ function SkyCanvas() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-hidden="true" />;
 }
 
 /* ── SVG Constellation Map with Path Illumination ── */
@@ -252,7 +252,7 @@ function ConstellationMap() {
   );
 
   return (
-    <svg viewBox="-10 -35 550 505" className="w-full h-full overflow-visible" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="-10 -35 550 505" className="w-full h-full overflow-visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
         <filter id="glow">
           <feGaussianBlur stdDeviation="6" result="blur" />
@@ -400,7 +400,7 @@ function FeatureCard({ icon, title, desc }: { icon: string; title: string; desc:
     >
       <div className="flex items-center gap-1.5 mb-0.5">
         <span className="text-xs">{icon}</span>
-        <h3 className="text-[11px] font-semibold text-foreground">{title}</h3>
+        <p className="text-[11px] font-semibold text-foreground">{title}</p>
       </div>
       <p className="text-[10px] text-muted-foreground leading-snug">{desc}</p>
     </div>
@@ -520,9 +520,21 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
                 <p className="text-[10px] text-muted-foreground">categories</p>
               </div>
               <div className="h-5 w-px bg-border/50" />
-              <div className="text-center">
-                <p className="text-base font-bold text-foreground">FSRS</p>
+              <div className="text-center relative group focus-within:*:last-child:opacity-100 focus-within:*:last-child:pointer-events-auto">
+                <div className="flex items-center gap-1 justify-center">
+                  <p className="text-base font-bold text-foreground">FSRS</p>
+                  <button type="button" className="text-muted-foreground/60 text-[10px] cursor-help" aria-label="What is FSRS?">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </button>
+                </div>
                 <p className="text-[10px] text-muted-foreground">algorithm</p>
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg border border-border/60 bg-muted/95 p-3 text-left text-[11px] text-foreground shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 z-50">
+                  <p className="font-semibold mb-1">Free Spaced Repetition Scheduler</p>
+                  <p className="text-muted-foreground leading-relaxed">An open-source algorithm that schedules reviews at growing intervals based on how well you retain each problem. Aurora adapts it using solve outcome, confidence, and solve speed.</p>
+                </div>
               </div>
             </div>
 

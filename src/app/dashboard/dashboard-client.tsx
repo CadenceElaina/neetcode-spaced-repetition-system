@@ -334,6 +334,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
   const [completedSort, setCompletedSort] = useState<CompletedSort>("retention");
   const [queueSearch, setQueueSearch] = useState("");
   const [showStatsDetail, setShowStatsDetail] = useState(false);
+  const [statsTab, setStatsTab] = useState<"overview" | "pace" | "time" | "readiness">("overview");
   const [pendingItems, setPendingItems] = useState<PendingItem[]>(data.pendingSubmissions);
   const [logModalProblem, setLogModalProblem] = useState<LogModalProblem | null>(null);
   const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({});
@@ -1198,154 +1199,248 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
       {/* ── Right Column ── */}
       <div className="flex flex-col lg:col-span-6 lg:min-h-0" data-onboarding="stats">
         {showStatsDetail ? (
-          /* ── Stats Detail (back side) ── */
-          <section className="rounded-lg border border-border bg-muted p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
-            <div className="flex items-center justify-between">
+          /* ── Stats Detail — tabbed layout ── */
+          <section className="rounded-lg border border-border bg-muted p-4 overflow-y-auto flex-1 min-h-0 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-medium text-muted-foreground">All Stats</p>
               <button
                 onClick={() => setShowStatsDetail(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Back to dashboard"
                 title="Back to dashboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               </button>
             </div>
 
-            {/* Pace */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Pace (14 day)</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.avgNewPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">new/day</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.avgReviewPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">reviews/day</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.avgPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">total/day</p>
-                </div>
-              </div>
+            {/* Tab bar */}
+            <div className="flex gap-1 mb-4 border-b border-border/50 pb-2">
+              {(["overview", "pace", "time", "readiness"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStatsTab(tab)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    statsTab === tab
+                      ? "bg-accent/15 text-accent border border-accent/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-transparent"
+                  }`}
+                >
+                  {tab === "overview" ? "Overview" : tab === "pace" ? "Pace" : tab === "time" ? "Time" : "Readiness"}
+                </button>
+              ))}
             </div>
 
-            {/* Overall Pace */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Pace (Overall)</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.overallNewPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">new/day</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.overallReviewPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">reviews/day</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.overallPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">total/day</p>
-                </div>
-              </div>
-            </div>
+            {/* Tab content */}
+            <div className="flex-1 min-h-0 space-y-4">
+              {statsTab === "overview" && (
+                <>
+                  {/* Key metrics at a glance */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                      <p className="text-[11px] text-muted-foreground mb-1">Progress</p>
+                      <p className="text-2xl font-bold tabular-nums">{data.attemptedCount}<span className="text-sm text-muted-foreground font-normal">/{data.totalProblems}</span></p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">problems attempted</p>
+                    </div>
+                    <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                      <p className="text-[11px] text-muted-foreground mb-1">Projection</p>
+                      <p className={`text-2xl font-bold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projectedRaw}<span className="text-sm font-normal text-muted-foreground">/{targetCount}</span></p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">projected by target</p>
+                    </div>
+                  </div>
 
-            {/* Progress */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Progress</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.attemptedCount}/{data.totalProblems}</p>
-                  <p className="text-[11px] text-muted-foreground">problems attempted</p>
-                </div>
-                <div>
-                  <p className={`text-lg font-bold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projectedRaw}/{targetCount}</p>
-                  <p className="text-[11px] text-muted-foreground">projected by target</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{countdown.neededPerDay.toFixed(1)}</p>
-                  <p className="text-[11px] text-muted-foreground">new/day needed</p>
-                </div>
-              </div>
-            </div>
+                  {/* Retention summary */}
+                  <div>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Retention</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-lg font-bold tabular-nums">{data.retainedCount}/{data.attemptedCount}</p>
+                        <p className="text-[11px] text-muted-foreground">retained (R &gt; 70%)</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold tabular-nums text-green-500">{data.masteredCount}</p>
+                        <p className="text-[11px] text-muted-foreground">mastered (S ≥ 30d)</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold tabular-nums text-accent">{data.learningCount}</p>
+                        <p className="text-[11px] text-muted-foreground">learning</p>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Retention */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Retention</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.retainedCount}/{data.attemptedCount}</p>
-                  <p className="text-[11px] text-muted-foreground">retained (R &gt; 70%)</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums text-green-500">{data.masteredCount}</p>
-                  <p className="text-[11px] text-muted-foreground">mastered (S ≥ 30d)</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums text-accent">{data.learningCount}</p>
-                  <p className="text-[11px] text-muted-foreground">learning</p>
-                </div>
-              </div>
-            </div>
+                  {/* Consistency */}
+                  <div>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Consistency</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-lg font-bold tabular-nums">🔥 {data.currentStreak}</p>
+                        <p className="text-[11px] text-muted-foreground">current streak</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold tabular-nums">{data.bestStreak}</p>
+                        <p className="text-[11px] text-muted-foreground">best streak</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold tabular-nums">{data.avgConfidence > 0 ? `${data.avgConfidence.toFixed(1)}/5` : "—"}</p>
+                        <p className="text-[11px] text-muted-foreground">avg confidence</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
-            {/* Time */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Time</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold">{formatMinutes(data.totalSolveMinutes)}</p>
-                  <p className="text-[11px] text-muted-foreground">total solve time</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold">{formatMinutes(data.totalStudyMinutes)}</p>
-                  <p className="text-[11px] text-muted-foreground">total study time</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p>
-                  <p className="text-[11px] text-muted-foreground">avg solve time</p>
-                </div>
-              </div>
-            </div>
+              {statsTab === "pace" && (
+                <>
+                  {/* 14-day pace */}
+                  <div>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Last 14 Days</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.avgNewPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">new/day</p>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.avgReviewPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">reviews/day</p>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.avgPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">total/day</p>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Streaks & Confidence */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Consistency</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">🔥 {data.currentStreak}</p>
-                  <p className="text-[11px] text-muted-foreground">current streak</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.bestStreak}</p>
-                  <p className="text-[11px] text-muted-foreground">best streak</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{data.avgConfidence > 0 ? `${data.avgConfidence.toFixed(1)}/5` : "—"}</p>
-                  <p className="text-[11px] text-muted-foreground">avg confidence</p>
-                </div>
-              </div>
-            </div>
+                  {/* Overall pace */}
+                  <div>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">All Time</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.overallNewPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">new/day</p>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.overallReviewPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">reviews/day</p>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                        <p className="text-2xl font-bold tabular-nums">{data.overallPerDay.toFixed(1)}</p>
+                        <p className="text-[11px] text-muted-foreground">total/day</p>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Readiness Breakdown */}
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Readiness ({data.readiness.score}/100 — {data.readiness.tier})</p>
-              <div className="grid grid-cols-4 gap-3">
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{Math.round(data.readinessBreakdown.coverage * 100)}%</p>
-                  <p className="text-[11px] text-muted-foreground">coverage</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{Math.round(data.readinessBreakdown.retention * 100)}%</p>
-                  <p className="text-[11px] text-muted-foreground">retention</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{Math.round(data.readinessBreakdown.categoryBalance * 100)}%</p>
-                  <p className="text-[11px] text-muted-foreground">category balance</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold tabular-nums">{Math.round(data.readinessBreakdown.consistency * 100)}%</p>
-                  <p className="text-[11px] text-muted-foreground">consistency</p>
-                </div>
-              </div>
+                  {/* Needed rate */}
+                  <div className={`rounded-lg p-3 text-sm ${countdown.onTrack ? "bg-green-500/10 border border-green-500/20" : "bg-orange-500/10 border border-orange-500/20"}`}>
+                    <p className={`font-medium ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
+                      {countdown.onTrack ? "On track" : "Behind pace"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Need <span className="font-medium text-foreground">{countdown.neededPerDay.toFixed(1)}</span> new problems/day to hit {targetCount} by target date
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {statsTab === "time" && (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                      <p className="text-[11px] text-muted-foreground mb-1">Total Solve</p>
+                      <p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p>
+                    </div>
+                    <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                      <p className="text-[11px] text-muted-foreground mb-1">Total Study</p>
+                      <p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p>
+                    </div>
+                    <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                      <p className="text-[11px] text-muted-foreground mb-1">Avg Solve</p>
+                      <p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p>
+                    </div>
+                  </div>
+
+                  {/* Time context */}
+                  <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Context</p>
+                    <div className="space-y-2 text-xs text-muted-foreground">
+                      <div className="flex justify-between">
+                        <span>Study time includes notes, research, and review beyond just solving</span>
+                      </div>
+                      {data.totalSolveMinutes > 0 && (
+                        <div className="flex justify-between">
+                          <span>Solve efficiency</span>
+                          <span className="font-medium text-foreground">{Math.round((data.totalSolveMinutes / data.totalStudyMinutes) * 100)}% of study time</span>
+                        </div>
+                      )}
+                      {data.attemptedCount > 0 && (
+                        <div className="flex justify-between">
+                          <span>Study time per problem</span>
+                          <span className="font-medium text-foreground">{Math.round(data.totalStudyMinutes / data.attemptedCount)}m avg</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {statsTab === "readiness" && (
+                <>
+                  {/* Tier badge */}
+                  <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-background/40 p-4">
+                    <span className={`inline-flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold ${TIER_COLORS[data.readiness.tier]}`}>
+                      {data.readiness.tier}
+                    </span>
+                    <div>
+                      <p className="text-2xl font-bold tabular-nums">{data.readiness.score}<span className="text-sm text-muted-foreground font-normal">/100</span></p>
+                      <p className="text-[11px] text-muted-foreground">Readiness Score</p>
+                    </div>
+                  </div>
+
+                  {/* Breakdown with visual bars */}
+                  <div className="space-y-3">
+                    {[
+                      { label: "Coverage", value: data.readinessBreakdown.coverage, weight: "30%" },
+                      { label: "Retention", value: data.readinessBreakdown.retention, weight: "40%" },
+                      { label: "Category Balance", value: data.readinessBreakdown.categoryBalance, weight: "20%" },
+                      { label: "Consistency", value: data.readinessBreakdown.consistency, weight: "10%" },
+                    ].map(({ label, value, weight }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">{label} <span className="text-muted-foreground/60">({weight})</span></span>
+                          <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-background overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"
+                            }`}
+                            style={{ width: `${Math.round(value * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tier scale */}
+                  <div className="rounded-lg border border-border/50 bg-background/40 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Tier Scale</p>
+                    <div className="flex gap-2 text-[11px]">
+                      {[
+                        { tier: "S", min: "90+" },
+                        { tier: "A", min: "75+" },
+                        { tier: "B", min: "55+" },
+                        { tier: "C", min: "35+" },
+                        { tier: "D", min: "<35" },
+                      ].map(({ tier, min }) => (
+                        <div key={tier} className={`flex-1 text-center rounded-md py-1.5 ${
+                          data.readiness.tier === tier ? "ring-1 ring-accent" : ""
+                        }`}>
+                          <span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
+                          <p className="text-muted-foreground mt-0.5">{min}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </section>
         ) : (
@@ -1358,6 +1453,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
               <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="text-xs text-muted-foreground hover:text-foreground"
+                aria-label="Edit target settings"
                 title="Edit target"
               >
                 ⚙
@@ -1365,6 +1461,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
               <button
                 onClick={() => setShowStatsDetail(true)}
                 className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="View all stats"
                 title="View all stats"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
@@ -1450,7 +1547,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors ml-auto shrink-0"
               title={showOverallPace ? "Showing overall averages — click for 14-day" : "Showing 14-day averages — click for overall"}
             >
-              <span className="text-[9px] uppercase tracking-wider w-[3.5ch] text-right">{showOverallPace ? "all" : "14d"}</span>
+              <span className="text-[10px] uppercase tracking-wider w-[3.5ch] text-right">{showOverallPace ? "all" : "14d"}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             </button>
           </div>
@@ -1475,6 +1572,8 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
           <button
             onClick={() => toggleWidget("activity")}
             className="flex items-center justify-between w-full"
+            aria-expanded={!collapsedWidgets.activity}
+            aria-label="Toggle activity chart"
           >
             <div className="flex items-center gap-2">
               <p className="text-xs font-medium text-muted-foreground">Activity</p>
@@ -1483,7 +1582,7 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                   <button
                     key={r}
                     onClick={() => setActivityRange(r)}
-                    className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${
+                    className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
                       activityRange === r
                         ? "bg-background text-foreground font-medium"
                         : "text-muted-foreground hover:text-foreground"
@@ -1509,12 +1608,23 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
             <button
               onClick={() => toggleWidget("queue")}
               className="flex items-center justify-between w-full"
+              aria-expanded={!collapsedWidgets.queue}
+              aria-label="Toggle review queue forecast"
             >
               <p className="text-xs font-medium text-muted-foreground">Review Queue Forecast</p>
               <span className="text-[10px] text-muted-foreground">{collapsedWidgets.queue ? "▼" : "▲"}</span>
             </button>
             {!collapsedWidgets.queue && (
               <div className="mt-2 space-y-2">
+                {/* Headline stat */}
+                {queueProjection.clearDay !== null ? (
+                  <p className="text-sm font-semibold text-green-500 select-text">Queue clears in ~{queueProjection.clearDay} day{queueProjection.clearDay !== 1 ? "s" : ""}</p>
+                ) : (
+                  <p className="text-sm font-semibold text-amber-500 select-text">
+                    Won&apos;t fully clear in 30d — lowest: {queueProjection.minSize} items (day {queueProjection.minDay})
+                  </p>
+                )}
+
                 {/* Mini bar chart — 30 day projection */}
                 <div className="flex items-end gap-px h-12">
                   {queueProjection.dailyQueueSize.map((size, i) => {
@@ -1531,13 +1641,13 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     );
                   })}
                 </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground">
+                <div className="flex justify-between text-[10px] text-muted-foreground select-text">
                   <span>Today</span>
                   <span>+30 days</span>
                 </div>
 
                 {/* Summary text */}
-                <div className="text-xs text-muted-foreground space-y-0.5">
+                <div className="text-xs text-muted-foreground select-text">
                   <p>
                     <span className="font-medium text-foreground">{queueProjection.currentSize}</span> due now
                     {" · "}
@@ -1545,13 +1655,6 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
                     {" · "}
                     <span className="font-medium text-foreground">{queueProjection.newPerDay}</span> new/day
                   </p>
-                  {queueProjection.clearDay !== null ? (
-                    <p className="text-green-500">Queue clears in ~{queueProjection.clearDay} day{queueProjection.clearDay !== 1 ? "s" : ""}</p>
-                  ) : (
-                    <p className="text-amber-500">
-                      Queue won&apos;t fully clear in 30d — lowest: {queueProjection.minSize} items (day {queueProjection.minDay})
-                    </p>
-                  )}
                 </div>
               </div>
             )}
@@ -1563,6 +1666,8 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
           <button
             onClick={() => toggleWidget("mastery")}
             className="flex items-center justify-between w-full"
+            aria-expanded={!collapsedWidgets.mastery}
+            aria-label="Toggle mastery progress"
           >
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-medium text-muted-foreground">Mastery Progress</p>
@@ -1597,6 +1702,8 @@ export function DashboardClient({ data, isDemo = false }: { data: DashboardData;
           <button
             onClick={() => toggleWidget("breakdown")}
             className="flex items-center justify-between w-full"
+            aria-expanded={!collapsedWidgets.breakdown}
+            aria-label="Toggle categories and difficulty breakdown"
           >
             <p className="text-xs font-medium text-muted-foreground">Categories &amp; Difficulty</p>
             <span className="text-[10px] text-muted-foreground">{collapsedWidgets.breakdown ? "▼" : "▲"}</span>
@@ -1796,7 +1903,7 @@ function ActivityChart({ history }: { history: AttemptDay[] }) {
                 />
               )}
               {showThisLabel && (
-                <span className={`text-[9px] leading-none tabular-nums transition-colors ${isCurrentWeek ? "text-accent font-semibold" : "text-muted-foreground group-hover:text-foreground"}`}>
+                <span className={`text-[10px] leading-none tabular-nums transition-colors ${isCurrentWeek ? "text-accent font-semibold" : "text-muted-foreground group-hover:text-foreground"}`}>
                   {bucket.label}
                 </span>
               )}
@@ -1985,7 +2092,7 @@ function InfoTooltip({ content }: { content: React.ReactNode }) {
       onMouseLeave={() => setOpen(false)}
     >
       <span
-        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/40 text-[9px] text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors cursor-help"
+        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/40 text-[10px] text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors cursor-help"
         aria-label="More info"
       >
         i
