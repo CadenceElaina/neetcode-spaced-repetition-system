@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { SetupGuide } from "@/components/setup-guide";
-import { DeleteAccountButton } from "@/components/delete-account-modal";
+import { DeleteAccountModal } from "@/components/delete-account-modal";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -175,16 +175,7 @@ export function Nav({ isAuthenticated = false, authConfigured = true, isDemo = f
           <span className="hidden sm:inline text-sm text-muted-foreground">{greeting}</span>
         )}
         {isAuthenticated ? (
-          <div className="flex items-center gap-1">
-            <DeleteAccountButton />
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150"
-              title="Sign out"
-            >
-              Sign out
-            </button>
-          </div>
+          <UserMenu userName={userName} />
         ) : authConfigured ? (
           <div className="flex items-center gap-1.5">
             {isDemo && !isLanding && (
@@ -231,6 +222,70 @@ export function Nav({ isAuthenticated = false, authConfigured = true, isDemo = f
         </nav>
       )}
     </header>
+  );
+}
+
+/* ── User Menu ── Signed-in avatar dropdown with sign-out + destructive actions */
+
+function UserMenu({ userName }: { userName?: string }) {
+  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const initial = userName?.trim()?.[0]?.toUpperCase() ?? "?";
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-muted text-xs font-semibold text-foreground transition-colors hover:border-accent/60 hover:bg-accent/10 hover:text-accent"
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={userName ? `Signed in as ${userName}` : "Account"}
+      >
+        {initial}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-background shadow-lg z-50 py-1"
+        >
+          {userName && (
+            <div className="px-3 py-2 text-xs text-muted-foreground border-b border-border/60 truncate">
+              Signed in as <span className="text-foreground font-medium">{userName}</span>
+            </div>
+          )}
+          <button
+            role="menuitem"
+            onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }}
+            className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            Sign out
+          </button>
+          <div className="my-1 h-px bg-border/60" />
+          <button
+            role="menuitem"
+            onClick={() => { setOpen(false); setDeleteOpen(true); }}
+            className="w-full px-3 py-2 text-left text-sm text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors"
+          >
+            Delete account
+          </button>
+        </div>
+      )}
+
+      <DeleteAccountModal open={deleteOpen} onClose={() => setDeleteOpen(false)} />
+    </div>
   );
 }
 
