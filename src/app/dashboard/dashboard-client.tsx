@@ -276,7 +276,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [plannedNewPerDay, setPlannedNewPerDay] = useState(1.5);
   const [plannedReviewPerDay, setPlannedReviewPerDay] = useState(5);
   const [editingPace, setEditingPace] = useState(false);
-  const [showQueueForecast, setShowQueueForecast] = useState(false);
+  const [showQueueForecast, setShowQueueForecast] = useState(true);
+  const [forecastMode, setForecastMode] = useState<"actual" | "goals">("actual");
 
 
   const activityData = useMemo(() => {
@@ -477,6 +478,55 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
       newPerDay: Math.round(newPerDay * 10) / 10,
     };
   }, [reviewItems, data.avgReviewPerDay, data.avgNewPerDay]);
+
+  const queueProjectionGoals = useMemo(() => {
+    const queue = reviewItems.map((r) => ({ stability: r.stability, daysOverdue: r.daysOverdue }));
+    if (queue.length === 0) return null;
+
+    const reviewsPerDay = Math.max(1, plannedReviewPerDay);
+    const newPerDay = plannedNewPerDay;
+    const AVG_MULTIPLIER = 2.0;
+
+    type QueueItem = { stability: number; dueInDays: number };
+    const items: QueueItem[] = queue.map((q) => ({ stability: q.stability, dueInDays: 0 }));
+
+    const dailyQueueSize: number[] = [];
+    const MAX_DAYS = 30;
+
+    for (let day = 0; day < MAX_DAYS; day++) {
+      const due = items.filter((it) => it.dueInDays <= day);
+      dailyQueueSize.push(due.length);
+
+      due.sort((a, b) => a.stability - b.stability);
+      const toReview = due.slice(0, Math.round(reviewsPerDay));
+
+      for (const item of toReview) {
+        item.stability = Math.min(365, item.stability * AVG_MULTIPLIER);
+        item.dueInDays = day + Math.round(item.stability);
+      }
+
+      if (newPerDay > 0) {
+        const newCount = Math.round(newPerDay);
+        for (let i = 0; i < newCount; i++) {
+          items.push({ stability: 0.5, dueInDays: day + 1 });
+        }
+      }
+    }
+
+    const clearDay = dailyQueueSize.findIndex((size) => size === 0);
+    const minSize = Math.min(...dailyQueueSize);
+    const minDay = dailyQueueSize.indexOf(minSize);
+
+    return {
+      currentSize: queue.length,
+      dailyQueueSize,
+      clearDay: clearDay === -1 ? null : clearDay,
+      minSize,
+      minDay,
+      reviewsPerDay: Math.round(reviewsPerDay * 10) / 10,
+      newPerDay: Math.round(newPerDay * 10) / 10,
+    };
+  }, [reviewItems, plannedReviewPerDay, plannedNewPerDay]);
 
   const weakCategories = useMemo(() =>
     [...data.categoryStats]
@@ -1538,34 +1588,50 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               </div>
 
               {/* Queue forecast (toggle) */}
-              {showQueueForecast && queueProjection && (
-                <div className="pt-1 border-t border-border/50 space-y-2">
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Queue Forecast</p>
-                  {queueProjection.clearDay !== null ? (
-                    <p className="text-sm font-semibold text-green-500">Clears in ~{queueProjection.clearDay} day{queueProjection.clearDay !== 1 ? "s" : ""}</p>
-                  ) : (
-                    <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {queueProjection.minSize} items (day {queueProjection.minDay})</p>
-                  )}
-                  <div className="relative flex items-end gap-px h-10">
-                    {queueProjection.dailyQueueSize.map((size, i) => {
-                      const maxSize = Math.max(...queueProjection.dailyQueueSize, 1);
-                      const height = Math.max(2, (size / maxSize) * 100);
-                      const isToday = i === 0;
-                      return (
-                        <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
-                            Day {i}: {size} due
+              {showQueueForecast && (() => {
+                const proj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
+                if (!proj) return null;
+                return (
+                  <div className="pt-1 border-t border-border/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Queue Forecast</p>
+                      <div className="flex rounded overflow-hidden border border-border/60 text-[10px]">
+                        <button
+                          onClick={() => setForecastMode("actual")}
+                          className={`px-2 py-0.5 transition-colors ${forecastMode === "actual" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                        >Actual</button>
+                        <button
+                          onClick={() => setForecastMode("goals")}
+                          className={`px-2 py-0.5 transition-colors border-l border-border/60 ${forecastMode === "goals" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                        >Goals</button>
+                      </div>
+                    </div>
+                    {proj.clearDay !== null ? (
+                      <p className="text-sm font-semibold text-green-500">Clears in ~{proj.clearDay} day{proj.clearDay !== 1 ? "s" : ""}</p>
+                    ) : (
+                      <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {proj.minSize} items (day {proj.minDay})</p>
+                    )}
+                    <div className="relative flex items-end gap-px h-10">
+                      {proj.dailyQueueSize.map((size, i) => {
+                        const maxSize = Math.max(...proj.dailyQueueSize, 1);
+                        const height = Math.max(2, (size / maxSize) * 100);
+                        const isToday = i === 0;
+                        return (
+                          <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
+                              Day {i}: {size} due
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>{proj.currentSize} due now · {proj.reviewsPerDay} reviews/day · {proj.newPerDay} new/day</span>
+                      <span>+30d</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>{queueProjection.currentSize} due now · {queueProjection.reviewsPerDay} reviews/day · {queueProjection.newPerDay} new/day</span>
-                    <span>+30d</span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </section>
