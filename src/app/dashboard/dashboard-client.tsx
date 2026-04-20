@@ -287,7 +287,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [pendingItems, setPendingItems] = useState<PendingItem[]>(data.pendingSubmissions);
   const [logModalProblem, setLogModalProblem] = useState<LogModalProblem | null>(null);
   const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({});
-  const [activityRange, setActivityRange] = useState<"14d" | "30d" | "90d" | "all">("14d");
+  const [activityViewMode, setActivityViewMode] = useState<"14d" | "monthly">("14d");
+  const [activityPage, setActivityPage] = useState(0);
   const [deferredItems, setDeferredItems] = useState(data.deferredProblems);
   const [autoDeferHards, setAutoDeferHards] = useState(data.autoDeferHards);
   const [reviewItems, setReviewItems] = useState(data.reviewQueue);
@@ -312,11 +313,15 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
 
 
   const activityData = useMemo(() => {
-    if (activityRange === "14d") return data.attemptHistory;
-    if (activityRange === "all") return data.fullAttemptHistory;
-    const days = activityRange === "30d" ? 30 : 90;
-    return data.fullAttemptHistory.slice(-days);
-  }, [activityRange, data.attemptHistory, data.fullAttemptHistory]);
+    if (activityViewMode === "monthly") return data.fullAttemptHistory;
+    const total = data.fullAttemptHistory.length;
+    const end = activityPage === 0 ? total : total - 14 * activityPage;
+    const start = Math.max(0, end - 14);
+    return data.fullAttemptHistory.slice(start, end);
+  }, [activityViewMode, activityPage, data.fullAttemptHistory]);
+
+  const canGoBack = activityViewMode === "14d" && (activityPage + 1) * 14 < data.fullAttemptHistory.length;
+  const canGoForward = activityViewMode === "14d" && activityPage > 0;
 
   function toggleWidget(key: string) {
     setCollapsedWidgets((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -914,13 +919,16 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             <div className="flex items-center gap-1.5">
               {/* Sort — segmented control matching tab row style */}
               {listMode === "review" && (
-                <div className="flex-[3] min-w-0 flex rounded-md border border-border p-0.5 gap-0.5">
-                  {(["urgency", "overdue", "difficulty", "category"] as ReviewSort[]).map((s) => (
-                    <button key={s} onClick={() => setReviewSort(s)} className={`flex-1 text-center text-xs px-1 py-0.5 rounded transition-colors ${reviewSort === s ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
-                      {s === "urgency" ? "Urgency" : s === "overdue" ? "Oldest" : s === "difficulty" ? "Hardest" : "Category"}
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={reviewSort}
+                  onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
+                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none shrink-0"
+                >
+                  <option value="urgency">Urgency</option>
+                  <option value="overdue">Oldest</option>
+                  <option value="difficulty">Hardest</option>
+                  <option value="category">Category</option>
+                </select>
               )}
               {listMode === "new" && (
                 <select
@@ -936,13 +944,15 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </select>
               )}
               {listMode === "completed" && (
-                <div className="flex-[3] min-w-0 flex rounded-md border border-border p-0.5 gap-0.5">
-                  {(["retention", "review-date", "category"] as CompletedSort[]).map((s) => (
-                    <button key={s} onClick={() => setCompletedSort(s)} className={`flex-1 text-center text-xs px-1 py-0.5 rounded transition-colors ${completedSort === s ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
-                      {s === "retention" ? "Weakest first" : s === "review-date" ? "Due soonest" : "Category"}
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={completedSort}
+                  onChange={(e) => setCompletedSort(e.target.value as CompletedSort)}
+                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none shrink-0"
+                >
+                  <option value="retention">Weakest first</option>
+                  <option value="review-date">Due soonest</option>
+                  <option value="category">Category</option>
+                </select>
               )}
               {(listMode === "import" || listMode === "mock") && <span className="flex-[3] min-w-0" />}
               {/* Search */}
@@ -1436,7 +1446,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
               </div>
             </div>
-            <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
+            <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-2">
               {displayCategories.map((cat) => (
                 <Link key={cat.category} href={`/problems?category=${encodeURIComponent(cat.category)}`} className="flex items-center gap-2 group/cat cursor-pointer">
                   <span className="text-[11px] w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
@@ -1524,22 +1534,43 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               <p className="text-sm font-semibold text-foreground">Activity</p>
             </button>
             <div className="flex items-center gap-1.5">
-              {/* Range selector */}
+              {/* Mode toggle: 14d / Monthly */}
               <div className="flex rounded-md border border-border p-0.5 gap-0.5">
-                {(["14d", "30d", "90d", "all"] as const).map((r) => (
+                {(["14d", "monthly"] as const).map((m) => (
                   <button
-                    key={r}
-                    onClick={() => setActivityRange(r)}
+                    key={m}
+                    onClick={() => { setActivityViewMode(m); setActivityPage(0); }}
                     className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
-                      activityRange === r
+                      activityViewMode === m
                         ? "bg-accent/20 text-accent font-semibold"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {r === "all" ? "All" : r}
+                    {m === "14d" ? "14d" : "Monthly"}
                   </button>
                 ))}
               </div>
+              {/* Back / Forward nav — 14d mode only */}
+              {activityViewMode === "14d" && (
+                <>
+                  <button
+                    onClick={() => setActivityPage((p) => p + 1)}
+                    disabled={!canGoBack}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                    aria-label="Go back 14 days"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button
+                    onClick={() => setActivityPage((p) => Math.max(0, p - 1))}
+                    disabled={!canGoForward}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                    aria-label="Go forward 14 days"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </>
+              )}
               {/* Chevron — collapses the whole section */}
               <button onClick={() => toggleWidget("activity")} aria-label="Toggle activity chart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${collapsedWidgets.activity ? "rotate-180" : ""}`}><polyline points="18 15 12 9 6 15"/></svg>
@@ -1640,7 +1671,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </div>
               </div>
 
-              <ActivityChart history={activityData} />
+              <ActivityChart history={activityData} mode={activityViewMode === "monthly" ? "monthly" : "auto"} />
 
             </div>
           )}
@@ -1649,16 +1680,16 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         {/* Queue Forecast */}
         <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
           <div className="flex items-center justify-between w-full">
+            <p className="text-sm font-semibold text-foreground">Queue Forecast</p>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-foreground">Queue Forecast</p>
               <div className="flex rounded overflow-hidden border border-border/60 text-[10px]">
                 <button onClick={() => setForecastMode("actual")} className={`px-2 py-0.5 transition-colors ${forecastMode === "actual" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Actual</button>
                 <button onClick={() => setForecastMode("goals")} className={`px-2 py-0.5 transition-colors border-l border-border/60 ${forecastMode === "goals" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Goals</button>
               </div>
+              <button onClick={() => setShowQueueForecast(v => !v)} aria-label="Toggle queue forecast" aria-expanded={showQueueForecast}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${showQueueForecast ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
             </div>
-            <button onClick={() => setShowQueueForecast(v => !v)} aria-label="Toggle queue forecast" aria-expanded={showQueueForecast}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${showQueueForecast ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
-            </button>
           </div>
           {showQueueForecast && (() => {
             const proj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
@@ -1722,14 +1753,33 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
 
 /* ── Activity Chart ── */
 
-function ActivityChart({ history }: { history: AttemptDay[] }) {
+function ActivityChart({ history, mode = "auto" }: { history: AttemptDay[]; mode?: "auto" | "monthly" }) {
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Aggregate into weekly buckets if >30 days
-  const shouldAggregate = history.length > 30;
+  // Aggregate: monthly if mode=monthly, weekly if auto+>30 days, else daily
+  const shouldMonthly = mode === "monthly";
+  const shouldAggregate = !shouldMonthly && history.length > 30;
   type Bucket = { label: string; count: number; newCount: number; reviewCount: number; dateRange: string; linkDate: string };
 
   const buckets: Bucket[] = useMemo(() => {
+    if (shouldMonthly) {
+      // Group by calendar month
+      const monthMap = new Map<string, Bucket>();
+      for (const day of history) {
+        const [y, m] = day.date.split("-");
+        const key = `${y}-${m}`;
+        if (!monthMap.has(key)) {
+          const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          const label = `${monthNames[parseInt(m, 10) - 1]} '${y.slice(2)}`;
+          monthMap.set(key, { label, count: 0, newCount: 0, reviewCount: 0, dateRange: `${monthNames[parseInt(m,10)-1]} ${y}`, linkDate: day.date });
+        }
+        const bucket = monthMap.get(key)!;
+        bucket.count += day.count;
+        bucket.newCount += day.newCount;
+        bucket.reviewCount += day.reviewCount;
+      }
+      return Array.from(monthMap.values());
+    }
     if (!shouldAggregate) {
       return history.map((day) => {
         const [, m, dd] = day.date.split("-");
@@ -1789,7 +1839,7 @@ function ActivityChart({ history }: { history: AttemptDay[] }) {
     }
 
     return weeks;
-  }, [history, shouldAggregate]);
+  }, [history, shouldAggregate, shouldMonthly]);
 
   const max = Math.max(...buckets.map((d) => d.count), 1);
   const MAX_BAR_PX = 44;
