@@ -273,6 +273,10 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [autoDeferHards, setAutoDeferHards] = useState(data.autoDeferHards);
   const [reviewItems, setReviewItems] = useState(data.reviewQueue);
   const [deferSearch, setDeferSearch] = useState("");
+  const [plannedNewPerDay, setPlannedNewPerDay] = useState(1.5);
+  const [plannedReviewPerDay, setPlannedReviewPerDay] = useState(5);
+  const [editingPace, setEditingPace] = useState(false);
+  const [showQueueForecast, setShowQueueForecast] = useState(false);
 
 
   const activityData = useMemo(() => {
@@ -304,6 +308,10 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     if (savedTab && ["review", "new", "completed", "deferred", "import"].includes(savedTab)) {
       setListMode(savedTab as ListMode);
     }
+    const savedNewPace = localStorage.getItem("aurora_planned_new_per_day");
+    if (savedNewPace) setPlannedNewPerDay(parseFloat(savedNewPace));
+    const savedReviewPace = localStorage.getItem("aurora_planned_review_per_day");
+    if (savedReviewPace) setPlannedReviewPerDay(parseFloat(savedReviewPace));
   }, []);
 
   // Persist active tab across sessions
@@ -1222,12 +1230,18 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             <span className="text-xs text-muted-foreground">{countdown.remaining} to go</span>
           </div>
 
-          {/* Projection */}
-          <div className={`mt-3 rounded-md p-2 text-xs ${countdown.onTrack ? "bg-green-500/10 text-green-500" : "bg-orange-500/10 text-orange-500"}`}>
-            {countdown.onTrack ? (
-              <span>On track — projected {countdown.projectedRaw}/{targetCount} by target date</span>
-            ) : (
-              <span>Behind — projected {countdown.projectedRaw}/{targetCount} · need {countdown.neededPerDay.toFixed(1)} new problems/day</span>
+          {/* Confidence + on-track */}
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span className={countdown.onTrack ? "text-green-500" : "text-orange-500"}>
+              {countdown.onTrack
+                ? `On track — projected ${countdown.projectedRaw}/${targetCount}`
+                : `Behind — projected ${countdown.projectedRaw}/${targetCount} · need ${countdown.neededPerDay.toFixed(1)}/day`}
+            </span>
+            {data.avgConfidence > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span>Confidence</span>
+                <span className="font-medium text-foreground">{data.avgConfidence.toFixed(1)}/5</span>
+              </span>
             )}
           </div>
 
@@ -1246,242 +1260,68 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         </>)}
 
         {showStatsDetail && (<>
-        {/* Overview */}
+        {/* Time */}
         <section className="rounded-lg border border-border bg-muted p-3">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground">Overview</p>
+            <p className="text-xs font-medium text-muted-foreground">Time</p>
             <button onClick={() => setShowStatsDetail(false)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Back to dashboard" title="Back to dashboard">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             </button>
           </div>
-          {true && (
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3">
-                  <p className="text-[11px] text-muted-foreground mb-1">Progress</p>
-                  <p className="text-2xl font-bold tabular-nums">{data.attemptedCount}<span className="text-sm text-muted-foreground font-normal">/{data.totalProblems}</span></p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">problems attempted</p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3">
-                  <p className="text-[11px] text-muted-foreground mb-1">Projection</p>
-                  <p className={`text-2xl font-bold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.projectedRaw}<span className="text-sm font-normal text-muted-foreground">/{targetCount}</span></p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">projected by target</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Retention</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><p className="text-lg font-bold tabular-nums">{data.retainedCount}/{data.attemptedCount}</p><p className="text-[11px] text-muted-foreground">retained (R &gt; 70%)</p></div>
-                  <div><p className="text-lg font-bold tabular-nums text-green-500">{data.masteredCount}</p><p className="text-[11px] text-muted-foreground">mastered (S ≥ 30d)</p></div>
-                  <div><p className="text-lg font-bold tabular-nums text-accent">{data.learningCount}</p><p className="text-[11px] text-muted-foreground">learning</p></div>
-                </div>
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Consistency</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><p className="text-lg font-bold tabular-nums">🔥 {data.currentStreak}</p><p className="text-[11px] text-muted-foreground">current streak</p></div>
-                  <div><p className="text-lg font-bold tabular-nums">{data.bestStreak}</p><p className="text-[11px] text-muted-foreground">best streak</p></div>
-                  <div><p className="text-lg font-bold tabular-nums">{data.avgConfidence > 0 ? `${data.avgConfidence.toFixed(1)}/5` : "—"}</p><p className="text-[11px] text-muted-foreground">avg confidence</p></div>
-                </div>
-              </div>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Solve</p><p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p></div>
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Study</p><p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p></div>
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Avg Solve</p><p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p></div>
             </div>
-          )}
-        </section>
-
-        {/* Pace */}
-        <section className="rounded-lg border border-border bg-muted p-3">
-          <p className="text-xs font-medium text-muted-foreground mb-3">Pace</p>
-          {true && (
-            <div className="mt-3 space-y-3">
-              <div>
-                <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">Last 14 Days</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.avgNewPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">new/day</p></div>
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.avgReviewPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">reviews/day</p></div>
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.avgPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">total/day</p></div>
-                </div>
+            {data.attemptedCount > 0 && (
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground space-y-1.5">
+                {data.totalSolveMinutes > 0 && data.totalStudyMinutes > 0 && <div className="flex justify-between"><span>Solve efficiency</span><span className="font-medium text-foreground">{Math.round((data.totalSolveMinutes / data.totalStudyMinutes) * 100)}% of study time</span></div>}
+                <div className="flex justify-between"><span>Study time per problem</span><span className="font-medium text-foreground">{Math.round(data.totalStudyMinutes / data.attemptedCount)}m avg</span></div>
               </div>
-              <div>
-                <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">All Time</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.overallNewPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">new/day</p></div>
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.overallReviewPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">reviews/day</p></div>
-                  <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-2xl font-bold tabular-nums">{data.overallPerDay.toFixed(1)}</p><p className="text-[11px] text-muted-foreground">total/day</p></div>
-                </div>
-              </div>
-              <div className={`rounded-lg p-3 text-sm ${countdown.onTrack ? "bg-green-500/10 border border-green-500/20" : "bg-orange-500/10 border border-orange-500/20"}`}>
-                <p className={`font-medium ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>{countdown.onTrack ? "On track" : "Behind pace"}</p>
-                <p className="text-xs text-muted-foreground mt-1">Need <span className="font-medium text-foreground">{countdown.neededPerDay.toFixed(1)}</span> new/day to hit {targetCount} by target date</p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Time */}
-        <section className="rounded-lg border border-border bg-muted p-3">
-          <p className="text-xs font-medium text-muted-foreground mb-3">Time</p>
-          {true && (
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Solve</p><p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p></div>
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Study</p><p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p></div>
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Avg Solve</p><p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p></div>
-              </div>
-              {data.attemptedCount > 0 && (
-                <div className="rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                  {data.totalSolveMinutes > 0 && data.totalStudyMinutes > 0 && <div className="flex justify-between"><span>Solve efficiency</span><span className="font-medium text-foreground">{Math.round((data.totalSolveMinutes / data.totalStudyMinutes) * 100)}% of study time</span></div>}
-                  <div className="flex justify-between"><span>Study time per problem</span><span className="font-medium text-foreground">{Math.round(data.totalStudyMinutes / data.attemptedCount)}m avg</span></div>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </section>
 
         {/* Readiness */}
         <section className="rounded-lg border border-border bg-muted p-3">
           <p className="text-xs font-medium text-muted-foreground mb-3">Readiness</p>
-          {true && (
-            <div className="mt-3 space-y-3">
-              <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-background/40 p-3">
-                <span className={`inline-flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
-                <div>
-                  <p className="text-2xl font-bold tabular-nums">{data.readiness.score}<span className="text-sm text-muted-foreground font-normal">/100</span></p>
-                  <p className="text-[11px] text-muted-foreground">Readiness Score</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Coverage", value: data.readinessBreakdown.coverage, weight: "30%" },
-                  { label: "Retention", value: data.readinessBreakdown.retention, weight: "40%" },
-                  { label: "Category Balance", value: data.readinessBreakdown.categoryBalance, weight: "20%" },
-                  { label: "Consistency", value: data.readinessBreakdown.consistency, weight: "10%" },
-                ].map(({ label, value, weight }) => (
-                  <div key={label}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">{label} <span className="text-muted-foreground/60">({weight})</span></span>
-                      <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-background overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 text-[11px]">
-                {[{ tier: "S", min: "90+" }, { tier: "A", min: "75+" }, { tier: "B", min: "55+" }, { tier: "C", min: "35+" }, { tier: "D", min: "<35" }].map(({ tier, min }) => (
-                  <div key={tier} className={`flex-1 text-center rounded-md py-1.5 ${data.readiness.tier === tier ? "ring-1 ring-accent" : ""}`}>
-                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
-                    <p className="text-muted-foreground mt-0.5">{min}</p>
-                  </div>
-                ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-background/40 p-3">
+              <span className={`inline-flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">{data.readiness.score}<span className="text-sm text-muted-foreground font-normal">/100</span></p>
+                <p className="text-[11px] text-muted-foreground">Readiness Score</p>
               </div>
             </div>
-          )}
+            <div className="space-y-3">
+              {[
+                { label: "Coverage", value: data.readinessBreakdown.coverage, weight: "30%" },
+                { label: "Retention", value: data.readinessBreakdown.retention, weight: "40%" },
+                { label: "Category Balance", value: data.readinessBreakdown.categoryBalance, weight: "20%" },
+                { label: "Consistency", value: data.readinessBreakdown.consistency, weight: "10%" },
+              ].map(({ label, value, weight }) => (
+                <div key={label}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">{label} <span className="text-muted-foreground/60">({weight})</span></span>
+                    <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-background overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 text-[11px]">
+              {[{ tier: "S", min: "90+" }, { tier: "A", min: "75+" }, { tier: "B", min: "55+" }, { tier: "C", min: "35+" }, { tier: "D", min: "<35" }].map(({ tier, min }) => (
+                <div key={tier} className={`flex-1 text-center rounded-md py-1.5 ${data.readiness.tier === tier ? "ring-1 ring-accent" : ""}`}>
+                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
+                  <p className="text-muted-foreground mt-0.5">{min}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
-        </>)}
-
-        {!showStatsDetail && (<>
-        {/* Activity Chart */}
-        <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
-          <button
-            onClick={() => toggleWidget("activity")}
-            className="flex items-center justify-between w-full"
-            aria-expanded={!collapsedWidgets.activity}
-            aria-label="Toggle activity chart"
-          >
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-medium text-muted-foreground">Activity</p>
-              <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
-                {(["14d", "30d", "90d", "all"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setActivityRange(r)}
-                    className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-                      activityRange === r
-                        ? "bg-background text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {r === "all" ? "All" : r}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <span className="text-[10px] text-muted-foreground">{collapsedWidgets.activity ? "▼" : "▲"}</span>
-          </button>
-          {!collapsedWidgets.activity && (
-            <div className="mt-2">
-              <ActivityChart history={activityData} />
-            </div>
-          )}
-        </section>
-
-        {/* Queue Projection */}
-        {queueProjection && (
-          <section className="rounded-lg border border-border bg-muted p-3">
-            <button
-              onClick={() => toggleWidget("queue")}
-              className="flex items-center justify-between w-full"
-              aria-expanded={!collapsedWidgets.queue}
-              aria-label="Toggle review queue forecast"
-            >
-              <p className="text-xs font-medium text-muted-foreground">Review Queue Forecast</p>
-              <span className="text-[10px] text-muted-foreground">{collapsedWidgets.queue ? "▼" : "▲"}</span>
-            </button>
-            {!collapsedWidgets.queue && (
-              <div className="mt-2 space-y-2">
-                {/* Headline stat */}
-                {queueProjection.clearDay !== null ? (
-                  <p className="text-sm font-semibold text-green-500 select-text">Queue clears in ~{queueProjection.clearDay} day{queueProjection.clearDay !== 1 ? "s" : ""}</p>
-                ) : (
-                  <p className="text-sm font-semibold text-amber-500 select-text">
-                    Won&apos;t fully clear in 30d — lowest: {queueProjection.minSize} items (day {queueProjection.minDay})
-                  </p>
-                )}
-
-                {/* Mini bar chart — 30 day projection */}
-                <div className="relative flex items-end gap-px h-12 group/chart">
-                  {queueProjection.dailyQueueSize.map((size, i) => {
-                    const maxSize = Math.max(...queueProjection.dailyQueueSize, 1);
-                    const height = Math.max(2, (size / maxSize) * 100);
-                    const isToday = i === 0;
-                    return (
-                      <div
-                        key={i}
-                        className={`relative flex-1 rounded-t-sm transition-all group/bar peer ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`}
-                        style={{ height: `${height}%` }}
-                      >
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
-                          <span className="font-medium">Day {i}</span>: {size} item{size !== 1 ? "s" : ""} due
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-muted-foreground select-text">
-                  <span>Today</span>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-accent" /> Today</span>
-                    <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-orange-500/60" /> Due</span>
-                    <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-green-500/60" /> Clear</span>
-                  </div>
-                  <span>+30 days</span>
-                </div>
-
-                {/* Summary text */}
-                <div className="text-xs text-muted-foreground select-text">
-                  <p>
-                    <span className="font-medium text-foreground">{queueProjection.currentSize}</span> due now
-                    {" · "}
-                    <span className="font-medium text-foreground">{queueProjection.reviewsPerDay}</span> reviews/day
-                    {" · "}
-                    <span className="font-medium text-foreground">{queueProjection.newPerDay}</span> new/day
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
 
         {/* Mastery Progress */}
         <section className="rounded-lg border border-border bg-muted p-3">
@@ -1532,23 +1372,12 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </button>
           {!collapsedWidgets.breakdown && (
           <div className="grid grid-cols-2 gap-3 mt-2">
-          {/* Category Breakdown */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[11px] font-medium text-muted-foreground">Categories</p>
               <div className="flex gap-1">
-                <button
-                  onClick={() => setCategoryView("weak")}
-                  className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "weak" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  Weakest
-                </button>
-                <button
-                  onClick={() => setCategoryView("all")}
-                  className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  All
-                </button>
+                <button onClick={() => setCategoryView("weak")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "weak" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Weakest</button>
+                <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
               </div>
             </div>
             <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
@@ -1556,10 +1385,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <Link key={cat.category} href={`/problems?category=${encodeURIComponent(cat.category)}`} className="flex items-center gap-2 group/cat cursor-pointer">
                   <span className="text-[11px] w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
                   <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background group-hover/cat:h-2 transition-all duration-150">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${retentionBarColor(cat.avgRetention)}`}
-                      style={{ width: `${cat.total > 0 ? Math.round((cat.attempted / cat.total) * 100) : 0}%` }}
-                    />
+                    <div className={`h-full rounded-full transition-all duration-300 ${retentionBarColor(cat.avgRetention)}`} style={{ width: `${cat.total > 0 ? Math.round((cat.attempted / cat.total) * 100) : 0}%` }} />
                   </div>
                   <span className={`text-[11px] w-10 text-right shrink-0 tabular-nums transition-colors ${cat.attempted > 0 ? retentionColor(cat.avgRetention) : "text-muted-foreground"}`}>
                     <span className="group-hover/cat:hidden">{cat.attempted}/{cat.total}</span>
@@ -1569,8 +1395,6 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               ))}
             </div>
           </div>
-
-          {/* Difficulty Progress */}
           <div>
             <p className="text-[11px] font-medium text-muted-foreground mb-2">Difficulty</p>
             <div className="space-y-2.5">
@@ -1594,6 +1418,158 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </div>
           )}
         </section>
+        </>)}
+
+        {!showStatsDetail && (<>
+        {/* Activity Chart */}
+        <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
+          <button
+            onClick={() => toggleWidget("activity")}
+            className="flex items-center justify-between w-full"
+            aria-expanded={!collapsedWidgets.activity}
+            aria-label="Toggle activity chart"
+          >
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium text-muted-foreground">Activity</p>
+              <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
+                {(["14d", "30d", "90d", "all"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setActivityRange(r)}
+                    className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                      activityRange === r
+                        ? "bg-background text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {r === "all" ? "All" : r}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className="text-[10px] text-muted-foreground">{collapsedWidgets.activity ? "▼" : "▲"}</span>
+          </button>
+          {!collapsedWidgets.activity && (
+            <div className="mt-2 space-y-3">
+              {/* Streak + projection row */}
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <span>🔥</span>
+                    <span className="font-semibold tabular-nums">{data.currentStreak}</span>
+                    <span className="text-muted-foreground">streak</span>
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-muted-foreground">Best</span>
+                    <span className="font-semibold tabular-nums">{data.bestStreak}</span>
+                  </span>
+                </div>
+                <span className={countdown.onTrack ? "text-green-500" : "text-orange-500"}>
+                  Projected {countdown.projectedRaw}/{targetCount}
+                </span>
+              </div>
+
+              <ActivityChart history={activityData} />
+
+              {/* Pace goal vs actual */}
+              <div className="pt-1 border-t border-border/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Daily Pace</p>
+                  <div className="flex items-center gap-2">
+                    {editingPace ? (
+                      <button
+                        onClick={() => {
+                          localStorage.setItem("aurora_planned_new_per_day", String(plannedNewPerDay));
+                          localStorage.setItem("aurora_planned_review_per_day", String(plannedReviewPerDay));
+                          setEditingPace(false);
+                        }}
+                        className="text-[10px] text-accent hover:opacity-80"
+                      >Save</button>
+                    ) : (
+                      <button onClick={() => setEditingPace(true)} className="text-[10px] text-muted-foreground hover:text-foreground">Edit goals</button>
+                    )}
+                    <button
+                      onClick={() => setShowQueueForecast(v => !v)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${showQueueForecast ? "bg-accent/15 text-accent border border-accent/30" : "text-muted-foreground hover:text-foreground border border-transparent"}`}
+                    >Queue forecast</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">New goal</span>
+                    {editingPace ? (
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={plannedNewPerDay}
+                        onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)}
+                        className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    ) : (
+                      <span className="font-medium tabular-nums">{plannedNewPerDay.toFixed(1)}/day</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Actual new</span>
+                    <span className={`font-medium tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}/day</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Review goal</span>
+                    {editingPace ? (
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={plannedReviewPerDay}
+                        onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)}
+                        className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    ) : (
+                      <span className="font-medium tabular-nums">{plannedReviewPerDay.toFixed(1)}/day</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Actual reviews</span>
+                    <span className={`font-medium tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}/day</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Queue forecast (toggle) */}
+              {showQueueForecast && queueProjection && (
+                <div className="pt-1 border-t border-border/50 space-y-2">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Queue Forecast</p>
+                  {queueProjection.clearDay !== null ? (
+                    <p className="text-sm font-semibold text-green-500">Clears in ~{queueProjection.clearDay} day{queueProjection.clearDay !== 1 ? "s" : ""}</p>
+                  ) : (
+                    <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {queueProjection.minSize} items (day {queueProjection.minDay})</p>
+                  )}
+                  <div className="relative flex items-end gap-px h-10">
+                    {queueProjection.dailyQueueSize.map((size, i) => {
+                      const maxSize = Math.max(...queueProjection.dailyQueueSize, 1);
+                      const height = Math.max(2, (size / maxSize) * 100);
+                      const isToday = i === 0;
+                      return (
+                        <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
+                            Day {i}: {size} due
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>{queueProjection.currentSize} due now · {queueProjection.reviewsPerDay} reviews/day · {queueProjection.newPerDay} new/day</span>
+                    <span>+30d</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         </>)}
 
         </div>
