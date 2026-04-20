@@ -1652,20 +1652,18 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
 
         {/* Queue Forecast */}
         <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
-          <button
-            onClick={() => setShowQueueForecast(v => !v)}
-            className="flex items-center justify-between w-full"
-            aria-expanded={showQueueForecast}
-          >
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold text-foreground">Queue Forecast</p>
-              <div className="flex rounded overflow-hidden border border-border/60 text-[10px]" onClick={(e) => e.stopPropagation()}>
+              <div className="flex rounded overflow-hidden border border-border/60 text-[10px]">
                 <button onClick={() => setForecastMode("actual")} className={`px-2 py-0.5 transition-colors ${forecastMode === "actual" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Actual</button>
                 <button onClick={() => setForecastMode("goals")} className={`px-2 py-0.5 transition-colors border-l border-border/60 ${forecastMode === "goals" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Goals</button>
               </div>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${showQueueForecast ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
+            <button onClick={() => setShowQueueForecast(v => !v)} aria-label="Toggle queue forecast" aria-expanded={showQueueForecast}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${showQueueForecast ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+          </div>
           {showQueueForecast && (() => {
             const proj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
             if (!proj) return <p className="text-xs text-muted-foreground mt-2">No items in queue.</p>;
@@ -2173,26 +2171,34 @@ function MasteryProgress({
             })}
           </div>
           {learningList.length > PAGE_SIZE && (
-            <div className="flex items-center gap-2 mt-1.5">
-              <button
-                onClick={() => setLearningPage(p => Math.max(0, p - 1))}
-                disabled={learningPage === 0}
-                className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                ←
-              </button>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {learningPage + 1} / {totalPages}
-              </span>
-              <button
-                onClick={() => setLearningPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={learningPage === totalPages - 1}
-                className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                →
-              </button>
-              <span className="text-[11px] text-muted-foreground ml-1">{learningList.length} total</span>
-            </div>
+            <nav className="flex flex-wrap items-center justify-between gap-2 mt-2 border-t border-border pt-2">
+              <p className="text-[11px] text-muted-foreground">
+                {learningPage * PAGE_SIZE + 1}–{Math.min((learningPage + 1) * PAGE_SIZE, learningList.length)} of {learningList.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setLearningPage(p => Math.max(0, p - 1))}
+                  disabled={learningPage === 0}
+                  className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded border border-border px-2 text-[11px] text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >Prev</button>
+                {Array.from({ length: totalPages }, (_, i) => i).map((i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLearningPage(i)}
+                    className={`inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-[11px] transition-colors ${
+                      i === learningPage
+                        ? "bg-accent text-accent-foreground font-semibold"
+                        : "border border-border text-muted-foreground hover:bg-background hover:text-foreground"
+                    }`}
+                  >{i + 1}</button>
+                ))}
+                <button
+                  onClick={() => setLearningPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={learningPage === totalPages - 1}
+                  className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded border border-border px-2 text-[11px] text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >Next</button>
+              </div>
+            </nav>
           )}
         </div>
       )}

@@ -36,7 +36,7 @@ const DEFAULT_PAGE_SIZE = 15;
 const ROW_HEIGHT_PX = 49;
 const TABLE_HEADER_PX = 41;
 // Space reserved below the table for pagination controls + page bottom padding.
-const BOTTOM_RESERVE_PX = 96;
+const BOTTOM_RESERVE_PX = 140;
 
 function statusLabel(r: number, bestQuality?: string | null): { label: string; className: string } {
   if (bestQuality === "NONE") return { label: "Unsolved", className: "text-red-500" };
