@@ -48,6 +48,11 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [expandNotes, setExpandNotes] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [customDate, setCustomDate] = useState(
+    problem.attemptDate ? new Date(problem.attemptDate).toISOString().split("T")[0] : ""
+  );
 
   // Close on Escape
   useEffect(() => {
@@ -88,11 +93,12 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
       confidence,
       solveTimeMinutes: solveTime || null,
       rewroteFromScratch: rewrote ? "YES" : "NO",
+      ...(notes.trim() && { notes: notes.trim() }),
       ...(force && { force: true }),
       ...(problem.source && { source: problem.source }),
-      ...(problem.attemptDate && { attemptDate: new Date(problem.attemptDate).toISOString() }),
+      ...(customDate && { attemptDate: new Date(customDate + "T12:00:00").toISOString() }),
     };
-  }, [outcome, quality, confidence, solveTime, rewrote, problem]);
+  }, [outcome, quality, confidence, solveTime, rewrote, notes, customDate, problem]);
 
   async function handleSubmit(force = false) {
     setSubmitting(true);
@@ -263,6 +269,43 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Notes / Date expander */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setExpandNotes((v) => !v)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-150 ${expandNotes ? "rotate-180" : ""}`}><polyline points="18 15 12 9 6 15"/></svg>
+              {expandNotes ? "Hide notes" : "Add notes / date"}
+            </button>
+            {expandNotes && (
+              <div className="space-y-3 pt-3">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Notes</p>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Key insight, approach, patterns…"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Date</p>
+                  <input
+                    type="date"
+                    value={customDate}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    placeholder={new Date().toISOString().split("T")[0]}
+                    className="h-8 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Error / Duplicate */}
