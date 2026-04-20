@@ -278,6 +278,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [editingPace, setEditingPace] = useState(false);
   const [showQueueForecast, setShowQueueForecast] = useState(true);
   const [forecastMode, setForecastMode] = useState<"actual" | "goals">("actual");
+  const [countdownTitle, setCountdownTitle] = useState("Fall Recruiting Countdown");
 
 
   const activityData = useMemo(() => {
@@ -313,6 +314,11 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     if (savedNewPace) setPlannedNewPerDay(parseFloat(savedNewPace));
     const savedReviewPace = localStorage.getItem("aurora_planned_review_per_day");
     if (savedReviewPace) setPlannedReviewPerDay(parseFloat(savedReviewPace));
+    const savedTitle = localStorage.getItem("aurora_countdown_title");
+    if (savedTitle) setCountdownTitle(savedTitle);
+    // Sync targetCount with saved goalType
+    const savedGoalForCount = localStorage.getItem("srs_goal_type");
+    if (savedGoalForCount === "blind75" && !saved) setTargetCount(75);
   }, []);
 
   // Persist active tab across sessions
@@ -343,10 +349,12 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     return () => clearTimeout(timer);
   }, [srsBanner]);
 
-  function saveSettings(date: string, count: number) {
+  function saveSettings(date: string, count: number, title: string) {
     setTargetDate(date);
     setTargetCount(count);
+    setCountdownTitle(title);
     localStorage.setItem("srs_target", JSON.stringify({ date, count }));
+    localStorage.setItem("aurora_countdown_title", title);
     setShowSettings(false);
   }
 
@@ -792,10 +800,9 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           />
         )}
         <section className="flex flex-col lg:flex-1 lg:min-h-0">
-          {/* Tab header — row 1: tabs + search/browse always visible */}
+          {/* Tab header — row 1: tabs full-width; row 2: sort pills + search */}
           <div className="flex flex-col gap-1.5 mb-2 shrink-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-0.5 rounded-md border border-border p-0.5 overflow-x-auto">
+            <div className="flex gap-0.5 rounded-md border border-border p-0.5 overflow-x-auto w-full">
                 <button
                   onClick={() => setListMode("review")}
                   className={`text-sm px-2.5 py-1 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
@@ -846,28 +853,10 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 >
                   Import
                 </button>
-              </div>
-              {/* Search + Browse — always visible */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {listMode !== "import" && (
-                  <input
-                    type="text"
-                    value={queueSearch}
-                    onChange={(e) => setQueueSearch(e.target.value)}
-                    placeholder="Filter…"
-                    className="h-7 w-24 rounded border border-border bg-background px-2 text-xs placeholder:text-muted-foreground focus:outline-none"
-                  />
-                )}
-                {listMode === "new" && (
-                  <Link href="/problems" className="text-xs text-accent hover:underline shrink-0">
-                    Browse all →
-                  </Link>
-                )}
-              </div>
             </div>
-            {/* Row 2: sort pills — left-aligned, unobtrusive */}
-            {listMode === "review" && (
-              <div className="flex gap-1">
+            {/* Row 2: sort pills + search sharing a row */}
+            <div className="flex items-center gap-1.5">
+            {listMode === "review" && (<>
                 {(["urgency", "overdue", "difficulty", "category"] as ReviewSort[]).map((s) => (
                   <button
                     key={s}
@@ -881,10 +870,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     {s === "urgency" ? "Urgency" : s === "overdue" ? "Oldest" : s === "difficulty" ? "Hardest" : "Category"}
                   </button>
                 ))}
-              </div>
-            )}
-            {listMode === "new" && (
-              <div className="flex items-center gap-1">
+            </>)}
+            {listMode === "new" && (<>
                 {(["curriculum", "hardest"] as NewSort[]).map((s) => (
                   <button
                     key={s}
@@ -918,10 +905,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     Blind 75 only
                   </button>
                 )}
-              </div>
-            )}
-            {listMode === "completed" && (
-              <div className="flex gap-1">
+            </>)}
+            {listMode === "completed" && (<>
                 {(["retention", "review-date", "category"] as CompletedSort[]).map((s) => (
                   <button
                     key={s}
@@ -935,8 +920,23 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     {s === "retention" ? "Strongest" : s === "review-date" ? "Next review" : "Category"}
                   </button>
                 ))}
-              </div>
-            )}
+            </>)}
+              <span className="flex-1" />
+              {listMode !== "import" && (
+                <input
+                  type="text"
+                  value={queueSearch}
+                  onChange={(e) => setQueueSearch(e.target.value)}
+                  placeholder="Filter…"
+                  className="h-7 w-24 rounded border border-border bg-background px-2 text-xs placeholder:text-muted-foreground focus:outline-none"
+                />
+              )}
+              {listMode === "new" && (
+                <Link href="/problems" className="text-xs text-accent hover:underline shrink-0">
+                  Browse all →
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Review list */}
@@ -1239,7 +1239,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         {/* Countdown */}
         <section className="rounded-lg border border-border bg-muted p-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-muted-foreground">Fall Recruiting Countdown</p>
+            <p className="text-xs font-medium text-muted-foreground">{countdownTitle}</p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -1260,16 +1260,34 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             </div>
           </div>
 
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-3xl font-bold tabular-nums">{countdown.daysLeft}</span>
-            <span className="text-sm text-muted-foreground">days left</span>
+          {/* Days left + status side by side */}
+          <div className="flex items-start gap-4 mb-1">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold tabular-nums">{countdown.daysLeft}</span>
+                <span className="text-sm text-muted-foreground">days left</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {targetCount} problems by {new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </p>
+            </div>
+            <div className="flex flex-col gap-0.5 pt-0.5 text-xs">
+              <span className={`font-medium ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
+                {countdown.onTrack ? "On track" : "Behind pace"}
+              </span>
+              <span className="text-muted-foreground">
+                Projected {countdown.projectedRaw}/{targetCount}
+              </span>
+              {!countdown.onTrack && (
+                <span className="text-muted-foreground">
+                  Need {countdown.neededPerDay.toFixed(1)}/day
+                </span>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Target: {targetCount} problems by {new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-          </p>
 
           {/* Progress bar */}
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-background">
             <div
               className={`h-full rounded-full transition-all duration-300 ${countdown.onTrack ? "bg-green-500" : "bg-orange-500"}`}
               style={{ width: `${Math.min(100, (data.attemptedCount / targetCount) * 100)}%` }}
@@ -1280,19 +1298,33 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             <span className="text-xs text-muted-foreground">{countdown.remaining} to go</span>
           </div>
 
-          {/* Confidence + on-track */}
-          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span className={countdown.onTrack ? "text-green-500" : "text-orange-500"}>
-              {countdown.onTrack
-                ? `On track — projected ${countdown.projectedRaw}/${targetCount}`
-                : `Behind — projected ${countdown.projectedRaw}/${targetCount} · need ${countdown.neededPerDay.toFixed(1)}/day`}
-            </span>
-            {data.avgConfidence > 0 && (
-              <span className="flex items-center gap-1.5">
-                <span>Confidence</span>
-                <span className="font-medium text-foreground">{data.avgConfidence.toFixed(1)}/5</span>
-              </span>
-            )}
+          {/* Readiness breakdown */}
+          <div className="mt-3 pt-2 border-t border-border/50 space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`inline-flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
+              <span className="text-xs font-semibold tabular-nums">{data.readiness.score}<span className="text-muted-foreground font-normal">/100</span></span>
+              <span className="text-xs text-muted-foreground">Readiness</span>
+            </div>
+            {[
+              { label: "Coverage", value: data.readinessBreakdown.coverage, weight: "30%", tooltip: "What % of the 150 problems you’ve attempted at least once. More coverage = more interview surface area. Weighted 30% of your readiness score." },
+              { label: "Retention", value: data.readinessBreakdown.retention, weight: "40%", tooltip: "Average retrievability across all attempted problems — how well your memory is holding up right now according to the SRS model. The most important signal. Weighted 40%." },
+              { label: "Category Balance", value: data.readinessBreakdown.categoryBalance, weight: "20%", tooltip: "How evenly your attempts are distributed across problem categories. Weak spots in specific categories lower this score. Weighted 20%." },
+              { label: "Consistency", value: data.readinessBreakdown.consistency, weight: "10%", tooltip: "Based on your current streak and practice frequency. Consistent daily review builds stronger long-term retention. Weighted 10%." },
+            ].map(({ label, value, weight, tooltip }) => (
+              <div key={label}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    {label}
+                    <span className="text-muted-foreground/50">({weight})</span>
+                    <InfoTooltip content={<p className="max-w-[220px]">{tooltip}</p>} />
+                  </span>
+                  <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Settings */}
@@ -1300,6 +1332,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             <SettingsPanel
               date={targetDate}
               count={targetCount}
+              title={countdownTitle}
               onSave={saveSettings}
               onCancel={() => setShowSettings(false)}
               autoDeferHards={autoDeferHards}
@@ -1323,52 +1356,6 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Solve</p><p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p></div>
               <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Total Study</p><p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p></div>
               <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-[11px] text-muted-foreground mb-1">Avg Solve</p><p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p></div>
-            </div>
-            {data.attemptedCount > 0 && (
-              <div className="rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                {data.totalSolveMinutes > 0 && data.totalStudyMinutes > 0 && <div className="flex justify-between"><span>Solve efficiency</span><span className="font-medium text-foreground">{Math.round((data.totalSolveMinutes / data.totalStudyMinutes) * 100)}% of study time</span></div>}
-                <div className="flex justify-between"><span>Study time per problem</span><span className="font-medium text-foreground">{Math.round(data.totalStudyMinutes / data.attemptedCount)}m avg</span></div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Readiness */}
-        <section className="rounded-lg border border-border bg-muted p-3">
-          <p className="text-xs font-medium text-muted-foreground mb-3">Readiness</p>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4 rounded-lg border border-border/50 bg-background/40 p-3">
-              <span className={`inline-flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
-              <div>
-                <p className="text-2xl font-bold tabular-nums">{data.readiness.score}<span className="text-sm text-muted-foreground font-normal">/100</span></p>
-                <p className="text-[11px] text-muted-foreground">Readiness Score</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: "Coverage", value: data.readinessBreakdown.coverage, weight: "30%" },
-                { label: "Retention", value: data.readinessBreakdown.retention, weight: "40%" },
-                { label: "Category Balance", value: data.readinessBreakdown.categoryBalance, weight: "20%" },
-                { label: "Consistency", value: data.readinessBreakdown.consistency, weight: "10%" },
-              ].map(({ label, value, weight }) => (
-                <div key={label}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-muted-foreground">{label} <span className="text-muted-foreground/60">({weight})</span></span>
-                    <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-background overflow-hidden">
-                    <div className={`h-full rounded-full transition-all duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2 text-[11px]">
-              {[{ tier: "S", min: "90+" }, { tier: "A", min: "75+" }, { tier: "B", min: "55+" }, { tier: "C", min: "35+" }, { tier: "D", min: "<35" }].map(({ tier, min }) => (
-                <div key={tier} className={`flex-1 text-center rounded-md py-1.5 ${data.readiness.tier === tier ? "ring-1 ring-accent" : ""}`}>
-                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${TIER_COLORS[tier]}`}>{tier}</span>
-                  <p className="text-muted-foreground mt-0.5">{min}</p>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -1501,8 +1488,53 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </button>
           {!collapsedWidgets.activity && (
             <div className="mt-2 space-y-3">
-              {/* Streak + projection row */}
-              <div className="flex items-center justify-between text-xs">
+              {/* Daily Pace — top */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Daily Pace</p>
+                  {editingPace ? (
+                    <button
+                      onClick={() => {
+                        localStorage.setItem("aurora_planned_new_per_day", String(plannedNewPerDay));
+                        localStorage.setItem("aurora_planned_review_per_day", String(plannedReviewPerDay));
+                        setEditingPace(false);
+                      }}
+                      className="text-[10px] text-accent hover:opacity-80"
+                    >Save</button>
+                  ) : (
+                    <button onClick={() => setEditingPace(true)} className="text-[10px] text-muted-foreground hover:text-foreground">Edit goals</button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">New goal</span>
+                    {editingPace ? (
+                      <input type="number" min="0" step="0.5" value={plannedNewPerDay} onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)} className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent" />
+                    ) : (
+                      <span className="font-medium tabular-nums">{plannedNewPerDay.toFixed(1)}/day</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Actual new</span>
+                    <span className={`font-medium tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}/day</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Review goal</span>
+                    {editingPace ? (
+                      <input type="number" min="0" step="0.5" value={plannedReviewPerDay} onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)} className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent" />
+                    ) : (
+                      <span className="font-medium tabular-nums">{plannedReviewPerDay.toFixed(1)}/day</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Actual reviews</span>
+                    <span className={`font-medium tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}/day</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Streak + Confidence row */}
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-border/50">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
                     <span>🔥</span>
@@ -1515,120 +1547,61 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     <span className="font-semibold tabular-nums">{data.bestStreak}</span>
                   </span>
                 </div>
-                <span className={countdown.onTrack ? "text-green-500" : "text-orange-500"}>
-                  Projected {countdown.projectedRaw}/{targetCount}
-                </span>
+                {data.avgConfidence > 0 && (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <span>Confidence</span>
+                    <span className="font-medium text-foreground tabular-nums">{data.avgConfidence.toFixed(1)}/5</span>
+                  </span>
+                )}
               </div>
 
               <ActivityChart history={activityData} />
 
-              {/* Pace goal vs actual */}
-              <div className="pt-1 border-t border-border/50 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Daily Pace</p>
-                  <div className="flex items-center gap-2">
-                    {editingPace ? (
-                      <button
-                        onClick={() => {
-                          localStorage.setItem("aurora_planned_new_per_day", String(plannedNewPerDay));
-                          localStorage.setItem("aurora_planned_review_per_day", String(plannedReviewPerDay));
-                          setEditingPace(false);
-                        }}
-                        className="text-[10px] text-accent hover:opacity-80"
-                      >Save</button>
-                    ) : (
-                      <button onClick={() => setEditingPace(true)} className="text-[10px] text-muted-foreground hover:text-foreground">Edit goals</button>
-                    )}
+              {/* Queue Forecast — always shown, chevron toggles content */}
+              {(() => {
+                const proj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
+                return (
+                  <div className="pt-1 border-t border-border/50">
                     <button
                       onClick={() => setShowQueueForecast(v => !v)}
-                      className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${showQueueForecast ? "bg-accent/15 text-accent border border-accent/30" : "text-muted-foreground hover:text-foreground border border-transparent"}`}
-                    >Queue forecast</button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">New goal</span>
-                    {editingPace ? (
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={plannedNewPerDay}
-                        onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)}
-                        className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent"
-                      />
-                    ) : (
-                      <span className="font-medium tabular-nums">{plannedNewPerDay.toFixed(1)}/day</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Actual new</span>
-                    <span className={`font-medium tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}/day</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Review goal</span>
-                    {editingPace ? (
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={plannedReviewPerDay}
-                        onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)}
-                        className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-accent"
-                      />
-                    ) : (
-                      <span className="font-medium tabular-nums">{plannedReviewPerDay.toFixed(1)}/day</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Actual reviews</span>
-                    <span className={`font-medium tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}/day</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Queue forecast (toggle) */}
-              {showQueueForecast && (() => {
-                const proj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
-                if (!proj) return null;
-                return (
-                  <div className="pt-1 border-t border-border/50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Queue Forecast</p>
-                      <div className="flex rounded overflow-hidden border border-border/60 text-[10px]">
-                        <button
-                          onClick={() => setForecastMode("actual")}
-                          className={`px-2 py-0.5 transition-colors ${forecastMode === "actual" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-                        >Actual</button>
-                        <button
-                          onClick={() => setForecastMode("goals")}
-                          className={`px-2 py-0.5 transition-colors border-l border-border/60 ${forecastMode === "goals" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-                        >Goals</button>
+                      className="flex items-center justify-between w-full mb-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Queue Forecast</p>
+                        <div className="flex rounded overflow-hidden border border-border/60 text-[10px]" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => setForecastMode("actual")} className={`px-2 py-0.5 transition-colors ${forecastMode === "actual" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Actual</button>
+                          <button onClick={() => setForecastMode("goals")} className={`px-2 py-0.5 transition-colors border-l border-border/60 ${forecastMode === "goals" ? "bg-background text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>Goals</button>
+                        </div>
                       </div>
-                    </div>
-                    {proj.clearDay !== null ? (
-                      <p className="text-sm font-semibold text-green-500">Clears in ~{proj.clearDay} day{proj.clearDay !== 1 ? "s" : ""}</p>
-                    ) : (
-                      <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {proj.minSize} items (day {proj.minDay})</p>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${showQueueForecast ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    {showQueueForecast && proj && (
+                      <div className="space-y-2 mt-1">
+                        {proj.clearDay !== null ? (
+                          <p className="text-sm font-semibold text-green-500">Clears in ~{proj.clearDay} day{proj.clearDay !== 1 ? "s" : ""}</p>
+                        ) : (
+                          <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {proj.minSize} items (day {proj.minDay})</p>
+                        )}
+                        <div className="relative flex items-end gap-px h-10">
+                          {proj.dailyQueueSize.map((size, i) => {
+                            const maxSize = Math.max(...proj.dailyQueueSize, 1);
+                            const height = Math.max(2, (size / maxSize) * 100);
+                            const isToday = i === 0;
+                            return (
+                              <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
+                                  Day {i}: {size} due
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>{proj.currentSize} due now · {proj.reviewsPerDay} reviews/day · {proj.newPerDay} new/day</span>
+                          <span>+30d</span>
+                        </div>
+                      </div>
                     )}
-                    <div className="relative flex items-end gap-px h-10">
-                      {proj.dailyQueueSize.map((size, i) => {
-                        const maxSize = Math.max(...proj.dailyQueueSize, 1);
-                        const height = Math.max(2, (size / maxSize) * 100);
-                        const isToday = i === 0;
-                        return (
-                          <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
-                              Day {i}: {size} due
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>{proj.currentSize} due now · {proj.reviewsPerDay} reviews/day · {proj.newPerDay} new/day</span>
-                      <span>+30d</span>
-                    </div>
                   </div>
                 );
               })()}
@@ -1865,6 +1838,7 @@ function StatusDot({
 function SettingsPanel({
   date,
   count,
+  title,
   onSave,
   onCancel,
   autoDeferHards,
@@ -1872,16 +1846,28 @@ function SettingsPanel({
 }: {
   date: string;
   count: number;
-  onSave: (date: string, count: number) => void;
+  title: string;
+  onSave: (date: string, count: number, title: string) => void;
   onCancel: () => void;
   autoDeferHards: boolean;
   onToggleAutoDeferHards: (enabled: boolean) => void;
 }) {
   const [d, setD] = useState(date);
   const [c, setC] = useState(count);
+  const [t, setT] = useState(title);
 
   return (
     <div className="mt-3 rounded-md border border-border bg-background p-3 space-y-2">
+      <div>
+        <label className="block text-xs text-muted-foreground mb-1">Widget Name</label>
+        <input
+          type="text"
+          value={t}
+          onChange={(e) => setT(e.target.value)}
+          placeholder="e.g. Fall Recruiting Countdown"
+          className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+        />
+      </div>
       <div>
         <label className="block text-xs text-muted-foreground mb-1">Target Date</label>
         <input
@@ -1893,6 +1879,20 @@ function SettingsPanel({
       </div>
       <div>
         <label className="block text-xs text-muted-foreground mb-1">Target Problems</label>
+        <div className="flex gap-1.5 mb-1.5">
+          <button
+            onClick={() => setC(75)}
+            className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+              c === 75 ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >Blind 75</button>
+          <button
+            onClick={() => setC(150)}
+            className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+              c === 150 ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >NeetCode 150</button>
+        </div>
         <input
           type="number"
           min={1}
@@ -1918,7 +1918,7 @@ function SettingsPanel({
       </div>
       <div className="flex gap-2">
         <button
-          onClick={() => onSave(d, c)}
+          onClick={() => onSave(d, c, t)}
           className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground hover:opacity-90"
         >
           Save
