@@ -592,10 +592,12 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   }, [reviewItems, forecastReviewPerDay, forecastNewPerDay]);
 
   const weakCategories = useMemo(() =>
-    [...data.categoryStats]
-      .filter(c => c.attempted > 0)
-      .sort((a, b) => a.avgRetention - b.avgRetention)
-      .slice(0, data.categoryStats.length),
+    [...data.categoryStats].sort((a, b) => {
+      if (a.attempted === 0 && b.attempted === 0) return 0;
+      if (a.attempted === 0) return 1;
+      if (b.attempted === 0) return -1;
+      return a.avgRetention - b.avgRetention;
+    }),
     [data.categoryStats],
   );
 
@@ -1418,9 +1420,9 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-muted-foreground mb-1">Total Solve</p><p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p></div>
-              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-muted-foreground mb-1">Total Study</p><p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p></div>
-              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-muted-foreground mb-1">Avg Solve</p><p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p></div>
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-foreground mb-1">Total Solve</p><p className="text-2xl font-bold">{formatMinutes(data.totalSolveMinutes)}</p></div>
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-foreground mb-1">Total Study</p><p className="text-2xl font-bold">{formatMinutes(data.totalStudyMinutes)}</p></div>
+              <div className="rounded-lg border border-border/50 bg-background/40 p-3"><p className="text-xs text-foreground mb-1">Avg Solve</p><p className="text-2xl font-bold">{data.avgSolveMinutes > 0 ? `${Math.round(data.avgSolveMinutes)}m` : "—"}</p></div>
             </div>
           </div>
         </section>
@@ -1437,10 +1439,10 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${collapsedWidgets.breakdown ? "rotate-180" : ""}`}><polyline points="18 15 12 9 6 15"/></svg>
           </button>
           {!collapsedWidgets.breakdown && (
-          <div className="grid grid-cols-2 gap-3 mt-2">
-          <div>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="rounded-md border border-border/40 bg-background/30 p-2">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium text-muted-foreground">Categories</p>
+              <p className="text-xs font-medium text-foreground">Categories</p>
               <div className="flex gap-1">
                 <button onClick={() => setCategoryView("weak")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "weak" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Weakest</button>
                 <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
@@ -1461,8 +1463,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               ))}
             </div>
           </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Difficulty</p>
+          <div className="rounded-md border border-border/40 bg-background/30 p-2">
+            <p className="text-xs font-medium text-foreground mb-2">Difficulty</p>
             <div className="space-y-2.5">
               {data.difficultyBreakdown.map((d) => {
                 const pct = d.count > 0 ? Math.round((d.attempted / d.count) * 100) : 0;
@@ -2190,8 +2192,8 @@ function MasteryProgress({
 
       {/* Recently mastered list */}
       {masteryList.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-border/50">
-          <p className="text-[11px] text-muted-foreground mb-1">Recently mastered</p>
+        <div className="mt-2 rounded-md border border-border/40 bg-background/30 p-2">
+          <p className="text-[11px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Recently mastered</p>
           <div className="space-y-0.5">
             {masteryList.slice(0, 5).map((item) => (
               <Link key={item.leetcodeNumber ?? item.title} href={`/problems/${item.problemId}`} className="flex items-center gap-1.5 text-xs hover:bg-background/50 rounded px-1 -mx-1 transition-colors">
@@ -2207,8 +2209,8 @@ function MasteryProgress({
 
       {/* Learning problems — stability progress toward 30d */}
       {learningList.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-border/50">
-          <p className="text-[11px] text-muted-foreground mb-1">Learning — stability toward 30d</p>
+        <div className="mt-2 rounded-md border border-border/40 bg-background/30 p-2">
+          <p className="text-[11px] font-semibold text-foreground uppercase tracking-wider mb-1.5">Learning — stability toward 30d</p>
           <div className="space-y-1">
             {displayLearning.map((item) => {
               const pct = Math.min(100, (item.stability / MASTERY_THRESHOLD) * 100);
