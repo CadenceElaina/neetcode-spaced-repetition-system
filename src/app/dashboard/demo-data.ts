@@ -319,6 +319,14 @@ export const DEMO_DASHBOARD_DATA = {
   importAttemptedIds: completedProblems.map(p => p.problemId),
   importTodayAttemptedIds: [],
   pendingSubmissions,
+  mockCandidates: [
+    { id: 10, leetcodeNumber: 11,  title: "Container With Most Water",      difficulty: "Medium" as const, category: "Two Pointers",   leetcodeUrl: "https://leetcode.com/problems/container-with-most-water/",      neetcodeUrl: "https://neetcode.io/problems/max-water-container" },
+    { id: 12, leetcodeNumber: 42,  title: "Trapping Rain Water",            difficulty: "Hard"   as const, category: "Two Pointers",   leetcodeUrl: "https://leetcode.com/problems/trapping-rain-water/",            neetcodeUrl: "https://neetcode.io/problems/trapping-rain-water" },
+    { id: 25, leetcodeNumber: 155, title: "Min Stack",                      difficulty: "Medium" as const, category: "Stack",          leetcodeUrl: "https://leetcode.com/problems/min-stack/",                      neetcodeUrl: "https://neetcode.io/problems/minimum-stack" },
+    { id: 24, leetcodeNumber: 150, title: "Evaluate Reverse Polish Notation", difficulty: "Medium" as const, category: "Stack",        leetcodeUrl: "https://leetcode.com/problems/evaluate-reverse-polish-notation/", neetcodeUrl: "https://neetcode.io/problems/evaluate-reverse-polish-notation" },
+    { id: 32, leetcodeNumber: 704, title: "Binary Search",                  difficulty: "Medium" as const, category: "Binary Search",  leetcodeUrl: "https://leetcode.com/problems/binary-search/",                  neetcodeUrl: "https://neetcode.io/problems/binary-search" },
+    { id: 3,  leetcodeNumber: 49,  title: "Group Anagrams",                 difficulty: "Medium" as const, category: "Arrays & Hashing", leetcodeUrl: "https://leetcode.com/problems/group-anagrams/",               neetcodeUrl: "https://neetcode.io/problems/anagram-groups" },
+  ],
 };
 
 /* ── Demo data for Activity page ── */

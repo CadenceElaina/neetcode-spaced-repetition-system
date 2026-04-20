@@ -396,6 +396,23 @@ export default async function DashboardPage() {
     })
     .filter(Boolean) as { problemId: number; title: string; leetcodeNumber: number | null; stability: number; category: string }[];
 
+  // Mock interview candidates: attempted medium/hard from weak categories
+  const weakCategorySet = new Set(
+    categoryStats.filter((c) => c.avgRetention < 0.7 && c.attempted > 0).map((c) => c.category),
+  );
+  const mockTargetCats = weakCategorySet.size > 0 ? weakCategorySet : new Set(allProblems.map((p) => p.category));
+  const mockCandidates = allProblems
+    .filter((p) => attemptedIds.has(p.id) && (p.difficulty === "Medium" || p.difficulty === "Hard") && mockTargetCats.has(p.category))
+    .map((p) => ({
+      id: p.id,
+      leetcodeNumber: p.leetcodeNumber,
+      title: p.title,
+      difficulty: p.difficulty as "Easy" | "Medium" | "Hard",
+      category: p.category,
+      leetcodeUrl: p.leetcodeUrl,
+      neetcodeUrl: p.neetcodeUrl,
+    }));
+
   const masteredCount = masteryData.filter((m) => m.stability >= MASTERY_THRESHOLD).length;
   const learningCount = userStates.length - masteredCount;
   const masteryList = masteryData
@@ -454,6 +471,7 @@ export default async function DashboardPage() {
         })),
         importAttemptedIds: [...attemptedIds],
         importTodayAttemptedIds: todayAttemptRows.map((a) => a.problemId),
+        mockCandidates,
         pendingSubmissions: pendingRows.map((p) => ({
           id: p.id,
           problemId: p.problemId,

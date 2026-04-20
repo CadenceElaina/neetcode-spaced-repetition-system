@@ -42,7 +42,8 @@ type CompletedItem = {
   bestQuality: string | null;
 };
 
-type ListMode = "review" | "new" | "completed" | "import" | "deferred";
+type ListMode = "review" | "new" | "completed" | "import" | "deferred" | "mock";
+type MockPhase = "setup" | "active" | "finished";
 type ReviewSort = "urgency" | "overdue" | "difficulty" | "category";
 type NewSort = "curriculum" | "hardest";
 type CompletedSort = "retention" | "review-date" | "category";
@@ -115,6 +116,16 @@ type DeferredItem = {
   isAutoDeferred: boolean;
 };
 
+type MockCandidate = {
+  id: number;
+  leetcodeNumber: number | null;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  leetcodeUrl: string;
+  neetcodeUrl: string | null;
+};
+
 type DashboardData = {
   reviewQueue: ReviewItem[];
   deferredProblems: DeferredItem[];
@@ -156,6 +167,7 @@ type DashboardData = {
   importAttemptedIds: number[];
   importTodayAttemptedIds: number[];
   pendingSubmissions: PendingItem[];
+  mockCandidates: MockCandidate[];
 };
 
 const TIER_COLORS: Record<string, string> = {
@@ -240,6 +252,13 @@ const PRIORITY_DOT: Record<string, string> = {
 
 const DIFF_ORDER: Record<string, number> = { Hard: 0, Medium: 1, Easy: 2 };
 
+function pickMockProblems(candidates: MockCandidate[]): MockCandidate[] {
+  const mediums = candidates.filter((p) => p.difficulty === "Medium");
+  const hards = candidates.filter((p) => p.difficulty === "Hard");
+  const pick = (arr: MockCandidate[]) => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
+  return [pick(mediums), pick(hards)].filter(Boolean) as MockCandidate[];
+}
+
 /* ── Default target: September 1 of current year (or next year if past) ── */
 function getDefaultTargetDate(): string {
   const now = new Date();
@@ -275,6 +294,14 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [deferSearch, setDeferSearch] = useState("");
   const [plannedNewPerDay, setPlannedNewPerDay] = useState(1.5);
   const [plannedReviewPerDay, setPlannedReviewPerDay] = useState(5);
+
+  // Mock interview state
+  const [mockPhase, setMockPhase] = useState<MockPhase>("setup");
+  const [mockDuration, setMockDuration] = useState<30 | 45 | 60>(45);
+  const [mockStartedAt, setMockStartedAt] = useState<number | null>(null);
+  const [mockTimeLeft, setMockTimeLeft] = useState(45 * 60);
+  const [mockSelectedProblems, setMockSelectedProblems] = useState<MockCandidate[]>([]);
+  const [mockLoggedIds, setMockLoggedIds] = useState<Set<number>>(new Set());
   const [editingPace, setEditingPace] = useState(false);
   const [showQueueForecast, setShowQueueForecast] = useState(true);
   const [forecastMode, setForecastMode] = useState<"actual" | "goals">("actual");
@@ -327,10 +354,26 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     if (savedForecastNew) setForecastNewPerDay(parseFloat(savedForecastNew));
   }, []);
 
-  // Persist active tab across sessions
+  // Persist active tab (don't persist mock — always start fresh on load)
   useEffect(() => {
-    if (!isDemo) localStorage.setItem("aurora_tab_mode", listMode);
+    if (!isDemo && listMode !== "mock") localStorage.setItem("aurora_tab_mode", listMode);
   }, [listMode, isDemo]);
+
+  // Mock interview timer
+  useEffect(() => {
+    if (mockPhase !== "active" || mockStartedAt === null) return;
+    const id = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - mockStartedAt) / 1000);
+      const left = mockDuration * 60 - elapsed;
+      if (left <= 0) {
+        setMockTimeLeft(0);
+        setMockPhase("finished");
+      } else {
+        setMockTimeLeft(left);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [mockPhase, mockStartedAt, mockDuration]);
 
   // SRS feedback banner from attempt redirect
   useEffect(() => {
@@ -859,6 +902,22 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 >
                   Import
                 </button>
+                <button
+                  onClick={() => {
+                    if (listMode !== "mock") {
+                      // Pick problems fresh each time we enter mock tab
+                      setMockSelectedProblems(pickMockProblems(data.mockCandidates));
+                      if (mockPhase === "finished") { setMockPhase("setup"); setMockLoggedIds(new Set()); }
+                    }
+                    setListMode("mock");
+                  }}
+                  className={`flex-1 text-center text-sm px-2 py-1 rounded transition-colors ${listMode === "mock" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"} relative`}
+                >
+                  Mock
+                  {mockPhase === "active" && listMode !== "mock" && (
+                    <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                  )}
+                </button>
             </div>
             {/* Row 2: sort control + search */}
             <div className="flex items-center gap-1.5">
@@ -900,9 +959,9 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                   ))}
                 </div>
               )}
-              {(listMode === "deferred" || listMode === "import") && <span className="flex-[3] min-w-0" />}
+              {(listMode === "deferred" || listMode === "import" || listMode === "mock") && <span className="flex-[3] min-w-0" />}
               {/* Search */}
-              {listMode !== "import" && (
+              {listMode !== "import" && listMode !== "mock" && (
                 <div className={`flex items-center gap-1.5 min-w-0 ${(listMode === "review" || listMode === "new" || listMode === "completed") ? "flex-[2]" : "flex-1"}`}>
                   <input
                     type="text"
@@ -1209,6 +1268,34 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── Mock Interview Panel ── */}
+          {listMode === "mock" && (
+            <MockPanel
+              phase={mockPhase}
+              duration={mockDuration}
+              timeLeft={mockTimeLeft}
+              problems={mockSelectedProblems}
+              loggedIds={mockLoggedIds}
+              onSetDuration={(d: 30 | 45 | 60) => setMockDuration(d)}
+              onStart={() => {
+                setMockStartedAt(Date.now());
+                setMockTimeLeft(mockDuration * 60);
+                setMockPhase("active");
+              }}
+              onEnd={() => setMockPhase("finished")}
+              onReshuffle={() => setMockSelectedProblems(pickMockProblems(data.mockCandidates))}
+              onLogged={(id: number) => setMockLoggedIds((prev) => new Set([...prev, id]))}
+              onReset={() => {
+                setMockPhase("setup");
+                setMockStartedAt(null);
+                setMockTimeLeft(mockDuration * 60);
+                setMockLoggedIds(new Set());
+                setMockSelectedProblems(pickMockProblems(data.mockCandidates));
+              }}
+              demoGuard={demoGuard}
+            />
           )}
 
         </section>
@@ -2247,6 +2334,267 @@ function PendingBanner({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Mock Interview Panel ── */
+
+function MockPanel({
+  phase, duration, timeLeft, problems, loggedIds,
+  onSetDuration, onStart, onEnd, onReshuffle, onLogged, onReset, demoGuard,
+}: {
+  phase: MockPhase;
+  duration: 30 | 45 | 60;
+  timeLeft: number;
+  problems: MockCandidate[];
+  loggedIds: Set<number>;
+  onSetDuration: (d: 30 | 45 | 60) => void;
+  onStart: () => void;
+  onEnd: () => void;
+  onReshuffle: () => void;
+  onLogged: (id: number) => void;
+  onReset: () => void;
+  demoGuard: (fn: () => void) => void;
+}) {
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const timerColor = timeLeft <= 300 ? "text-destructive" : timeLeft <= 600 ? "text-warning" : "text-foreground";
+  const barColor = timeLeft <= 300 ? "bg-red-500" : timeLeft <= 600 ? "bg-yellow-500" : "bg-accent";
+  const progress = timeLeft / (duration * 60);
+  const allLogged = problems.length > 0 && problems.every((p) => loggedIds.has(p.id));
+
+  if (phase === "setup") {
+    return (
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        {/* Duration picker */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground shrink-0">Duration:</span>
+          <div className="flex rounded-md border border-border p-0.5 gap-0.5">
+            {([30, 45, 60] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => onSetDuration(d)}
+                className={`px-3 py-1 rounded text-xs transition-colors ${duration === d ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {d}m
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {problems.length === 0 ? (
+          <div className="rounded-lg border border-border bg-muted p-6 text-center text-sm text-muted-foreground">
+            No attempted medium/hard problems found yet. Work through some problems first, then come back for a mock.
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border bg-muted flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="px-3 py-2 border-b border-border/60 flex items-center justify-between shrink-0">
+              <p className="text-xs text-muted-foreground">Selected from your weak categories</p>
+              <button onClick={onReshuffle} className="text-xs text-accent hover:underline">Reshuffle</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {problems.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0">
+                  <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{p.leetcodeNumber}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{p.title}</p>
+                    <p className="text-xs text-muted-foreground">{p.category}</p>
+                  </div>
+                  <DifficultyBadge difficulty={p.difficulty} />
+                </div>
+              ))}
+            </div>
+            <div className="px-3 py-3 border-t border-border/60 shrink-0">
+              <button
+                onClick={() => demoGuard(onStart)}
+                className="w-full inline-flex h-9 items-center justify-center rounded-md bg-accent text-sm font-semibold text-accent-foreground transition-colors hover:opacity-90"
+              >
+                Start {duration}-min interview
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (phase === "active") {
+    return (
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        {/* Timer */}
+        <div className="rounded-lg border border-border bg-muted p-3 shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className={`font-mono text-3xl font-bold tabular-nums ${timerColor}`}>{formatTime(timeLeft)}</span>
+            <button
+              onClick={onEnd}
+              className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              End early
+            </button>
+          </div>
+          <div className="h-1 w-full rounded-full bg-border overflow-hidden">
+            <div className={`h-full rounded-full transition-all duration-1000 ease-linear ${barColor}`} style={{ width: `${progress * 100}%` }} />
+          </div>
+        </div>
+
+        {/* Problems */}
+        <div className="rounded-lg border border-border bg-muted flex-1 min-h-0 overflow-y-auto">
+          {problems.map((p, i) => (
+            <div key={p.id} className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0">
+              <span className="text-xs text-muted-foreground shrink-0">#{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{p.leetcodeNumber}. {p.title}</p>
+                <p className="text-xs text-muted-foreground">{p.category}</p>
+              </div>
+              <DifficultyBadge difficulty={p.difficulty} />
+              <a
+                href={p.leetcodeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-7 items-center rounded-md bg-accent px-2.5 text-xs text-accent-foreground hover:opacity-90 transition-opacity shrink-0"
+              >
+                Open ↗
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Finished phase
+  return (
+    <div className="flex flex-col gap-3 flex-1 min-h-0">
+      <div className="flex items-center justify-between shrink-0">
+        <p className="text-sm font-medium">{timeLeft === 0 ? "Time's up!" : "Interview ended."}</p>
+        {allLogged && (
+          <button onClick={onReset} className="text-xs text-accent hover:underline">New mock</button>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-border bg-muted flex-1 min-h-0 overflow-y-auto">
+        {problems.map((p) => (
+          <MockLogRow
+            key={p.id}
+            problem={p}
+            sessionMinutes={duration}
+            numProblems={problems.length}
+            logged={loggedIds.has(p.id)}
+            onLogged={onLogged}
+            demoGuard={demoGuard}
+          />
+        ))}
+      </div>
+
+      {!allLogged && (
+        <p className="text-xs text-muted-foreground shrink-0">Log each problem to update your SRS schedule.</p>
+      )}
+    </div>
+  );
+}
+
+/* ── Mock log row — compact inline attempt logger ── */
+
+function MockLogRow({ problem, sessionMinutes, numProblems, logged, onLogged, demoGuard }: {
+  problem: MockCandidate;
+  sessionMinutes: number;
+  numProblems: number;
+  logged: boolean;
+  onLogged: (id: number) => void;
+  demoGuard: (fn: () => void) => void;
+}) {
+  const [outcome, setOutcome] = useState<"YES" | "PARTIAL" | "NO" | null>(null);
+  const [confidence, setConfidence] = useState<number>(3);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const solveMinutes = Math.floor((sessionMinutes * 60) / numProblems / 60);
+  const quality = outcome === "YES" ? "OPTIMAL" : outcome === "PARTIAL" ? "SUBOPTIMAL" : "NONE";
+
+  async function submit() {
+    if (!outcome) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problemId: problem.id,
+          solvedIndependently: outcome,
+          solutionQuality: quality,
+          confidence,
+          solveTimeMinutes: solveMinutes,
+          studyTimeMinutes: 0,
+          rewroteFromScratch: "NO",
+          source: "manual",
+        }),
+      });
+      if (res.ok) {
+        onLogged(problem.id);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Failed to save");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (logged) {
+    return (
+      <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border last:border-b-0">
+        <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{problem.leetcodeNumber}</span>
+        <span className="text-sm flex-1 min-w-0 truncate text-muted-foreground">{problem.title}</span>
+        <span className="text-xs text-green-500 font-medium">✓ Logged</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-3 py-2.5 border-b border-border last:border-b-0 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{problem.leetcodeNumber}</span>
+        <span className="text-sm font-medium flex-1 min-w-0 truncate">{problem.title}</span>
+        <DifficultyBadge difficulty={problem.difficulty} />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 pl-10">
+        {/* Outcome */}
+        <div className="flex rounded border border-border p-0.5 gap-0.5">
+          {(["YES", "PARTIAL", "NO"] as const).map((o) => (
+            <button
+              key={o}
+              onClick={() => setOutcome(o)}
+              className={`px-2 py-0.5 rounded text-xs transition-colors ${outcome === o ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {o === "YES" ? "Solved" : o === "PARTIAL" ? "Partial" : "Stuck"}
+            </button>
+          ))}
+        </div>
+        {/* Confidence */}
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground">Conf:</span>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              onClick={() => setConfidence(n)}
+              className={`h-5 w-5 rounded text-[10px] transition-colors ${confidence === n ? "bg-accent text-accent-foreground font-bold" : "border border-border text-muted-foreground hover:text-foreground"}`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => demoGuard(submit)}
+          disabled={!outcome || saving}
+          className="inline-flex h-6 items-center rounded px-2.5 bg-accent text-xs text-accent-foreground font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+        >
+          {saving ? "…" : "Log"}
+        </button>
+        {error && <span className="text-xs text-destructive">{error}</span>}
+      </div>
     </div>
   );
 }
