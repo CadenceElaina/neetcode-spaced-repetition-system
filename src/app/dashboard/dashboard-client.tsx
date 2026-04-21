@@ -790,7 +790,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     {/* Subtle ambient starfield — fixed, full-viewport, behind all content */}
     <SkyCanvas />
     {/* All interactive content above the starfield */}
-    <div className="relative z-[1] flex flex-col lg:h-full lg:min-h-0">
+    <div className="relative z-[1] flex flex-col lg:h-[calc(100dvh-3.5rem-4rem)] lg:min-h-0">
     {/* Demo sign-in prompt */}
     {showDemoSignIn && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowDemoSignIn(false)}>
@@ -1448,8 +1448,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
               </div>
             </div>
-            <div className="space-y-1.5 h-[118px] overflow-y-auto pr-2">
-              {displayCategories.map((cat) => (
+            <div className="space-y-1.5">
+              {displayCategories.slice(0, 5).map((cat) => (
                 <Link key={cat.category} href={`/problems?category=${encodeURIComponent(cat.category)}`} className="flex items-center gap-2 group/cat cursor-pointer">
                   <span className="text-xs w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
                   <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-background group-hover/cat:h-2 transition-all duration-150">

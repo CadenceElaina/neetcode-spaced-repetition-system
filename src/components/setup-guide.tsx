@@ -426,9 +426,10 @@ interface PanelHeaderProps {
   onPopIn?: () => void;
   onMinimize?: () => void;
   onDragStart?: (e: React.MouseEvent) => void;
+  onNavigateInstall?: () => void;
 }
 
-function PanelHeader({ onClose, onPopOut, onPopIn, onMinimize, onDragStart }: PanelHeaderProps) {
+function PanelHeader({ onClose, onPopOut, onPopIn, onMinimize, onDragStart, onNavigateInstall }: PanelHeaderProps) {
   const draggable = !!onDragStart;
   return (
     <div
@@ -451,6 +452,22 @@ function PanelHeader({ onClose, onPopOut, onPopIn, onMinimize, onDragStart }: Pa
         className="flex items-center gap-1 shrink-0"
         onMouseDown={(e) => e.stopPropagation()}
       >
+        <a
+          href={GITHUB_README}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg px-2.5 py-1 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Full README ↗
+        </a>
+        <button
+          onClick={onNavigateInstall}
+          className="rounded-lg px-2.5 py-1 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+        >
+          Clone &amp; Install →
+        </button>
+        <div className="w-px h-4 bg-border/40 mx-0.5" />
         {onPopOut && (
           <button
             onClick={onPopOut}
@@ -565,7 +582,7 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
     document.addEventListener("mouseup", onUp);
   }, [pos.x, pos.y]);
 
-  const open = useCallback(() => { setMode("modal"); }, []);
+  const open = useCallback(() => { setMode(isDesktop ? "float" : "modal"); }, [isDesktop]);
   const close = useCallback(() => setMode("closed"), []);
 
   const popOut = useCallback(() => {
@@ -593,9 +610,10 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
   const defaultTrigger = (
     <button
       onClick={open}
-      className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150"
+      className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/95 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
     >
-      Setup
+      <span className="text-muted-foreground/70">{Icons.wrench}</span>
+      Setup Guide
     </button>
   );
 
@@ -624,6 +642,7 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             <PanelHeader
               onClose={close}
               onPopOut={isDesktop ? popOut : undefined}
+              onNavigateInstall={() => setActiveIdx(SECTIONS.findIndex(s => s.id === "install"))}
             />
             <div className="flex flex-1 min-h-0">
               <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
@@ -647,6 +666,7 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             onPopIn={popIn}
             onMinimize={minimize}
             onDragStart={handleDragStart}
+            onNavigateInstall={() => setActiveIdx(SECTIONS.findIndex(s => s.id === "install"))}
           />
           <div className="flex flex-1 min-h-0">
             <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
