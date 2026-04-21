@@ -371,31 +371,10 @@ function GuideContent({ activeIdx, setActiveIdx }: { activeIdx: number; setActiv
         {SECTIONS[activeIdx].content()}
       </div>
 
-      <div className="shrink-0 border-t border-border/40 px-4 py-2.5 grid grid-cols-3 items-center gap-2 bg-background/20">
-        {/* Left: prev */}
-        <div>
-          {activeIdx > 0 && (
-            <button onClick={() => setActiveIdx(activeIdx - 1)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 max-w-full">
-              <span className="shrink-0">←</span>
-              <span className="truncate">{SECTIONS[activeIdx - 1].label}</span>
-            </button>
-          )}
-        </div>
-        {/* Center: Full README */}
-        <div className="flex justify-center">
-          <a href={GITHUB_README} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors whitespace-nowrap">
-            Full README ↗
-          </a>
-        </div>
-        {/* Right: next */}
-        <div className="flex justify-end">
-          {activeIdx < SECTIONS.length - 1 && (
-            <button onClick={() => setActiveIdx(activeIdx + 1)} className="text-xs text-accent hover:opacity-80 transition-opacity flex items-center gap-1 max-w-full">
-              <span className="truncate">{SECTIONS[activeIdx + 1].label}</span>
-              <span className="shrink-0">→</span>
-            </button>
-          )}
-        </div>
+      <div className="shrink-0 border-t border-border/40 px-4 py-2.5 flex justify-center bg-background/20">
+        <a href={GITHUB_README} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors whitespace-nowrap">
+          Full README ↗
+        </a>
       </div>
     </>
   );

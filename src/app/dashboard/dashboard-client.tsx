@@ -1575,13 +1575,13 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           {!collapsedWidgets.activity && (
             <div className="mt-2 space-y-3">
               {/* 2-column stats row: Streak | Pace comparison */}
-              <div className="grid grid-cols-2 gap-2 text-xs border border-border/40 rounded-md bg-background/30 divide-x divide-border/40">
+              <div className="grid grid-cols-2 gap-3 text-xs border border-border/50 rounded-lg bg-background/40">
                 {/* Col 1: Streak */}
-                <div className="flex flex-col gap-1.5 p-2">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider leading-none">Streak</p>
+                <div className="flex flex-col gap-2 p-3">
+                  <p className="text-xs font-semibold text-foreground mb-1">Streak</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Current</span>
-                    <span className="font-semibold tabular-nums flex items-center gap-0.5">
+                    <span className="font-semibold text-sm tabular-nums flex items-center gap-0.5">
                       {data.currentStreak === 0 ? (
                         <><span>{data.currentStreak}</span><span>❄️</span></>
                       ) : (
@@ -1591,19 +1591,19 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Best</span>
-                    <span className="font-semibold tabular-nums">{data.bestStreak}</span>
+                    <span className="font-semibold text-sm tabular-nums">{data.bestStreak}</span>
                   </div>
                   {data.avgConfidence > 0 && (
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Confidence</span>
-                      <span className="font-medium tabular-nums">{data.avgConfidence.toFixed(1)}/5</span>
+                      <span className="font-medium text-sm tabular-nums">{data.avgConfidence.toFixed(1)}/5</span>
                     </div>
                   )}
                 </div>
                 {/* Col 2: Goal vs Actual comparison table */}
-                <div className="flex flex-col gap-1.5 p-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider leading-none">Pace</p>
+                <div className="flex flex-col gap-2 p-3 border-l border-border/40">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-foreground">Pace</p>
                     {!editingPace && (
                       <button onClick={() => setEditingPace(true)} className="p-0.5 text-muted-foreground hover:text-foreground transition-colors" title="Edit goals">
                         <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1611,7 +1611,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     )}
                   </div>
                   {/* Header row */}
-                  <div className="grid grid-cols-3 text-[11px] text-muted-foreground mb-0.5">
+                  <div className="grid grid-cols-3 text-[11px] text-muted-foreground">
                     <span></span>
                     <span className="text-right">Goal</span>
                     <span className="text-right">Actual</span>
@@ -1621,13 +1621,13 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     <span className="text-xs text-muted-foreground">New</span>
                     {editingPace ? (
                       <>
-                        <span className="text-right font-medium tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
+                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
                         <input type="number" min="0" step="0.5" value={plannedNewPerDay} onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-full" />
                       </>
                     ) : (
                       <>
-                        <span className="text-right font-medium tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
-                        <span className={`text-right font-medium tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
+                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
+                        <span className={`text-right font-medium text-sm tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
                       </>
                     )}
                   </div>
@@ -1636,13 +1636,13 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     <span className="text-xs text-muted-foreground">Review</span>
                     {editingPace ? (
                       <>
-                        <span className="text-right font-medium tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
+                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
                         <input type="number" min="0" step="0.5" value={plannedReviewPerDay} onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-full" />
                       </>
                     ) : (
                       <>
-                        <span className="text-right font-medium tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
-                        <span className={`text-right font-medium tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
+                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
+                        <span className={`text-right font-medium text-sm tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
                       </>
                     )}
                   </div>
@@ -1703,18 +1703,18 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             return (
               <div className="mt-2 space-y-2">
                 {forecastMode === "goals" && (
-                  <div className="flex items-center gap-4 text-xs pb-1 border-b border-border/50">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground">Reviews/day</span>
-                      <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                      <span className="font-medium tabular-nums w-8 text-center">{forecastReviewPerDay}</span>
-                      <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                  <div className="flex items-center gap-3 text-[11px] pb-1.5 border-b border-border/50">
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">Rev/d</span>
+                      <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                      <span className="font-medium tabular-nums w-7 text-center text-xs">{forecastReviewPerDay}</span>
+                      <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground">New/day</span>
-                      <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                      <span className="font-medium tabular-nums w-8 text-center">{forecastNewPerDay}</span>
-                      <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">New/d</span>
+                      <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                      <span className="font-medium tabular-nums w-7 text-center text-xs">{forecastNewPerDay}</span>
+                      <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
                     </div>
                   </div>
                 )}
