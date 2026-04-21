@@ -1555,27 +1555,6 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                   </button>
                 ))}
               </div>
-              {/* Back / Forward nav — 14d mode only */}
-              {activityViewMode === "14d" && (
-                <>
-                  <button
-                    onClick={() => setActivityPage((p) => p + 1)}
-                    disabled={!canGoBack}
-                    className="w-6 h-6 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                    aria-label="Go back 14 days"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
-                  <button
-                    onClick={() => setActivityPage((p) => Math.max(0, p - 1))}
-                    disabled={!canGoForward}
-                    className="w-6 h-6 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                    aria-label="Go forward 14 days"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                </>
-              )}
               {/* Chevron — collapses the whole section */}
               <button onClick={() => toggleWidget("activity")} aria-label="Toggle activity chart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-muted-foreground transition-transform ${collapsedWidgets.activity ? "rotate-180" : ""}`}><polyline points="18 15 12 9 6 15"/></svg>
@@ -1583,77 +1562,54 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             </div>
           </div>
           {!collapsedWidgets.activity && (
-            <div className="mt-2 space-y-3">
-              {/* Pace — full width now that streak moved to countdown */}
-              <div className="text-xs border border-border/50 rounded-lg bg-background">
-                <div className="flex flex-col gap-1.5 p-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-foreground">Pace</p>
-                    {!editingPace && (
-                      <button onClick={() => setEditingPace(true)} className="p-0.5 text-muted-foreground hover:text-foreground transition-colors" title="Edit goals">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                    )}
+            <div className="mt-2 space-y-2">
+              {/* Pace — compact inline rows */}
+              {editingPace ? (
+                <div className="flex flex-col gap-1.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500 font-medium w-12">New</span>
+                    <span className="text-muted-foreground text-[11px]">goal</span>
+                    <input type="number" min="0" step="0.5" value={plannedNewPerDay} onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-16" />
+                    <span className="text-muted-foreground text-[11px]">actual</span>
+                    <span className={`font-medium tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
                   </div>
-                  {/* Header row */}
-                  <div className="grid grid-cols-3 text-[11px] text-muted-foreground">
-                    <span></span>
-                    <span className="text-right">Goal</span>
-                    <span className="text-right">Actual</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-accent font-medium w-12">Review</span>
+                    <span className="text-muted-foreground text-[11px]">goal</span>
+                    <input type="number" min="0" step="0.5" value={plannedReviewPerDay} onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-16" />
+                    <span className="text-muted-foreground text-[11px]">actual</span>
+                    <span className={`font-medium tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
                   </div>
-                  {/* New row */}
-                  <div className="grid grid-cols-3 items-center">
-                    <span className="text-xs text-green-500 font-medium">New</span>
-                    {editingPace ? (
-                      <>
-                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
-                        <input type="number" min="0" step="0.5" value={plannedNewPerDay} onChange={(e) => setPlannedNewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-full" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedNewPerDay.toFixed(1)}</span>
-                        <span className={`text-right font-medium text-sm tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
-                      </>
-                    )}
+                  <div className="flex gap-1.5 mt-0.5">
+                    <button onClick={() => setEditingPace(false)} className="inline-flex h-6 items-center rounded border border-border px-2 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground">Cancel</button>
+                    <button onClick={() => { localStorage.setItem("aurora_planned_new_per_day", String(plannedNewPerDay)); localStorage.setItem("aurora_planned_review_per_day", String(plannedReviewPerDay)); setEditingPace(false); }} className="inline-flex h-6 items-center rounded bg-accent px-2 text-[10px] text-accent-foreground hover:opacity-90">Save</button>
                   </div>
-                  {/* Review row */}
-                  <div className="grid grid-cols-3 items-center">
-                    <span className="text-xs text-accent font-medium">Review</span>
-                    {editingPace ? (
-                      <>
-                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
-                        <input type="number" min="0" step="0.5" value={plannedReviewPerDay} onChange={(e) => setPlannedReviewPerDay(parseFloat(e.target.value) || 0)} className="rounded border border-border bg-background px-1.5 py-0.5 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-accent w-full" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-right font-medium text-sm tabular-nums text-muted-foreground">{plannedReviewPerDay.toFixed(1)}</span>
-                        <span className={`text-right font-medium text-sm tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
-                      </>
-                    )}
-                  </div>
-                  {/* Save/Cancel when editing */}
-                  {editingPace && (
-                    <div className="flex justify-end gap-1.5 mt-1">
-                      <button
-                        onClick={() => setEditingPace(false)}
-                        className="inline-flex h-6 items-center rounded border border-border px-2 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
-                      >Cancel</button>
-                      <button
-                        onClick={() => {
-                          localStorage.setItem("aurora_planned_new_per_day", String(plannedNewPerDay));
-                          localStorage.setItem("aurora_planned_review_per_day", String(plannedReviewPerDay));
-                          setEditingPace(false);
-                        }}
-                        className="inline-flex h-6 items-center rounded bg-accent px-2 text-[10px] text-accent-foreground hover:opacity-90"
-                      >Save</button>
-                    </div>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-green-500 font-medium">New</span>
+                  <span className={`tabular-nums font-semibold ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
+                  <span className="text-muted-foreground text-[11px]">/{plannedNewPerDay.toFixed(1)} goal</span>
+                  <span className="text-border mx-1">·</span>
+                  <span className="text-accent font-medium">Review</span>
+                  <span className={`tabular-nums font-semibold ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
+                  <span className="text-muted-foreground text-[11px]">/{plannedReviewPerDay.toFixed(1)} goal</span>
+                  <button onClick={() => setEditingPace(true)} className="ml-auto p-0.5 text-muted-foreground hover:text-foreground transition-colors" title="Edit goals">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </div>
+              )}
 
               {activityViewMode === "heatmap"
                 ? <ActivityHeatmap history={data.fullAttemptHistory} />
-                : <ActivityChart history={activityData} mode={activityViewMode === "monthly" ? "monthly" : "auto"} />
+                : <ActivityChart
+                    history={activityData}
+                    mode={activityViewMode === "monthly" ? "monthly" : "auto"}
+                    onPrev={activityViewMode === "14d" ? () => setActivityPage((p) => p + 1) : undefined}
+                    onNext={activityViewMode === "14d" ? () => setActivityPage((p) => Math.max(0, p - 1)) : undefined}
+                    canGoBack={activityViewMode === "14d" ? canGoBack : undefined}
+                    canGoForward={activityViewMode === "14d" ? canGoForward : undefined}
+                  />
               }
 
             </div>
@@ -1707,7 +1663,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     return (
                       <div key={i} className={`relative flex-1 rounded-t-sm group/bar ${isToday ? "bg-accent" : size === 0 ? "bg-green-500/60" : "bg-orange-500/60"}`} style={{ height: `${height}%` }}>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/bar:opacity-100 transition-opacity z-10 shadow-md">
-                          Day {i}: {size} due
+                          {(() => { const d = new Date(); d.setDate(d.getDate() + i); return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); })()} — {size} due
                         </div>
                       </div>
                     );
@@ -1789,20 +1745,17 @@ function ActivityHeatmap({ history }: { history: AttemptDay[] }) {
   function cellColor(count: number, newCount: number) {
     if (count === 0) return "#1f2937"; // empty
     const intensity = Math.min(count / Math.max(maxCount * 0.6, 3), 1);
-    const reviewRatio = count > 0 ? newCount / count : 0;
-    // Blend green (new) and purple (review) based on mix, with intensity
-    if (reviewRatio >= 0.7) {
-      // Mostly new — green
-      const g = Math.round(100 + intensity * 105);
-      return `rgb(${Math.round(20 + intensity * 14)},${g},${Math.round(30 + intensity * 46)})`;
-    } else if (reviewRatio <= 0.3) {
-      // Mostly review — purple/accent
-      const v = Math.round(80 + intensity * 110);
-      return `rgb(${Math.round(80 + intensity * 80)},${Math.round(40 + intensity * 30)},${v})`;
+    const newRatio = count > 0 ? newCount / count : 0;
+    // Anchor colors match bar chart: green-500 (#22c55e) for new, accent (#a855f7) for review
+    if (newRatio >= 0.7) {
+      // Mostly new — interpolate dark green → #22c55e
+      return `rgb(${Math.round(20 + intensity * 14)},${Math.round(60 + intensity * 137)},${Math.round(20 + intensity * 74)})`;
+    } else if (newRatio <= 0.3) {
+      // Mostly review — interpolate dark purple → #a855f7
+      return `rgb(${Math.round(60 + intensity * 108)},${Math.round(20 + intensity * 65)},${Math.round(80 + intensity * 167)})`;
     } else {
-      // Mixed — teal
-      const b = Math.round(100 + intensity * 100);
-      return `rgb(${Math.round(20 + intensity * 20)},${Math.round(100 + intensity * 80)},${b})`;
+      // Mixed — teal (midpoint between green and purple)
+      return `rgb(${Math.round(20 + intensity * 20)},${Math.round(80 + intensity * 100)},${Math.round(60 + intensity * 120)})`;
     }
   }
 
@@ -1819,12 +1772,10 @@ function ActivityHeatmap({ history }: { history: AttemptDay[] }) {
     }
   });
 
-  const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
   return (
     <div className="overflow-x-auto">
       {/* Month labels */}
-      <div className="flex pl-7 mb-0.5" style={{ gap: "2px" }}>
+      <div className="flex mb-0.5" style={{ gap: "2px" }}>
         {weeks.map((_, wi) => {
           const ml = monthLabels.find(m => m.col === wi);
           return (
@@ -1835,33 +1786,40 @@ function ActivityHeatmap({ history }: { history: AttemptDay[] }) {
         })}
       </div>
       <div className="flex" style={{ gap: "2px" }}>
-        {/* Day-of-week labels */}
-        <div className="flex flex-col" style={{ gap: "2px", width: "24px", flexShrink: 0 }}>
-          {DAY_LABELS.map((d, i) => (
-            <div key={d} className="text-[8px] text-muted-foreground leading-none flex items-center" style={{ height: "10px" }}>
-              {i % 2 === 1 ? d.slice(0, 1) : ""}
-            </div>
-          ))}
-        </div>
         {/* Weeks */}
         {weeks.map((week, wi) => (
           <div key={wi} className="flex flex-col flex-1" style={{ gap: "2px" }}>
-            {week.map((day) => (
-              <div
-                key={day.date}
-                title={`${day.date}: ${day.count > 0 ? `${day.newCount} new · ${day.reviewCount} review` : "no activity"}`}
-                style={{ height: "10px", borderRadius: "2px", backgroundColor: cellColor(day.count, day.newCount) }}
-              />
-            ))}
+            {week.map((day) => {
+              const label = day.count > 0
+                ? `${new Date(day.date + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })} — ${day.newCount > 0 ? `${day.newCount} new` : ""}${day.newCount > 0 && day.reviewCount > 0 ? " · " : ""}${day.reviewCount > 0 ? `${day.reviewCount} review` : ""}`
+                : new Date(day.date + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+              return (
+                <div
+                  key={day.date}
+                  className="relative group/cell"
+                  style={{ height: "10px" }}
+                >
+                  <div style={{ height: "10px", borderRadius: "2px", backgroundColor: cellColor(day.count, day.newCount) }} />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 rounded bg-background border border-border px-2 py-1 text-[10px] whitespace-nowrap opacity-0 pointer-events-none group-hover/cell:opacity-100 transition-opacity z-50 shadow-md">
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-3 mt-1.5 justify-end">
-        <span className="text-[10px] text-muted-foreground">Less</span>
+      <div className="flex items-center gap-2 mt-1.5 justify-end text-[10px] text-muted-foreground">
+        <span>Less</span>
         {[0, 0.25, 0.5, 0.75, 1].map(v => (
-          <span key={v} className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: v === 0 ? "#1f2937" : `rgb(${Math.round(20+v*14)},${Math.round(100+v*105)},${Math.round(30+v*46)})` }} />
+          <span key={v} className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: v === 0 ? "#1f2937" : `rgb(${Math.round(20+v*14)},${Math.round(60+v*137)},${Math.round(20+v*74)})` }} />
         ))}
-        <span className="text-[10px] text-muted-foreground">More</span>
+        <span>More</span>
+        <span className="ml-1 w-px h-3 bg-border/60" />
+        <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: `rgb(${Math.round(60+108)},${Math.round(20+65)},${Math.round(80+167)})` }} />
+        <span>Review</span>
+        <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: `rgb(${Math.round(20+20)},${Math.round(80+100)},${Math.round(60+120)})` }} />
+        <span>Mixed</span>
       </div>
     </div>
   );
@@ -1869,7 +1827,7 @@ function ActivityHeatmap({ history }: { history: AttemptDay[] }) {
 
 /* ── Activity Chart ── */
 
-const ActivityChart = memo(function ActivityChart({ history, mode = "auto" }: { history: AttemptDay[]; mode?: "auto" | "monthly" }) {
+const ActivityChart = memo(function ActivityChart({ history, mode = "auto", onPrev, onNext, canGoBack, canGoForward }: { history: AttemptDay[]; mode?: "auto" | "monthly"; onPrev?: () => void; onNext?: () => void; canGoBack?: boolean; canGoForward?: boolean }) {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   // Aggregate: monthly if mode=monthly, weekly if auto+>30 days, else daily
@@ -2014,15 +1972,37 @@ const ActivityChart = memo(function ActivityChart({ history, mode = "auto" }: { 
           );
         })}
       </div>
-      <div className="flex items-center gap-3 mt-1.5 justify-end">
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <span className="inline-block w-2 h-2 rounded-sm bg-green-500" /> New
-        </span>
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <span className="inline-block w-2 h-2 rounded-sm bg-accent" /> Review
-        </span>
-        {shouldAggregate && (
-          <span className="text-[10px] text-muted-foreground ml-1">(weekly)</span>
+      <div className="flex items-center mt-1.5 gap-1">
+        {onPrev !== undefined && (
+          <button
+            onClick={onPrev}
+            disabled={!canGoBack}
+            className="w-6 h-6 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:pointer-events-none transition-colors shrink-0"
+            aria-label="Go back 14 days"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        )}
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-sm bg-green-500" /> New
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-sm bg-accent" /> Review
+          </span>
+          {shouldAggregate && (
+            <span className="text-[10px] text-muted-foreground">(weekly)</span>
+          )}
+        </div>
+        {onNext !== undefined && (
+          <button
+            onClick={onNext}
+            disabled={!canGoForward}
+            className="w-6 h-6 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:pointer-events-none transition-colors shrink-0"
+            aria-label="Go forward 14 days"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         )}
       </div>
     </div>
