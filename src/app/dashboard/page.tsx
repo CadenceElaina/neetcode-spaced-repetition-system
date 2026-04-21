@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
   // Parallel data fetching
-  const [allProblems, userStates, attemptDateRows, timeRows, pendingRows, todayAttemptRows, userRow] = await Promise.all([
+  const [allProblems, userStates, attemptDateRows, timeRows, pendingRows, todayAttemptRows, userRow, firstAttemptByProblem] = await Promise.all([
     db.select().from(problems).orderBy(asc(problems.id)),
     db.select().from(userProblemStates).where(eq(userProblemStates.userId, userId)),
     db
@@ -82,6 +82,14 @@ export default async function DashboardPage() {
         ),
       ),
     db.select({ autoDeferHards: users.autoDeferHards }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({
+        problemId: attempts.problemId,
+        firstDate: sql<string>`date(min(${attempts.createdAt}))`,
+      })
+      .from(attempts)
+      .where(eq(attempts.userId, userId))
+      .groupBy(attempts.problemId),
   ]);
 
   const stateMap = new Map(userStates.map((s) => [s.problemId, s]));
@@ -333,15 +341,6 @@ export default async function DashboardPage() {
 
   // Attempt history (last 14 days) with new vs review breakdown
   // A "new" attempt on a given day = the first-ever attempt for that problem
-  const firstAttemptByProblem = await db
-    .select({
-      problemId: attempts.problemId,
-      firstDate: sql<string>`date(min(${attempts.createdAt}))`,
-    })
-    .from(attempts)
-    .where(eq(attempts.userId, userId))
-    .groupBy(attempts.problemId);
-
   const newByDate = new Map<string, number>();
   for (const r of firstAttemptByProblem) {
     newByDate.set(r.firstDate, (newByDate.get(r.firstDate) ?? 0) + 1);
