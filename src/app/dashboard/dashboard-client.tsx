@@ -858,11 +858,11 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         )}
         <section className="flex flex-col lg:flex-1 lg:min-h-0">
           {/* Tab header — row 1: tabs full-width; row 2: sort pills + search */}
-          <div className="flex flex-col gap-1.5 mb-2 shrink-0">
+          <div className="flex flex-col gap-2 mb-2 shrink-0">
             <div className="flex gap-0.5 rounded-md border border-border p-0.5 w-full">
                 <button
                   onClick={() => setListMode("review")}
-                  className={`flex-1 text-center text-sm px-2 py-1 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Review
                   {reviewItems.length > 0 && (
@@ -873,7 +873,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </button>
                 <button
                   onClick={() => setListMode("new")}
-                  className={`flex-1 text-center text-sm px-2 py-1 rounded transition-colors ${listMode === "new" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "new" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   New
                   {sortedNewProblems.length > 0 && (
@@ -884,7 +884,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </button>
                 <button
                   onClick={() => setListMode("completed")}
-                  className={`flex-1 text-center text-sm px-2 py-1 rounded transition-colors ${listMode === "completed" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "completed" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Done
                   {data.completedProblems.length > 0 && (
@@ -897,7 +897,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <span className="w-px bg-border my-0.5 shrink-0" />
                 <button
                   onClick={() => setListMode("import")}
-                  className={`text-sm px-2.5 py-1 rounded transition-colors ${listMode === "import" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`text-sm px-2.5 py-1.5 rounded transition-colors ${listMode === "import" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Import
                 </button>
@@ -909,7 +909,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     }
                     setListMode("mock");
                   }}
-                  className={`relative text-sm px-2.5 py-1 rounded transition-colors ${listMode === "mock" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`relative text-sm px-2.5 py-1.5 rounded transition-colors ${listMode === "mock" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Mock
                   {mockPhase === "active" && listMode !== "mock" && (
@@ -918,14 +918,13 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 </button>
             </div>
             {/* Row 2: sort control + search */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {/* Sort — segmented control matching tab row style */}
               {listMode === "review" && (
                 <select
                   value={reviewSort}
                   onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
-                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none shrink-0"
-                >
+                  className="h-8 rounded border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none shrink-0">
                   <option value="urgency">Urgency</option>
                   <option value="overdue">Oldest</option>
                   <option value="difficulty">Hardest</option>
@@ -936,8 +935,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <select
                   value={newDifficultyFilter}
                   onChange={(e) => setNewDifficultyFilter(e.target.value as NewDifficultyFilter)}
-                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none shrink-0"
-                >
+                  className="h-8 rounded border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none shrink-0">
                   <option value="all">All difficulties</option>
                   <option value="easy">Easy only</option>
                   <option value="easy-medium">Easy &amp; Medium</option>
@@ -949,8 +947,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <select
                   value={completedSort}
                   onChange={(e) => setCompletedSort(e.target.value as CompletedSort)}
-                  className="h-7 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none shrink-0"
-                >
+                  className="h-8 rounded border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none shrink-0">
                   <option value="retention">Weakest first</option>
                   <option value="review-date">Due soonest</option>
                   <option value="category">Category</option>
@@ -964,7 +961,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                   value={queueSearch}
                   onChange={(e) => setQueueSearch(e.target.value)}
                   placeholder="Filter…"
-                  className="h-7 flex-1 min-w-0 rounded border border-border bg-background px-2 text-xs placeholder:text-muted-foreground focus:outline-none"
+                  className="h-8 flex-1 min-w-0 rounded border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none"
                 />
               )}
             </div>
@@ -1060,7 +1057,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
               <div className="rounded-lg border border-border overflow-hidden shrink-0">
                 <button
                   onClick={() => setShowDeferredInline((v) => !v)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors"
+                  className="flex w-full items-center justify-between px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <span className="font-medium">Deferred{deferredItems.length > 0 ? ` (${deferredItems.length})` : ""}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${showDeferredInline ? "" : "rotate-180"}`}><polyline points="18 15 12 9 6 15"/></svg>
@@ -1074,7 +1071,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                           placeholder="Search review queue to defer..."
                           value={deferSearch}
                           onChange={(e) => setDeferSearch(e.target.value)}
-                          className="h-7 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                          className="h-8 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                         {deferSearch.trim() && (
                           <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-border bg-background shadow-lg max-h-48 overflow-y-auto">
@@ -1673,7 +1670,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         </section>
 
         {/* Queue Forecast */}
-        <section className="rounded-lg border border-border bg-muted p-3 shrink-0 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+        <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
           <div className="flex items-center justify-between w-full">
             <p className="text-sm font-semibold text-foreground">Queue Forecast</p>
             <div className="flex items-center gap-2">
@@ -1702,27 +1699,6 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             if (!proj) return <p className="text-xs text-muted-foreground mt-2">No items in queue.</p>;
             return (
               <div className="mt-2 space-y-2">
-                {forecastMode === "goals" && (
-                  <div className="flex items-center gap-3 text-[11px] pb-1.5 border-b border-border/50">
-                    <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground">Rev/d</span>
-                      <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                      <span className="font-medium tabular-nums w-7 text-center text-xs">{forecastReviewPerDay}</span>
-                      <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground">New/d</span>
-                      <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                      <span className="font-medium tabular-nums w-7 text-center text-xs">{forecastNewPerDay}</span>
-                      <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
-                    </div>
-                  </div>
-                )}
-                {proj.clearDay !== null ? (
-                  <p className="text-sm font-semibold text-green-500">Clears in ~{proj.clearDay} day{proj.clearDay !== 1 ? "s" : ""}</p>
-                ) : (
-                  <p className="text-sm font-semibold text-amber-500">Won&apos;t fully clear in 30d — lowest: {proj.minSize} items (day {proj.minDay})</p>
-                )}
                 <div className="relative flex items-end gap-px h-28">
                   {proj.dailyQueueSize.map((size, i) => {
                     const maxSize = Math.max(...proj.dailyQueueSize, 1);
@@ -1737,10 +1713,31 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                     );
                   })}
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
                   <span><span className="font-medium text-foreground">{proj.currentSize}</span> due now</span>
+                  {forecastMode === "goals" && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground text-[10px]">Rev/d</span>
+                        <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                        <span className="font-medium tabular-nums w-6 text-center text-[10px]">{forecastReviewPerDay}</span>
+                        <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground text-[10px]">New/d</span>
+                        <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                        <span className="font-medium tabular-nums w-6 text-center text-[10px]">{forecastNewPerDay}</span>
+                        <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                      </div>
+                    </div>
+                  )}
                   <span>{proj.reviewsPerDay} rev/d · {proj.newPerDay} new/d · <span className="text-muted-foreground/60">+30d</span></span>
                 </div>
+                {proj.clearDay !== null ? (
+                  <p className="text-xs font-semibold text-green-500 text-center">Clears in ~{proj.clearDay} day{proj.clearDay !== 1 ? "s" : ""}</p>
+                ) : (
+                  <p className="text-xs font-semibold text-amber-500 text-center">Won&apos;t fully clear in 30d — lowest: {proj.minSize} items (day {proj.minDay})</p>
+                )}
               </div>
             );
           })()}
