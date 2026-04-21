@@ -1644,7 +1644,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             if (!proj) return <p className="text-xs text-muted-foreground mt-2">No items in queue.</p>;
             return (
               <div className="mt-2 space-y-2">
-                <div className="relative flex items-end gap-px h-28">
+                <div className="relative flex items-end gap-px h-36">
                   {proj.dailyQueueSize.map((size, i) => {
                     const maxSize = Math.max(...proj.dailyQueueSize, 1);
                     const height = Math.max(2, (size / maxSize) * 100);
@@ -1661,18 +1661,18 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                   <span><span className="font-medium text-foreground">{proj.currentSize}</span> due now</span>
                   {forecastMode === "goals" && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground text-[10px]">Rev/d</span>
-                        <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                        <span className="font-medium tabular-nums w-6 text-center text-[10px]">{forecastReviewPerDay}</span>
-                        <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                        <span className="text-muted-foreground text-xs">Rev/d</span>
+                        <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                        <span className="font-medium tabular-nums w-6 text-center text-xs">{forecastReviewPerDay}</span>
+                        <button onClick={() => { const v = forecastReviewPerDay + 1; setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground text-[10px]">New/d</span>
-                        <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
-                        <span className="font-medium tabular-nums w-6 text-center text-[10px]">{forecastNewPerDay}</span>
-                        <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-4 h-4 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
+                        <span className="text-muted-foreground text-xs">New/d</span>
+                        <button onClick={() => { const v = Math.max(0, forecastNewPerDay - 1); setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
+                        <span className="font-medium tabular-nums w-6 text-center text-xs">{forecastNewPerDay}</span>
+                        <button onClick={() => { const v = forecastNewPerDay + 1; setForecastNewPerDay(v); localStorage.setItem("aurora_forecast_new_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">+</button>
                       </div>
                     </div>
                   )}
@@ -1906,7 +1906,7 @@ const ActivityChart = memo(function ActivityChart({ history, mode = "auto", onPr
   }, [history, shouldAggregate, shouldMonthly]);
 
   const max = Math.max(...buckets.map((d) => d.count), 1);
-  const MAX_BAR_PX = 56;
+  const MAX_BAR_PX = 72;
   const showCounts = buckets.length <= 21;
 
   return (
