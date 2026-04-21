@@ -309,7 +309,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
   const [forecastMode, setForecastMode] = useState<"actual" | "goals">("actual");
   const [countdownTitle, setCountdownTitle] = useState("Fall Recruiting Countdown");
   const [forecastReviewPerDay, setForecastReviewPerDay] = useState(5);
-  const [forecastNewPerDay, setForecastNewPerDay] = useState(1.5);
+  const [forecastNewPerDay, setForecastNewPerDay] = useState(2);
 
 
   const activityData = useMemo(() => {
@@ -357,7 +357,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     const savedForecastReview = localStorage.getItem("aurora_forecast_review_per_day");
     if (savedForecastReview) setForecastReviewPerDay(parseFloat(savedForecastReview));
     const savedForecastNew = localStorage.getItem("aurora_forecast_new_per_day");
-    if (savedForecastNew) setForecastNewPerDay(parseFloat(savedForecastNew));
+    if (savedForecastNew) setForecastNewPerDay(parseInt(savedForecastNew, 10));
     const savedForecastMode = localStorage.getItem("aurora_forecast_mode");
     if (savedForecastMode === "actual" || savedForecastMode === "goals") {
       setForecastMode(savedForecastMode);
