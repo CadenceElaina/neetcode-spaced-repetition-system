@@ -155,6 +155,12 @@ Start the dev server:
 npm run dev
 ```
 
+Run the test suite (52 SRS unit tests, no DB required):
+
+```bash
+npm test
+```
+
 `seed.ts` inserts the 150 problem rows only — no user data. Fresh installs start with a clean slate.
 
 ### Regenerate Problem Data (optional)
@@ -254,18 +260,19 @@ Only submissions **after** connecting are detected. Historical submissions are n
 problems.json                  # 150 problems with metadata + complexity
 docs/
   ARCHITECTURE.md              # Data model, algorithm, system design
-  DESIGN_SYSTEM.md             # Colors, typography, spacing, components
   decisions/                   # Architecture Decision Records (ADRs)
+  archived/                    # Superseded design docs
 scripts/
   fetch_problems.py            # Data pipeline
   seed.ts                      # Seeds problem metadata into Postgres
+tests/
+  unit/srs.test.ts             # SRS engine unit tests (52 cases)
 src/
   lib/srs.ts                   # Core SRS engine (stability, retrievability, readiness)
   db/schema.ts                 # Drizzle schema
   app/
-    dashboard/                 # Dashboard (queue, stats, readiness)
+    dashboard/                 # Dashboard (queue, stats, readiness, mock interview)
     problems/                  # Problem list, detail, attempt form
-    mock-interview/            # Timed mock interview
     api/attempts/              # Attempt logging + SRS update
     api/notes/                 # Per-user problem notes
     api/review/                # Review queue + skip endpoint
