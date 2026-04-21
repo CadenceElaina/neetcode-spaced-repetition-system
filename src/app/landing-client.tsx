@@ -353,18 +353,18 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
             )}
 
             {/* Stats row */}
-            <div className="flex items-center gap-4">
-              <div className="text-center">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-center flex-1">
                 <p className="text-base font-bold text-foreground">{totalProblems}</p>
                 <p className="text-[11px] text-muted-foreground">problems</p>
               </div>
               <div className="h-5 w-px bg-border/50" />
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <p className="text-base font-bold text-foreground">{categories.length}</p>
                 <p className="text-[11px] text-muted-foreground">categories</p>
               </div>
               <div className="h-5 w-px bg-border/50" />
-              <div className="text-center relative group focus-within:*:last-child:opacity-100 focus-within:*:last-child:pointer-events-auto">
+              <div className="text-center relative group focus-within:*:last-child:opacity-100 focus-within:*:last-child:pointer-events-auto flex-1">
                 <div className="flex items-center gap-1 justify-center">
                   <p className="text-base font-bold text-foreground">FSRS</p>
                   <button type="button" className="text-muted-foreground/60 text-[10px] cursor-help" aria-label="What is FSRS?">
@@ -384,7 +384,7 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
                   <div className="h-5 w-px bg-border/50" />
                   <Link
                     href="/dashboard"
-                    className="inline-flex h-8 items-center rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground shadow-[0_0_20px_var(--glow)] transition-all duration-150 hover:shadow-[0_0_32px_var(--glow)]"
+                    className="inline-flex h-8 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground shadow-[0_0_20px_var(--glow)] transition-all duration-150 hover:shadow-[0_0_32px_var(--glow)] flex-1"
                   >
                     Go to Dashboard
                   </Link>

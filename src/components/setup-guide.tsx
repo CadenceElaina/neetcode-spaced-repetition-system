@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 const GITHUB_README = "https://github.com/CadenceElaina/aurora#getting-started";
 const POS_KEY = "aurora_guide_pos";
-const FLOAT_W = 460;
+const FLOAT_W = 540;
 
 type Mode = "closed" | "modal" | "float";
 
@@ -425,10 +425,9 @@ interface PanelHeaderProps {
   onPopOut?: () => void;
   onPopIn?: () => void;
   onDragStart?: (e: React.MouseEvent) => void;
-  onNavigateInstall?: () => void;
 }
 
-function PanelHeader({ onClose, onPopOut, onPopIn, onDragStart, onNavigateInstall }: PanelHeaderProps) {
+function PanelHeader({ onClose, onPopOut, onPopIn, onDragStart }: PanelHeaderProps) {
   const draggable = !!onDragStart;
   return (
     <div
@@ -451,22 +450,6 @@ function PanelHeader({ onClose, onPopOut, onPopIn, onDragStart, onNavigateInstal
         className="flex items-center gap-1 shrink-0"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <a
-          href={GITHUB_README}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg px-2.5 py-1 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Full README ↗
-        </a>
-        <button
-          onClick={onNavigateInstall}
-          className="rounded-lg px-2.5 py-1 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-        >
-          Clone &amp; Install →
-        </button>
-        <div className="w-px h-4 bg-border/40 mx-0.5" />
         {onPopOut && (
           <button
             onClick={onPopOut}
@@ -626,7 +609,6 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             <PanelHeader
               onClose={close}
               onPopOut={isDesktop ? popOut : undefined}
-              onNavigateInstall={() => setActiveIdx(SECTIONS.findIndex(s => s.id === "install"))}
             />
             <div className="flex flex-1 min-h-0">
               <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
@@ -649,7 +631,6 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             onClose={close}
             onPopIn={popIn}
             onDragStart={handleDragStart}
-            onNavigateInstall={() => setActiveIdx(SECTIONS.findIndex(s => s.id === "install"))}
           />
           <div className="flex flex-1 min-h-0">
             <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />

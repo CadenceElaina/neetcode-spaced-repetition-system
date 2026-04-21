@@ -1310,23 +1310,16 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             </div>
           </div>
 
-          {/* Days left + pace inline */}
-          <div className="flex items-center justify-between gap-3 mb-0.5">
+          {/* Days left + status chip */}
+          <div className="flex items-end justify-between gap-3 mb-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold tabular-nums">{countdown.daysLeft}</span>
+              <span className="text-3xl font-bold tabular-nums leading-none">{countdown.daysLeft}</span>
               <span className="text-sm text-muted-foreground">days left</span>
             </div>
-            <div className="text-right shrink-0">
-              <p className={`text-sm font-semibold tabular-nums ${countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
-                {countdown.onTrack ? "On track" : "Behind pace"}
-                {!countdown.onTrack && (
-                  <span className="text-muted-foreground font-normal"> · Need <span className="font-semibold text-foreground">{countdown.neededPerDay.toFixed(1)}/day</span></span>
-                )}
-              </p>
-              <p className="text-[11px] text-muted-foreground tabular-nums">
-                Projected <span className="font-medium text-foreground">{countdown.projectedRaw}/{targetCount}</span>
-              </p>
-            </div>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${countdown.onTrack ? "bg-green-500/15 text-green-500" : "bg-orange-500/15 text-orange-500"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${countdown.onTrack ? "bg-green-500" : "bg-orange-500"}`} />
+              {countdown.onTrack ? "On track" : `Need ${countdown.neededPerDay.toFixed(1)}/day`}
+            </span>
           </div>
           <p className="text-xs text-muted-foreground mb-2">
             {targetCount} problems by {new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -1340,8 +1333,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
             />
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-xs text-muted-foreground">{data.attemptedCount} solved</span>
-            <span className="text-xs text-muted-foreground">{countdown.remaining} to go</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{data.attemptedCount} solved · {countdown.remaining} to go</span>
+            <span className="text-xs text-muted-foreground tabular-nums">Projected <span className="font-medium text-foreground">{countdown.projectedRaw}/{targetCount}</span></span>
           </div>
 
           {/* Settings */}
@@ -1486,7 +1479,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </div>
           )}
         </section>        {/* Mastery Progress */}
-        <section className="rounded-lg border border-border bg-muted p-3">
+        <section className="rounded-lg border border-border bg-muted p-3 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
           <button
             onClick={() => toggleWidget("mastery")}
             className="flex items-center justify-between w-full"
@@ -1680,7 +1673,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         </section>
 
         {/* Queue Forecast */}
-        <section className="rounded-lg border border-border bg-muted p-3 shrink-0">
+        <section className="rounded-lg border border-border bg-muted p-3 shrink-0 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
           <div className="flex items-center justify-between w-full">
             <p className="text-sm font-semibold text-foreground">Queue Forecast</p>
             <div className="flex items-center gap-2">
