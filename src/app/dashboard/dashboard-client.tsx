@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -404,16 +404,6 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     return () => clearTimeout(timer);
   }, [srsBanner]);
 
-  // ESC to close demo sign-in overlay
-  useEffect(() => {
-    if (!showDemoSignIn) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setShowDemoSignIn(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [showDemoSignIn]);
-
   function saveSettings(date: string, count: number, title: string) {
     setTargetDate(date);
     setTargetCount(count);
@@ -694,6 +684,16 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
 
   // Demo sign-in prompt overlay
   const [showDemoSignIn, setShowDemoSignIn] = useState(false);
+
+  // ESC to close demo sign-in overlay
+  useEffect(() => {
+    if (!showDemoSignIn) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowDemoSignIn(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [showDemoSignIn]);
 
   function demoGuard(action: () => void) {
     if (isDemo) {
@@ -1189,7 +1189,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                             difficulty: p.difficulty,
                             isReview: false,
                           }))}
-                          className="inline-flex h-7 items-center rounded-md border border-border px-3 text-xs text-foreground transition-colors hover:bg-muted"
+                          className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
                         >
                           Log
                         </button>
@@ -1397,7 +1397,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                         <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-background overflow-hidden">
-                        <div className={`h-full rounded-full transition-all duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
+                        <div className={`h-full rounded-full transition-[width] duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
                       </div>
                     </div>
                   ))}
@@ -1771,7 +1771,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
 
 /* ── Activity Chart ── */
 
-function ActivityChart({ history, mode = "auto" }: { history: AttemptDay[]; mode?: "auto" | "monthly" }) {
+const ActivityChart = memo(function ActivityChart({ history, mode = "auto" }: { history: AttemptDay[]; mode?: "auto" | "monthly" }) {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   // Aggregate: monthly if mode=monthly, weekly if auto+>30 days, else daily
@@ -1929,7 +1929,7 @@ function ActivityChart({ history, mode = "auto" }: { history: AttemptDay[]; mode
       </div>
     </div>
   );
-}
+});
 
 /* ── Status Dot (hover tooltip) ── */
 
