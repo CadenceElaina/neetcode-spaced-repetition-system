@@ -786,7 +786,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
         ]);
       }
     }} />
-    <div className="relative lg:h-[calc(100dvh-3.5rem)]">
+    <div className="relative lg:h-[calc(100dvh-7.5rem)]">
     {/* Subtle ambient starfield — fixed, full-viewport, behind all content */}
     <SkyCanvas />
     {/* All interactive content above the starfield */}

@@ -367,7 +367,7 @@ function GuideContent({ activeIdx, setActiveIdx }: { activeIdx: number; setActiv
 
   return (
     <>
-      <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-4">
+      <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         {SECTIONS[activeIdx].content()}
       </div>
 
@@ -608,7 +608,7 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
             />
             <div className="flex flex-1 min-h-0">
               <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
-              <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex flex-col flex-1 min-h-0 min-w-0">
                 <GuideContent activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
               </div>
             </div>
@@ -630,7 +630,7 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
           />
           <div className="flex flex-1 min-h-0">
             <SidebarNav activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 min-w-0">
               <GuideContent activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
             </div>
           </div>
