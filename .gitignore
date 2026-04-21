@@ -27,8 +27,9 @@ scripts/seed-my-history.ts
 .DS_Store
 Thumbs.db
 
-# debug
+# debug / build artifacts
 npm-debug.log*
+build.log
 
 # typescript
 *.tsbuildinfo
