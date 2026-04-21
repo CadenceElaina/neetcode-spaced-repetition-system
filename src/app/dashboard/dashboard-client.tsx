@@ -828,7 +828,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
     }} />}
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:flex-1 lg:min-h-0 lg:grid-rows-1">
       {/* ── Combined Problem Queue ── */}
-      <div className="flex flex-col lg:min-h-0 lg:col-span-6" data-onboarding="queue">
+      <div className="flex flex-col lg:min-h-0 lg:h-full lg:col-span-6" data-onboarding="queue">
         {/* Pending GitHub submissions banner */}
         {pendingItems.length > 0 && (
           <PendingBanner
@@ -1280,7 +1280,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
       </div>
 
       {/* ── Right Column ── */}
-      <div className="flex flex-col lg:col-span-6 lg:min-h-0 overflow-x-hidden" data-onboarding="stats">
+      <div className="flex flex-col lg:col-span-6 lg:min-h-0 lg:h-full overflow-x-hidden" data-onboarding="stats">
         <div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
         {!showStatsDetail && (<>
         {/* Countdown */}
