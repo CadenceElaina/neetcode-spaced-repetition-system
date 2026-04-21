@@ -375,44 +375,80 @@ export function ImportClient({ allProblems, attemptedIds, todayAttemptedIds, onD
         )}
 
         <div className={embedded ? "flex flex-col gap-3 flex-1 min-h-0" : "space-y-4"}>
-          <div className="flex items-end gap-3 shrink-0">
-            <div>
-              <label className="text-xs text-muted-foreground">Date</label>
-              <input
-                type="date"
-                value={dateStr}
-                max={today}
-                onChange={(e) => setDateStr(e.target.value)}
-                className="mt-1 block rounded-md border border-border bg-muted px-3 py-2 text-sm"
+          {embedded ? (
+            <>
+              {/* Date row — matches mock's duration row */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground shrink-0">Date:</span>
+                <input
+                  type="date"
+                  value={dateStr}
+                  max={today}
+                  onChange={(e) => setDateStr(e.target.value)}
+                  className="rounded-md border border-border bg-muted px-2 py-1 text-xs"
+                />
+                <span className="text-xs text-muted-foreground truncate">
+                  Copy table from{" "}
+                  <code className="rounded bg-muted px-1 text-xs">neetcode.io/activity/YYYY-MM-DD</code>
+                </span>
+              </div>
+
+              {/* Bordered panel — matches mock's selected-problems panel */}
+              <div className="rounded-lg border border-border bg-muted flex-1 min-h-0 flex flex-col overflow-hidden">
+                <textarea
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder={`Paste activity table here…\n\nExample (select all rows on the NeetCode activity page, then Ctrl+C):\n\nTwo Sum\tEasy\tAccepted\tPython\t40 ms\t16.5 MB\t2:30 PM\nValid Anagram\tEasy\tAccepted\tPython\t52 ms\t17.1 MB\t2:45 PM`}
+                  className="block w-full flex-1 min-h-0 resize-none bg-transparent px-3 py-2 font-mono text-sm focus:outline-none"
+                />
+                {parseError && (
+                  <p className="px-3 py-2 text-xs text-red-500 border-t border-border/60 shrink-0">{parseError}</p>
+                )}
+                <div className="px-3 py-3 border-t border-border/60 shrink-0">
+                  <button
+                    onClick={handleParse}
+                    disabled={!rawText.trim() || !dateStr}
+                    className="w-full inline-flex h-9 items-center justify-center rounded-md bg-accent text-sm font-semibold text-accent-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+                  >
+                    Parse Activity →
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-end gap-3 shrink-0">
+                <div>
+                  <label className="text-xs text-muted-foreground">Date</label>
+                  <input
+                    type="date"
+                    value={dateStr}
+                    max={today}
+                    onChange={(e) => setDateStr(e.target.value)}
+                    className="mt-1 block rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <textarea
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder={`Paste activity table here…\n\nExample (select all rows on the NeetCode activity page, then Ctrl+C):\n\nTwo Sum\tEasy\tAccepted\tPython\t40 ms\t16.5 MB\t2:30 PM\nValid Anagram\tEasy\tAccepted\tPython\t52 ms\t17.1 MB\t2:45 PM`}
+                rows={12}
+                className="block w-full rounded-md border border-border bg-muted px-3 py-2 font-mono text-sm resize-y"
               />
-            </div>
-            {embedded && (
-              <p className="text-xs text-muted-foreground pb-2">
-                Copy table from{" "}
-                <code className="rounded bg-muted px-1 text-xs">neetcode.io/activity/YYYY-MM-DD</code>
-              </p>
-            )}
-          </div>
 
-          <textarea
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            placeholder={`Paste activity table here…\n\nExample (select all rows on the NeetCode activity page, then Ctrl+C):\n\nTwo Sum\tEasy\tAccepted\tPython\t40 ms\t16.5 MB\t2:30 PM\nValid Anagram\tEasy\tAccepted\tPython\t52 ms\t17.1 MB\t2:45 PM`}
-            rows={embedded ? 8 : 12}
-            className={`block w-full rounded-md border border-border bg-muted px-3 py-2 font-mono text-sm ${
-              embedded ? "flex-1 min-h-0 resize-none" : "resize-y"
-            }`}
-          />
+              {parseError && <p className="text-xs text-red-500 shrink-0">{parseError}</p>}
 
-          {parseError && <p className="text-xs text-red-500 shrink-0">{parseError}</p>}
-
-          <button
-            onClick={handleParse}
-            disabled={!rawText.trim() || !dateStr}
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-accent px-4 text-sm text-accent-foreground transition-colors hover:opacity-90 disabled:opacity-50"
-          >
-            Parse Activity →
-          </button>
+              <button
+                onClick={handleParse}
+                disabled={!rawText.trim() || !dateStr}
+                className="inline-flex h-9 shrink-0 items-center rounded-md bg-accent px-4 text-sm text-accent-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+              >
+                Parse Activity →
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
