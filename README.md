@@ -64,11 +64,11 @@ $$S_{\text{new}} = S_{\text{old}} \times \text{multiplier} \times \text{modifier
 
 **Multipliers** (by outcome × quality):
 
-| Outcome    |        Optimal         | Brute Force | No Solution |
-| ---------- | :--------------------: | :---------: | :---------: |
-| Solved     |          2.5×          |    1.5×     |      —      |
-| Partial    | 1.1× (quality ignored) |    1.1×     |      —      |
-| Not solved |           —            |    0.8×     |    0.5×     |
+| Outcome    | Optimal | Suboptimal | Brute Force | No Solution |
+| ---------- | :-----: | :--------: | :---------: | :---------: |
+| Solved     |  2.5×   |    2.0×    |    1.5×     |      —      |
+| Partial    |  1.1× (quality ignored across all columns)  |    |     |      —      |
+| Not solved |    —    |     —      |    0.8×     |    0.5×     |
 
 **Modifiers** (independent solves only): rewrote from scratch (+0.5), fast solve on Mediums < 10 min (+0.2). **Confidence** (all attempts): level 5 (+0.3), level 4 (+0.1), level 2 (−0.2), level 1 (−0.4). Stability clamped to [0.5, 365] days.
 
@@ -97,6 +97,8 @@ The dashboard projects how many unique problems you'll cover by your target date
 4. Each simulated day: new problems enter the learning pool, increasing future review load
 5. Stability grows over time as reviews strengthen retention, gradually reducing review frequency
 6. Problems "graduate" to mastered (stability ≥ 45d), freeing capacity
+
+Note: at any given moment, your review queue will be **smaller** than your total attempted problems — that is the SRS working correctly. Each problem has a scheduled review date; only problems whose date has passed appear in the queue. If you have 30 problems in active learning, typically 5–15 are due on a given day.
 
 This captures the key dynamic: as you learn more problems, reviews consume more of your daily budget, naturally slowing the rate of new problem acquisition — then mastery gradually frees capacity back up.
 

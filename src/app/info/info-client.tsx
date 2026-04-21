@@ -415,8 +415,17 @@ export default function InfoClient() {
               <strong>Weak category</strong>: +0.3 if your average retention in that category is below 60% — this
               helps shore up gaps (e.g., if your Stack problems are all fading, they get prioritized)
             </li>
-          </ul>
-        </section>
+
+
+          <h3 className="text-sm font-semibold pt-2">Why is my queue smaller than my total attempts?</h3>
+          <p>
+            This is the SRS working correctly. The system assigns each problem a <em>next review date</em> based on
+            its stability — some problems are due today, others next week, others in a month. At any given moment,
+            only the subset whose review date has passed appears in the queue. If you have 30 problems in active
+            learning, you might see 5–15 due on a typical day. The queue size fluctuates naturally: it grows when
+            you skip sessions and shrinks as you clear it. A small queue does <em>not</em> mean you have less work
+            to do — it means the work is spread across time as intended.
+          </p>
 
         {/* ── Readiness ── */}
         <section id="readiness" className="space-y-3">
