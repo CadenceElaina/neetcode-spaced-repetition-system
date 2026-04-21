@@ -1426,7 +1426,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
               </div>
             </div>
-            <div className="h-[120px] overflow-y-auto pr-0.5 space-y-1.5">
+            <div className="h-[96px] overflow-y-auto pr-0.5 space-y-1.5">
               {(categoryView === "all" ? displayCategories : displayCategories.slice(0, 5)).map((cat) => (
                 <Link key={cat.category} href={`/problems?category=${encodeURIComponent(cat.category)}`} className="flex items-center gap-2 group/cat cursor-pointer">
                   <span className="text-xs w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
@@ -1443,7 +1443,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </div>
           <div className="rounded-md border border-border/40 bg-background/30 p-2">
             <p className="text-xs font-medium text-foreground mb-2">Difficulty</p>
-            <div className="h-[120px] overflow-y-auto pr-1.5 space-y-2.5">
+            <div className="h-[96px] overflow-y-auto pr-1.5 space-y-2">
               {data.difficultyBreakdown.map((d) => {
                 const pct = d.count > 0 ? Math.round((d.attempted / d.count) * 100) : 0;
                 return (
@@ -1560,10 +1560,10 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           {!collapsedWidgets.activity && (
             <div className="mt-2 space-y-3">
               {/* 2-column stats row: Streak | Pace comparison */}
-              <div className="grid grid-cols-2 gap-3 text-xs border border-border/50 rounded-lg bg-background">
+              <div className="grid grid-cols-2 gap-2 text-xs border border-border/50 rounded-lg bg-background">
                 {/* Col 1: Streak */}
-                <div className="flex flex-col gap-2 p-3">
-                  <p className="text-xs font-semibold text-foreground mb-1">Streak</p>
+                <div className="flex flex-col gap-1.5 p-2">
+                  <p className="text-xs font-semibold text-foreground">Streak</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Current</span>
                     <span className="font-semibold text-sm tabular-nums flex items-center gap-0.5">
@@ -1586,8 +1586,8 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                   )}
                 </div>
                 {/* Col 2: Goal vs Actual comparison table */}
-                <div className="flex flex-col gap-2 p-3 border-l border-border/40">
-                  <div className="flex items-center justify-between mb-1">
+                <div className="flex flex-col gap-1.5 p-2 border-l border-border/40">
+                  <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-foreground">Pace</p>
                     {!editingPace && (
                       <button onClick={() => setEditingPace(true)} className="p-0.5 text-muted-foreground hover:text-foreground transition-colors" title="Edit goals">
@@ -1838,7 +1838,7 @@ const ActivityChart = memo(function ActivityChart({ history, mode = "auto" }: { 
   }, [history, shouldAggregate, shouldMonthly]);
 
   const max = Math.max(...buckets.map((d) => d.count), 1);
-  const MAX_BAR_PX = 72;
+  const MAX_BAR_PX = 56;
   const showCounts = buckets.length <= 21;
 
   return (
@@ -2092,13 +2092,16 @@ function SolvedDonut({ breakdown, totalSolved, totalTarget }: { breakdown: Diffi
   const eA = easy?.attempted ?? 0;
   const mA = medium?.attempted ?? 0;
   const hA = hard?.attempted ?? 0;
+  const eC = easy?.count ?? 0;
+  const mC = medium?.count ?? 0;
+  const hC = hard?.count ?? 0;
   const segs = [
     { color: "#22c55e", len: (eA / TOTAL_PROBLEMS) * C, start: 0 },
     { color: "#f59e0b", len: (mA / TOTAL_PROBLEMS) * C, start: (eA / TOTAL_PROBLEMS) * C },
     { color: "#ef4444", len: (hA / TOTAL_PROBLEMS) * C, start: ((eA + mA) / TOTAL_PROBLEMS) * C },
   ].filter(s => s.len > 0);
   return (
-    <div className="flex flex-col items-center gap-1.5 shrink-0">
+    <div className="flex items-center gap-2.5 shrink-0">
       <svg width="72" height="72" viewBox="0 0 72 72">
         <circle cx={36} cy={36} r={r} fill="none" strokeWidth={6} stroke="hsl(var(--background))" />
         {segs.map(({ color, len, start }) => (
@@ -2110,13 +2113,28 @@ function SolvedDonut({ breakdown, totalSolved, totalTarget }: { breakdown: Diffi
             transform={`rotate(${-90 + (start / C) * 360} 36 36)`}
           />
         ))}
-        <text x={36} y={33} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="13" fontWeight="700">{totalSolved}</text>
-        <text x={36} y={46} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--muted-foreground))" fontSize="8">/{totalTarget}</text>
+        <text x={36} y={36} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="18" fontWeight="700">{totalSolved}</text>
+        <text x={36} y={51} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--muted-foreground))" fontSize="9">/{totalTarget}</text>
       </svg>
-      <div className="flex gap-2 text-[10px] tabular-nums">
-        <span className="text-green-500">{eA}<span className="text-muted-foreground">E</span></span>
-        <span className="text-amber-500">{mA}<span className="text-muted-foreground">M</span></span>
-        <span className="text-red-500">{hA}<span className="text-muted-foreground">H</span></span>
+      <div className="flex flex-col gap-1.5 text-xs">
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+          <span className="text-green-500 font-medium w-3.5">E</span>
+          <span className="tabular-nums font-medium">{eA}</span>
+          <span className="text-muted-foreground">/{eC}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+          <span className="text-amber-500 font-medium w-3.5">M</span>
+          <span className="tabular-nums font-medium">{mA}</span>
+          <span className="text-muted-foreground">/{mC}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+          <span className="text-red-500 font-medium w-3.5">H</span>
+          <span className="tabular-nums font-medium">{hA}</span>
+          <span className="text-muted-foreground">/{hC}</span>
+        </div>
       </div>
     </div>
   );
