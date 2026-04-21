@@ -1430,7 +1430,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
                 <button onClick={() => setCategoryView("all")} className={`text-[10px] px-1.5 py-0.5 rounded ${categoryView === "all" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"}`}>All</button>
               </div>
             </div>
-            <div className={categoryView === "all" ? "max-h-[120px] overflow-y-auto pr-0.5 space-y-1.5" : "space-y-1.5"}>
+            <div className="h-[120px] overflow-y-auto pr-0.5 space-y-1.5">
               {(categoryView === "all" ? displayCategories : displayCategories.slice(0, 5)).map((cat) => (
                 <Link key={cat.category} href={`/problems?category=${encodeURIComponent(cat.category)}`} className="flex items-center gap-2 group/cat cursor-pointer">
                   <span className="text-xs w-24 shrink-0 truncate group-hover/cat:text-foreground transition-colors" title={cat.category}>{cat.category}</span>
@@ -1447,7 +1447,7 @@ export function DashboardClient({ data, isDemo = false, userId }: { data: Dashbo
           </div>
           <div className="rounded-md border border-border/40 bg-background/30 p-2">
             <p className="text-xs font-medium text-foreground mb-2">Difficulty</p>
-            <div className="max-h-[140px] overflow-y-auto pr-1.5 space-y-2.5">
+            <div className="h-[120px] overflow-y-auto pr-1.5 space-y-2.5">
               {data.difficultyBreakdown.map((d) => {
                 const pct = d.count > 0 ? Math.round((d.attempted / d.count) * 100) : 0;
                 return (
