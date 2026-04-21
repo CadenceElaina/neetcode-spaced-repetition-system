@@ -9,7 +9,9 @@ export function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const matches = confirmation.trim().toLowerCase() === "delete my account";\n\n  const handleClose = useCallback(() => {
+  const matches = confirmation.trim().toLowerCase() === "delete my account";
+
+  const handleClose = useCallback(() => {
     if (loading) return;
     setConfirmation("");
     setError(null);
