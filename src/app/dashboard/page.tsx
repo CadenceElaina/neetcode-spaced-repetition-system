@@ -302,7 +302,7 @@ export default async function DashboardPage() {
     (s) => s.nextReviewAt && s.nextReviewAt <= now,
   ).length;
   const totalScheduled = recentAttemptCount + scheduledInWindow;
-  const consistencyPct = totalScheduled > 0 ? recentAttemptCount / totalScheduled : 1;
+  const consistencyPct = totalScheduled > 0 ? recentAttemptCount / totalScheduled : 0;
 
   const readiness = computeReadiness({
     totalProblems: allProblems.length,

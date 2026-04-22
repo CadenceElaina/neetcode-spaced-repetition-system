@@ -435,6 +435,7 @@ export function Onboarding({ isDemo = false, userId, onPreferences }: {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{ colorScheme: "dark" }}
                   className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">Default: Sep 1, 2026 (Fall recruiting season)</p>
