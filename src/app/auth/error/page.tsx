@@ -141,12 +141,49 @@ function SetupGuide({ error }: { error: string }) {
   );
 }
 
+function WaitlistPage() {
+  return (
+    <div className="flex flex-col items-center justify-center py-24">
+      <div className="w-full max-w-md rounded-lg border border-border bg-muted p-8 text-center space-y-4">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <h1 className="text-xl font-semibold text-foreground">Aurora is at capacity</h1>
+        <p className="text-sm text-muted-foreground">
+          We&apos;re in early access and have hit our current user limit. You can still explore the app using demo mode.
+        </p>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex h-9 items-center rounded-md bg-accent px-5 text-sm font-medium text-accent-foreground transition-all duration-150 hover:shadow-[0_0_16px_var(--glow)]"
+          >
+            View demo
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm text-foreground transition-colors duration-150 hover:bg-muted"
+          >
+            Go Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function AuthErrorPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+
+  // User cap reached — show waitlist page
+  if (error === "UserCapReached") {
+    return <WaitlistPage />;
+  }
 
   // Configuration and DatabaseError get the full setup guide
   if (error === "Configuration" || error === "DatabaseError") {

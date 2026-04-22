@@ -27,6 +27,10 @@ python scripts/fetch_problems.py  # Regenerate problem metadata
 - `AUTH_SECRET` — generate with `npx auth secret`
 - `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` — GitHub OAuth app credentials
 
+**Optional env vars:**
+- `MAX_USERS` — integer cap on new sign-ups (e.g. `500`). Returning users always pass through. Unset = no limit.
+- `CRON_SECRET` — secures `/api/cron/ping`. Generate with `openssl rand -base64 32`. Required in production if the Vercel cron is active.
+
 ## Tech Stack
 
 Next.js 16 (App Router) + React 19 + TypeScript 5 (strict), Tailwind CSS 4, Drizzle ORM on Postgres (Supabase), NextAuth v5 (GitHub OAuth).
@@ -78,6 +82,7 @@ All mutations go through `/api/*` routes:
 | `GET/POST /api/notes` | User notes per problem |
 | `GET/POST /api/review` | Review queue + skip |
 | `POST /api/webhook/github` | GitHub push webhook (HMAC-validated, auto-detects solved problems) |
+| `GET /api/cron/ping` | Supabase keep-alive DB ping (Vercel cron, every 3 days) |
 
 ### GitHub Sync
 

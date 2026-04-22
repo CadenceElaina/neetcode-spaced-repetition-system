@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users, accounts, sessions, verificationTokens } from "@/db/schema";
 
@@ -39,6 +40,31 @@ const authResult = isAuthConfigured
       pages: {
         signIn: "/auth/signin",
         error: "/auth/error",
+      },
+      callbacks: {
+        async signIn({ user }) {
+          const maxStr = process.env.MAX_USERS;
+          if (!maxStr) return true;
+          const maxUsers = parseInt(maxStr, 10);
+          if (isNaN(maxUsers)) return true;
+
+          // Returning users (already in DB) are always allowed through
+          if (user.email) {
+            const existing = await db
+              .select({ id: users.id })
+              .from(users)
+              .where(eq(users.email, user.email))
+              .limit(1);
+            if (existing.length > 0) return true;
+          }
+
+          // New user — check total against cap
+          const [{ total }] = await db.select({ total: count() }).from(users);
+          if (total >= maxUsers) {
+            return "/auth/error?error=UserCapReached";
+          }
+          return true;
+        },
       },
     })
   : {

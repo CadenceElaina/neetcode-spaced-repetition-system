@@ -187,6 +187,8 @@ Downloads metadata from [neetcode-gh/leetcode](https://github.com/neetcode-gh/le
    | `AUTH_SECRET`        | Run `npx auth secret` locally and paste the **value only**       |
    | `AUTH_GITHUB_ID`     | GitHub OAuth App Client ID                                       |
    | `AUTH_GITHUB_SECRET` | GitHub OAuth App Client Secret (**value only**, not `KEY=value`) |
+   | `MAX_USERS` *(opt)*  | Integer cap on new sign-ups, e.g. `500`. Returning users always pass. Unset = no limit. |
+   | `CRON_SECRET` *(opt)*| Secures the keep-alive cron route. Generate: `openssl rand -base64 32`. |
 
 4. Update your GitHub OAuth App's **Authorization callback URL** to:
    ```
@@ -220,6 +222,8 @@ CREATE POLICY "service_role_all" ON "session" FOR ALL USING (true) WITH CHECK (t
 ALTER TABLE "verification_token" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON "verification_token" FOR ALL USING (true) WITH CHECK (true);
 ```
+
+> **Supabase free tier:** Projects pause after 7 days of inactivity. The `vercel.json` cron job pings the database every 3 days to prevent this. Add `CRON_SECRET` to your Vercel env vars to activate it.
 
 ---
 
