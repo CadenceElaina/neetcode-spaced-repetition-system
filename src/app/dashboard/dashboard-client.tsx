@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight, Target, X } from "lucide-react";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { ImportClient } from "@/app/import/import-client";
 import { LogAttemptModal, type LogModalProblem, type LogModalResult } from "@/components/log-attempt-modal";
@@ -330,6 +331,24 @@ function queueStability(projection: QueueProjection): QueueStability {
   };
 }
 
+function queueForecastStatus(projection: QueueProjection): { label: string; className: string } {
+  if (projection.clearDay !== null && projection.clearDay >= 0) {
+    return {
+      label: projection.clearDay === 0 ? "Clears today" : `Clears in ~${projection.clearDay}d`,
+      className: "text-green-500",
+    };
+  }
+
+  const start = projection.dailyQueueSize[0] ?? projection.currentSize;
+  const end = projection.dailyQueueSize[projection.dailyQueueSize.length - 1] ?? start;
+  const max = Math.max(...projection.dailyQueueSize, start);
+  const growing = end > start || max > start * 1.25;
+
+  return growing
+    ? { label: "Growing", className: "text-orange-400" }
+    : { label: "No clear date in 30d", className: "text-amber-500" };
+}
+
 function computePracticeRecommendation({
   data,
   countdown,
@@ -351,7 +370,7 @@ function computePracticeRecommendation({
   if (goalType === "none") {
     return {
       tone: "neutral",
-      title: "Recommendation: track freely",
+      title: "Track freely",
       body: "No target is selected, so Aurora will keep scheduling future reviews without pushing coverage pace.",
       reason: "Use this mode when you mainly want logging and long-term review timing.",
       actionLabel: "Browse problems",
@@ -362,7 +381,7 @@ function computePracticeRecommendation({
   if (data.attemptedCount === 0) {
     return {
       tone: "neutral",
-      title: "Recommendation: start with new coverage",
+      title: "Start with new coverage",
       body: `Aurora needs a few logged attempts before it can judge review load for ${targetLabel}.`,
       reason: "Start with an Easy or familiar Medium, then log honestly so the forecast has signal.",
       actionLabel: "Browse new",
@@ -373,7 +392,7 @@ function computePracticeRecommendation({
   if (!actualProjection) {
     return {
       tone: behindCoverage ? "watch" : "good",
-      title: behindCoverage ? "Recommendation: push coverage" : "Recommendation: maintain pace",
+      title: behindCoverage ? "Push coverage" : "Maintain pace",
       body: behindCoverage
         ? `Reviews are light, but ${targetLabel} needs about ${requiredNewPerDay.toFixed(1)} new/day from here.`
         : "Your review queue is light. Add new problems when you have real focus time, or review weak categories.",
@@ -384,8 +403,9 @@ function computePracticeRecommendation({
   }
 
   const metrics = queueStability(actualProjection);
-  const queueCritical = metrics.peakLoadDays > 4 || metrics.slope14 >= 2 || (metrics.acceleration >= 1.25 && metrics.secondWeekSlope > 1);
-  const queueGrowing = metrics.peakLoadDays > 2.5 || metrics.slope14 >= 0.75 || metrics.growth14 >= 8 || metrics.acceleration >= 0.75;
+  const queueHeavy = metrics.peakLoadDays > 2.5;
+  const queueCritical = metrics.slope14 >= 2 || (metrics.peakLoadDays > 4 && metrics.slope14 > 0.25) || (metrics.acceleration >= 1.25 && metrics.secondWeekSlope > 1);
+  const queueGrowing = metrics.slope14 >= 0.75 || metrics.growth14 >= 8 || metrics.acceleration >= 0.75;
   const queueStable = Math.abs(metrics.slope14) < 0.5 && metrics.peakLoadDays <= 2.5;
   const activeLoadHigh = data.learningCount / Math.max(1, actualProjection.reviewsPerDay) > 14;
   const avgQueueLabel = metrics.avg14.toFixed(metrics.avg14 >= 10 ? 0 : 1);
@@ -394,8 +414,8 @@ function computePracticeRecommendation({
   if (queueCritical) {
     return {
       tone: "danger",
-      title: "Recommendation: protect retention",
-      body: "Your projected review load is compounding. Pause new problems until the forecast returns to a stable band.",
+      title: "Review first",
+      body: "Your review forecast is rising faster than your recent review capacity. Review first and pause new problems for now.",
       reason: `At your current pace, the next 14 days average ${avgQueueLabel} due reviews and peak near ${peakQueueLabel}.`,
       actionLabel: "Review first",
       actionMode: "review",
@@ -403,12 +423,17 @@ function computePracticeRecommendation({
     };
   }
 
-  if (queueGrowing || activeLoadHigh || retentionRisk) {
+  if (queueGrowing || queueHeavy || activeLoadHigh || retentionRisk) {
+    const queueEasingButHeavy = queueHeavy && metrics.slope14 < 0.5;
     return {
       tone: "watch",
-      title: "Recommendation: review-biased",
-      body: "Keep new problems optional until the review forecast flattens. The goal is a sustainable queue, not an empty one.",
-      reason: activeLoadHigh
+      title: "Review first",
+      body: queueEasingButHeavy
+        ? "Your forecast is easing, but the peak review load is still heavy. Review what is due before adding more."
+        : "Keep new problems optional until the review forecast flattens. The goal is a sustainable queue, not an empty one.",
+      reason: queueEasingButHeavy
+        ? `Peak load is about ${metrics.peakLoadDays.toFixed(1)} review-days at your recent pace.`
+        : activeLoadHigh
         ? `You have ${data.learningCount} active learning problems, which is a lot for ${actualProjection.reviewsPerDay.toFixed(1)} reviews/day.`
         : retentionRisk
           ? "Retention is below 50%, so adding coverage now may make the queue noisier before it gets useful."
@@ -422,7 +447,7 @@ function computePracticeRecommendation({
   if (queueStable && behindCoverage) {
     return {
       tone: "good",
-      title: "Recommendation: add coverage carefully",
+      title: "Add coverage carefully",
       body: `Your review load looks stable, and ${targetLabel} needs about ${requiredNewPerDay.toFixed(1)} new/day from here.`,
       reason: weakCategoryRisk
         ? "Prefer a weak or under-covered category so coverage improves without hiding a blind spot."
@@ -435,7 +460,7 @@ function computePracticeRecommendation({
 
   return {
     tone: dataLight ? "neutral" : "good",
-    title: "Recommendation: keep current pace",
+    title: "Keep current pace",
     body: dataLight
       ? "Aurora has limited history, but your current queue does not look unstable yet."
       : "Your queue is active without accelerating. Review what is due, then add new only when you have focus time.",
@@ -1836,9 +1861,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
               {(() => {
                 const hProj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
                 if (!hProj) return null;
-                return hProj.clearDay !== null
-                  ? <span className="text-[11px] font-medium text-green-500 truncate">Clears in ~{hProj.clearDay}d</span>
-                  : <span className="text-[11px] font-medium text-amber-500 truncate">Won&apos;t clear in 30d</span>;
+                const status = queueForecastStatus(hProj);
+                return <span className={`text-[11px] font-medium truncate ${status.className}`}>{status.label}</span>;
               })()}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -2303,64 +2327,87 @@ function PracticeRecommendationPanel({
   onAction: (mode: ListMode) => void;
   onDismiss: () => void;
 }) {
+  const toneLabel: Record<PracticeRecommendation["tone"], string> = {
+    neutral: "Plan",
+    good: "On track",
+    watch: "Watch",
+    danger: "Priority",
+  };
   const toneClass: Record<PracticeRecommendation["tone"], string> = {
-    neutral: "border-border bg-muted",
-    good: "border-green-500/25 bg-green-500/5",
-    watch: "border-amber-500/30 bg-amber-500/5",
-    danger: "border-red-500/30 bg-red-500/5",
+    neutral: "border-accent/20 bg-accent/10 text-accent",
+    good: "border-green-500/20 bg-green-500/10 text-green-400",
+    watch: "border-amber-500/25 bg-amber-500/10 text-amber-300",
+    danger: "border-red-500/25 bg-red-500/10 text-red-300",
   };
-  const dotClass: Record<PracticeRecommendation["tone"], string> = {
-    neutral: "bg-accent",
-    good: "bg-green-500",
-    watch: "bg-amber-500",
-    danger: "bg-red-500",
-  };
+  const displayTitle = recommendation.title.startsWith("Recommendation: ")
+    ? recommendation.title.replace(/^Recommendation: /, "Today: ")
+    : `Today: ${recommendation.title}`;
+  const trendLabel = recommendation.metrics
+    ? recommendation.metrics.slope14 >= 0.75
+      ? "Trend rising"
+      : recommendation.metrics.slope14 <= -0.5
+        ? "Trend easing"
+        : "Trend stable"
+    : null;
 
   return (
-    <section className={`mb-3 rounded-lg border px-3 py-2.5 ${toneClass[recommendation.tone]}`} aria-label="Practice recommendation">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className={`h-2 w-2 rounded-full shrink-0 ${dotClass[recommendation.tone]}`} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <p className="text-sm font-semibold text-foreground">{recommendation.title}</p>
-            <p className="text-xs text-muted-foreground">{recommendation.body}</p>
+    <section className="mb-3 rounded-lg border border-border bg-muted/80 px-3 py-3" aria-label="Practice recommendation">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/50 text-accent">
+            <Target size={15} strokeWidth={2.2} aria-hidden="true" />
           </div>
-          <p className="mt-0.5 text-[11px] text-muted-foreground/80">{recommendation.reason}</p>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {recommendation.metrics && (
-            <InfoTooltip
-              content={
-                <div className="space-y-1.5">
-                  <p className="font-medium">Review load forecast</p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
-                    <span className="text-muted-foreground">Avg due</span>
-                    <span className="text-right tabular-nums">{recommendation.metrics.avg14.toFixed(1)}</span>
-                    <span className="text-muted-foreground">Peak due</span>
-                    <span className="text-right tabular-nums">{recommendation.metrics.max14.toFixed(0)}</span>
-                    <span className="text-muted-foreground">Growth/day</span>
-                    <span className="text-right tabular-nums">{recommendation.metrics.slope14.toFixed(1)}</span>
-                    <span className="text-muted-foreground">Peak load</span>
-                    <span className="text-right tabular-nums">{recommendation.metrics.peakLoadDays.toFixed(1)}d</span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">{displayTitle}</p>
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${toneClass[recommendation.tone]}`}>
+                {toneLabel[recommendation.tone]}
+              </span>
+              {recommendation.metrics && <InfoTooltip
+                content={
+                  <div className="space-y-1.5">
+                    <p className="font-medium">Review load forecast</p>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                      <span className="text-muted-foreground">Avg due</span>
+                      <span className="text-right tabular-nums">{recommendation.metrics.avg14.toFixed(1)}</span>
+                      <span className="text-muted-foreground">Peak due</span>
+                      <span className="text-right tabular-nums">{recommendation.metrics.max14.toFixed(0)}</span>
+                      <span className="text-muted-foreground">Growth/day</span>
+                      <span className="text-right tabular-nums">{recommendation.metrics.slope14.toFixed(1)}</span>
+                      <span className="text-muted-foreground">Peak load</span>
+                      <span className="text-right tabular-nums">{recommendation.metrics.peakLoadDays.toFixed(1)}d</span>
+                    </div>
+                    <p className="border-t border-border/60 pt-1 text-[11px] text-muted-foreground">Aurora flags the queue when it grows faster than recent review capacity can absorb.</p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/60">Healthy does not mean empty. Aurora flags the queue when it grows faster than recent review capacity can absorb.</p>
-                </div>
-              }
-            />
-          )}
+                }
+              />}
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{recommendation.body}</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/80">{recommendation.reason}</p>
+            {recommendation.metrics && (
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+                <span className="rounded-md border border-border bg-background/40 px-2 py-1 tabular-nums">Avg due {recommendation.metrics.avg14.toFixed(1)}</span>
+                <span className="rounded-md border border-border bg-background/40 px-2 py-1 tabular-nums">Peak {recommendation.metrics.max14.toFixed(0)}</span>
+                {trendLabel && <span className="rounded-md border border-border bg-background/40 px-2 py-1">{trendLabel}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5 self-start sm:pt-0.5">
           <button
             onClick={() => onAction(recommendation.actionMode)}
-            className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground transition-colors hover:opacity-90"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-accent/25 bg-accent/15 px-3 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
           >
             {recommendation.actionLabel}
+            <ArrowRight size={13} strokeWidth={2.2} aria-hidden="true" />
           </button>
           <button
             onClick={onDismiss}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
             aria-label="Hide recommendation"
             title="Hide recommendation"
           >
-            x
+            <X size={14} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </div>
       </div>
