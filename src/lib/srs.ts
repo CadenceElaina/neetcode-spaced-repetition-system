@@ -43,7 +43,7 @@ const BASE_MULTIPLIERS: Record<string, number> = {
   "PARTIAL:OPTIMAL": 1.1,
   "PARTIAL:SUBOPTIMAL": 1.1,
   "PARTIAL:BRUTE_FORCE": 1.1,
-  "PARTIAL:NONE": 1.0,
+  "PARTIAL:NONE": 1.1,
   // solved=NO
   "NO:BRUTE_FORCE": 0.8,
   "NO:NONE": 0.5,

@@ -112,6 +112,22 @@ describe("computeNewStability", () => {
     expect(s).toBeCloseTo(OLD * 1.1, 5);
   });
 
+  it("PARTIAL+NONE, conf 3 → old × 1.1 (quality irrelevant for PARTIAL)", () => {
+    const s = computeNewStability(
+      OLD,
+      signals({ solvedIndependently: "PARTIAL", solutionQuality: "NONE" }),
+    );
+    expect(s).toBeCloseTo(OLD * 1.1, 5);
+  });
+
+  it("all four PARTIAL quality combos produce identical stability", () => {
+    const qualities = ["OPTIMAL", "SUBOPTIMAL", "BRUTE_FORCE", "NONE"] as const;
+    const results = qualities.map((q) =>
+      computeNewStability(OLD, signals({ solvedIndependently: "PARTIAL", solutionQuality: q }))
+    );
+    for (const r of results) expect(r).toBeCloseTo(results[0], 5);
+  });
+
   it("NO+NONE, conf 3 → old × 0.5", () => {
     const s = computeNewStability(
       OLD,

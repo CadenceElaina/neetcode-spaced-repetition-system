@@ -68,7 +68,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID | Agent | Description |
 |----|-------|-------------|
-| T-001 | Claude (session 2026-05-03) | Mock interview: fix 1-problem bug |
+| T-002 | Claude (session 2026-05-03) | PARTIAL:NONE multiplier fix + unit tests |
 
 ---
 
@@ -76,6 +76,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID    | Completed  | Description |
 |-------|------------|-------------|
+| T-001 | 2026-05-03 | `fix(dashboard)`: pickMockProblems always returns 2; Medium+Medium fallback when no hards |
 | —     | 2026-04-22 | `fix(readiness)`: sample weight scales score with data volume |
 | —     | 2026-04-22 | `fix(readiness)`: show tier from day one, D is honest starting grade |
 | —     | 2026-04-22 | `feat(hosting)`: user cap, Supabase keep-alive cron, waitlist page |
