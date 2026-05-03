@@ -2345,9 +2345,9 @@ function PracticeRecommendationPanel({
   onDismiss: () => void;
 }) {
   const toneLabel: Record<PracticeRecommendation["tone"], string> = {
-    neutral: "Plan",
+    neutral: "Getting started",
     good: "On track",
-    watch: "Watch",
+    watch: "Review first",
     danger: "Priority",
   };
   const toneClass: Record<PracticeRecommendation["tone"], string> = {
