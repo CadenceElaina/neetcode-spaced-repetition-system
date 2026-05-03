@@ -495,6 +495,7 @@ function computePracticeRecommendation({
 /* ── Main Component ── */
 
 export function DashboardClient({ data, isDemo = false, userId, onboardingComplete = false }: { data: DashboardData; isDemo?: boolean; userId?: string; onboardingComplete?: boolean }) {
+  const isFirstLogin = !isDemo && data.attemptedCount === 0;
   const searchParams = useSearchParams();
   const router = useRouter();
   const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string; cat: string } | null>(null);
@@ -1358,10 +1359,24 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
             <div className="flex flex-col flex-1 min-h-0 gap-2">
             {reviewItems.length === 0 ? (
               <div className="rounded-lg border border-border bg-muted p-6 text-center">
-                <p className="text-sm text-muted-foreground">All caught up! No reviews due.</p>
-                <button onClick={() => setListMode("new")} className="mt-2 text-xs text-accent hover:underline">
-                  Start a new problem →
-                </button>
+                {isFirstLogin ? (
+                  <>
+                    <p className="text-sm font-medium text-foreground">No reviews yet</p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      Log a problem to start building your schedule. Aurora will surface it for review right when you&apos;re about to forget it.
+                    </p>
+                    <button onClick={() => setListMode("new")} className="mt-3 text-xs text-accent hover:underline">
+                      Browse problems to log →
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">All caught up! No reviews due.</p>
+                    <button onClick={() => setListMode("new")} className="mt-2 text-xs text-accent hover:underline">
+                      Start a new problem →
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
@@ -1700,6 +1715,44 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       <div className="flex flex-col md:col-span-5 md:min-h-0 md:h-full lg:col-span-6 overflow-hidden" data-onboarding="stats">
         <div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
         {!showStatsDetail && (<>
+        {/* First-login getting-started card */}
+        {isFirstLogin && (
+          <section className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Start building your queue</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Your retention curves, readiness score, and review schedule unlock after your first few logs.
+              </p>
+            </div>
+            <ol className="space-y-2">
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">1</span>
+                <div>
+                  <button onClick={() => setListMode("new")} className="text-sm font-medium text-foreground hover:text-accent transition-colors text-left">
+                    Log your first problem
+                  </button>
+                  <p className="text-xs text-muted-foreground">Pick anything from New Problems and tap Log</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted border border-border text-[10px] font-bold text-muted-foreground">2</span>
+                <div>
+                  <button onClick={() => setShowSettings(true)} className="text-sm font-medium text-foreground hover:text-accent transition-colors text-left">
+                    Set a goal
+                  </button>
+                  <p className="text-xs text-muted-foreground">Blind 75, NeetCode 150, or freeform</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted border border-border text-[10px] font-bold text-muted-foreground">3</span>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Connect GitHub Sync</span>
+                  <p className="text-xs text-muted-foreground">Optional — auto-detects solves from your NeetCode repo</p>
+                </div>
+              </li>
+            </ol>
+          </section>
+        )}
         {/* Countdown */}
         <section className="rounded-lg border border-border bg-muted p-3">
           <div className="flex items-center justify-between mb-1">

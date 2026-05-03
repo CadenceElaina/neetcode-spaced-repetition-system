@@ -41,7 +41,6 @@ Last updated: 2026-05-03 — all tasks complete
 
 | ID  | Agent | Description |
 | --- | ----- | ----------- |
-| T-018 | GitHub Copilot | `ux`: make demo, onboarding tour, and sign-in flow consistent |
 
 ---
 
@@ -49,6 +48,7 @@ Last updated: 2026-05-03 — all tasks complete
 
 | ID    | Completed  | Description                                                                                                                             |
 | ----- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| T-018 | 2026-05-03 | `ux`: unified demo/onboarding/sign-in flow + first-login empty-state treatment                                                          |
 | T-017 | 2026-05-03 | `docs`: CURRENT.md synced with session; CLAUDE.md updated to point to docs/TASKS.md                                                     |
 | T-001 | 2026-05-03 | `fix(dashboard)`: `pickMockProblems` always returns 2; Medium+Medium fallback when no Hards; `pickTwo` deduplication via index-swap     |
 | T-002 | 2026-05-03 | `fix(srs)`: `PARTIAL:NONE` multiplier corrected 1.0→1.1; unit tests covering all four PARTIAL combos                                    |
