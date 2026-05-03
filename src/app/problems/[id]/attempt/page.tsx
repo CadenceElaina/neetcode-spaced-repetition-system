@@ -47,6 +47,7 @@ export default async function AttemptPage({ params, searchParams }: { params: Pr
         problemId={problem.id}
         problemTitle={problem.title}
         leetcodeNumber={problem.leetcodeNumber}
+        problemCategory={problem.category}
         isReview={isReview}
         defaultAttemptDate={attemptDate ?? null}
       />

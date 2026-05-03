@@ -17,12 +17,14 @@ type Props = {
   problemId: number;
   problemTitle: string;
   leetcodeNumber: number | null;
+  problemCategory: string;
   isReview: boolean;
   defaultAttemptDate?: string | null;
 };
 
-export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview, defaultAttemptDate }: Props) {
+export function AttemptForm({ problemId, problemTitle, leetcodeNumber, problemCategory, isReview, defaultAttemptDate }: Props) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [peeked, setPeeked] = useState(false);
   const [quality, setQuality] = useState<Quality | null>(null);
   const [confidence, setConfidence] = useState(3);
   const [rewrote, setRewrote] = useState(false);
@@ -47,7 +49,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview,
     if (outcome === "NO_SOLUTION") {
       solvedIndependently = "NO";
       solutionQuality = "NONE";
-    } else if (outcome === "PARTIAL") {
+    } else if (outcome === "PARTIAL" || (outcome === "SOLVED" && peeked)) {
       solvedIndependently = "PARTIAL";
       solutionQuality = "BRUTE_FORCE";
     } else {
@@ -126,6 +128,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview,
       attemptId: data.id,
       pName: problemTitle,
       pNum: String(leetcodeNumber ?? ""),
+      cat: problemCategory,
     });
     window.location.href = `/dashboard?${params.toString()}`;
   }
@@ -152,6 +155,7 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview,
       attemptId: data.id,
       pName: problemTitle,
       pNum: String(leetcodeNumber ?? ""),
+      cat: problemCategory,
     });
     window.location.href = `/dashboard?${params.toString()}`;
   }
@@ -185,8 +189,24 @@ export function AttemptForm({ problemId, problemTitle, leetcodeNumber, isReview,
         </div>
       </div>
 
+      {/* Peek toggle — shown when SOLVED; converts to PARTIAL transparently */}
+      {outcome === "SOLVED" && (
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={peeked}
+            onChange={(e) => setPeeked(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-accent"
+          />
+          <span className="text-sm text-muted-foreground">
+            I referenced the cheat sheet / template before solving
+            {peeked && <span className="ml-1.5 text-xs text-amber-400">(will log as Partial)</span>}
+          </span>
+        </label>
+      )}
+
       {/* Quality (brute force vs optimal) */}
-      {showQuality && (
+      {showQuality && !peeked && (
         <div className="space-y-2">
           <p className="text-sm font-medium">Was your solution optimal?</p>
           <div className="flex gap-2">

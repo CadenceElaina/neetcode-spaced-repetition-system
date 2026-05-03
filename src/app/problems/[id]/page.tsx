@@ -10,6 +10,8 @@ import { ProblemNotes } from "@/components/problem-notes";
 import { DeleteAttemptButton } from "@/components/delete-attempt-button";
 import { auth } from "@/auth";
 import { computeRetrievability } from "@/lib/srs";
+import { CHEATSHEET_MAP } from "@/lib/cheatsheets";
+import { PatternCard } from "./pattern-card";
 import { ProblemLogButton } from "./log-button";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -158,6 +160,11 @@ export default async function ProblemDetailPage({ params }: { params: Promise<{ 
           <VideoEmbed videoId={problem.videoId} />
         )}
       </div>
+
+      {/* Pattern cheatsheet */}
+      {CHEATSHEET_MAP.has(problem.category) && (
+        <PatternCard sheet={CHEATSHEET_MAP.get(problem.category)!} />
+      )}
 
       {/* Complexity + SRS State */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

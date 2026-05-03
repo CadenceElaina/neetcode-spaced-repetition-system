@@ -493,7 +493,7 @@ function computePracticeRecommendation({
 export function DashboardClient({ data, isDemo = false, userId, onboardingComplete = false }: { data: DashboardData; isDemo?: boolean; userId?: string; onboardingComplete?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string } | null>(null);
+  const [srsBanner, setSrsBanner] = useState<{ oldS: number; newS: number; next: string; pct: number; attemptId: string; pName: string; pNum: string; cat: string } | null>(null);
 
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
   const [targetCount, setTargetCount] = useState(150);
@@ -628,8 +628,9 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     const attemptId = searchParams.get("attemptId");
     const pName = searchParams.get("pName");
     const pNum = searchParams.get("pNum");
+    const cat = searchParams.get("cat");
     if (oldS && newS && next && pct && attemptId) {
-      setSrsBanner({ oldS: Number(oldS), newS: Number(newS), next, pct: Number(pct), attemptId, pName: pName ?? "", pNum: pNum ?? "" });
+      setSrsBanner({ oldS: Number(oldS), newS: Number(newS), next, pct: Number(pct), attemptId, pName: pName ?? "", pNum: pNum ?? "", cat: cat ?? "" });
       // Clean URL without reload
       router.replace("/dashboard", { scroll: false });
     }
@@ -911,6 +912,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       attemptId: result.attemptId,
       pName: problem?.title ?? "",
       pNum: String(problem?.leetcodeNumber ?? ""),
+      cat: problem?.category ?? "",
     });
     // Remove from pending if applicable
     if (problem?.pendingId) {
@@ -1296,6 +1298,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                               title: item.title,
                               leetcodeNumber: item.leetcodeNumber,
                               difficulty: item.difficulty,
+                              category: item.category,
                               isReview: true,
                             }))}
                             className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
@@ -1435,6 +1438,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                             title: p.title,
                             leetcodeNumber: p.leetcodeNumber,
                             difficulty: p.difficulty,
+                            category: p.category,
                             isReview: false,
                           }))}
                           className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
@@ -1493,6 +1497,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                             title: item.title,
                             leetcodeNumber: item.leetcodeNumber,
                             difficulty: item.difficulty,
+                            category: item.category,
                             isReview: true,
                           }))}
                           className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
@@ -2793,6 +2798,7 @@ function SrsFeedbackBanner({
   attemptId,
   pName,
   pNum,
+  cat,
   onDismiss,
   onUndo,
 }: {
@@ -2803,6 +2809,7 @@ function SrsFeedbackBanner({
   attemptId: string;
   pName: string;
   pNum: string;
+  cat: string;
   onDismiss: () => void;
   onUndo: () => void;
 }) {
@@ -2837,6 +2844,14 @@ function SrsFeedbackBanner({
         </div>
         <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
       </div>
+      {cat && (
+        <Link
+          href={`/cheatsheets#${encodeURIComponent(cat)}`}
+          className="text-xs text-muted-foreground hover:text-foreground shrink-0 underline-offset-2 hover:underline"
+        >
+          Review pattern
+        </Link>
+      )}
       <button onClick={onUndo} className="text-orange-500 hover:text-orange-400 text-xs font-medium shrink-0">Undo</button>
       <button onClick={onDismiss} className="text-muted-foreground hover:text-foreground text-xs shrink-0">✕</button>
     </div>

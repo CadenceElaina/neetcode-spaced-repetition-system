@@ -19,6 +19,7 @@ export type LogModalProblem = {
   title: string;
   leetcodeNumber: number | null;
   difficulty: "Easy" | "Medium" | "Hard";
+  category?: string;
   isReview: boolean;
   /** Optional pre-filled date, e.g. from GitHub commit */
   attemptDate?: string | null;
