@@ -1136,7 +1136,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   onClick={() => setListMode("completed")}
                   className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "completed" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  Done
+                  Completed
                   {data.completedProblems.length > 0 && (
                     <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "completed" ? "bg-accent-foreground/20" : "bg-muted"}`}>
                       {data.completedProblems.length}
