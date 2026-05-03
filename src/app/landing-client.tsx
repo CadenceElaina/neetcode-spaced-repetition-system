@@ -400,7 +400,7 @@ export function LandingPage({ totalProblems, categories, isAuthenticated, authCo
               <FeatureCard icon="🧠" title="Spaced Recall" desc="Review intervals grow as you prove mastery" />
               <FeatureCard icon="📊" title="Readiness Score" desc="Know exactly how prepared you are (S–D tier)" />
               <FeatureCard icon="🎯" title="Category Focus" desc="Target weak categories with smart filtering" />
-              <FeatureCard icon="⏱️" title="Mock Interviews" desc="Timed sessions from your weak spots" />
+              <FeatureCard icon="📈" title="Insights" desc="Track overconfidence, stuck patterns, and learning velocity" />
             </div>
 
             {/* Sub-nav links + github */}
