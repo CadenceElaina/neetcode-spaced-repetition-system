@@ -104,6 +104,14 @@ export function computeNewStability(
   const modifier = computeModifier(signals);
   const effectiveMultiplier = baseMultiplier + modifier;
 
+  // Example trace — solved+optimal+confidence-5, no rewrite, Medium, 20 min:
+  //   key          = "YES:OPTIMAL"  → baseMultiplier = 2.5  (README table ✓)
+  //   computeModifier: confidence 5 → +0.3; no rewrite → +0; no fast-solve → +0
+  //   effectiveMultiplier = 2.5 + 0.3 = 2.8
+  //   newS = oldS × 2.8  (clamped to [0.5, 365])
+  // For computeInitialStability: INITIAL_STABILITY_BASE (2.0) × 2.8 = 5.6 days
+  // Matches README §Algorithm and ARCHITECTURE.md §6.2 — verified 2026-05-03.
+
   const newS = oldStability * effectiveMultiplier;
   return clampStability(newS);
 }

@@ -3,7 +3,7 @@
 Agents and sessions pull from this file. Claim a task by adding your session ID to the Agent column.
 **Canonical task file** — root `TASKS.md` is a mirror. Edit only this one.
 
-Last updated: 2026-05-03 — polish sprint complete; T-001–T-009, T-016–T-017 done
+Last updated: 2026-05-03 — T-011 algorithm audit comment, T-015 OG metadata added
 
 ---
 
@@ -24,7 +24,6 @@ Last updated: 2026-05-03 — polish sprint complete; T-001–T-009, T-016–T-01
 
 | ID    | Priority | Description | Scope Hints | Acceptance Criteria |
 |-------|----------|-------------|-------------|---------------------|
-| T-011 | 🟠 P1    | **Algorithm audit** — trace a solved+optimal+confidence-5 attempt through `computeNewStability` manually; verify the stability multiplier product matches the README table; write the result in a comment. Document any discrepancy found. | `src/lib/srs.ts`, `tests/unit/srs.test.ts`, `README.md` | Verified trace documented in a code comment. Any discrepancy between code, README, and ARCHITECTURE.md fixed and consistent. |
 
 ### UX / Feature Verification
 
@@ -39,7 +38,6 @@ Last updated: 2026-05-03 — polish sprint complete; T-001–T-009, T-016–T-01
 | ID    | Priority | Description | Scope Hints | Acceptance Criteria |
 |-------|----------|-------------|-------------|---------------------|
 | T-014 | 🟢 P3    | **API tests: attempt logging** — add Vitest tests for `POST /api/attempts` covering: successful attempt → SRS state updated, invalid outcome → 400, unauthenticated → 401 | `tests/api/attempts.test.ts` (new), `src/app/api/attempts/route.ts` | 3+ passing tests covering happy path and two error paths. |
-| T-015 | 🟢 P3    | **OG / social preview metadata** — add `og:image`, `twitter:card`, title and description tags to layout. | `src/app/layout.tsx`, `public/og.png` | Pasting aurora-ascent.vercel.app into Slack/Twitter shows preview with title, description, image. |
 
 ---
 
@@ -66,6 +64,8 @@ Last updated: 2026-05-03 — polish sprint complete; T-001–T-009, T-016–T-01
 | T-005 | 2026-05-03 | `fix(dashboard)`: new tab default when queue empty; neutral tone at < 5 attempts |
 | T-004 | 2026-05-03 | `chore(theme)`: verified casual elements (CatGreeting, "powered by cats") already removed; --accent-secondary unused in components |
 | T-003 | 2026-05-03 | `fix(srs)`: explicit `NO:OPTIMAL`=0.8 and `NO:SUBOPTIMAL`=0.8 entries (defensive against direct API calls); 2 new unit tests (55 total) |
+| T-011 | 2026-05-03 | `fix(srs)`: verified trace comment in `computeNewStability`; solved+optimal+confidence-5 → 5.6 days matches README table |
+| T-015 | 2026-05-03 | `chore(meta)`: OG + Twitter card metadata added to layout.tsx |
 | —     | 2026-04-22 | `fix(readiness)`: sample weight scales score with data volume |
 | —     | 2026-04-22 | `fix(readiness)`: show tier from day one, D is honest starting grade |
 | —     | 2026-04-22 | `feat(hosting)`: user cap, Supabase keep-alive cron, waitlist page |

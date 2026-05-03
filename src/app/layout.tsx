@@ -7,6 +7,17 @@ import { auth, isAuthConfigured } from "@/auth";
 export const metadata: Metadata = {
   title: "Aurora",
   description: "Spaced repetition for technical interviews",
+  openGraph: {
+    title: "Aurora",
+    description: "Spaced repetition for technical interviews. Never forget a LeetCode problem again.",
+    siteName: "Aurora",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Aurora",
+    description: "Spaced repetition for technical interviews. Never forget a LeetCode problem again.",
+  },
 };
 
 export default async function RootLayout({
