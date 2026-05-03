@@ -68,7 +68,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID | Agent | Description |
 |----|-------|-------------|
-| T-009 | Claude (session 2026-05-03) | Rename "Done" tab to "Completed" |
+| T-016 | Claude (session 2026-05-03) | Nav avatar img → next/image |
 
 ---
 
@@ -78,6 +78,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 |-------|------------|-------------|
 | T-001 | 2026-05-03 | `fix(dashboard)`: `pickMockProblems` always returns 2; Medium+Medium fallback when no Hards; `pickTwo` deduplication via index-swap |
 | T-002 | 2026-05-03 | `fix(srs)`: `PARTIAL:NONE` multiplier corrected 1.0→1.1; unit tests covering all four PARTIAL combos |
+| T-009 | 2026-05-03 | `fix(dashboard)`: "Done" tab renamed to "Completed" |
 | T-007 | 2026-05-03 | `fix(dashboard)`: tone badge "Watch"→"Review first", "Plan"→"Getting started"; all 7 branches audited |
 | T-005 | 2026-05-03 | `fix(dashboard)`: new tab default when queue empty; neutral tone at < 5 attempts |
 | T-004 | 2026-05-03 | `chore(theme)`: verified casual elements (CatGreeting, "powered by cats") already removed; --accent-secondary unused in components |

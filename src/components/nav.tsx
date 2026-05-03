@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -254,8 +255,7 @@ function UserMenu({ userName, userEmail, userImage }: { userName?: string; userE
         title={`Signed in as ${displayName}`}
       >
         {userImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={userImage} alt="" className="h-full w-full object-cover" />
+          <Image src={userImage} alt="" width={32} height={32} className="h-full w-full object-cover" />
         ) : initial}
       </button>
 
@@ -267,8 +267,7 @@ function UserMenu({ userName, userEmail, userImage }: { userName?: string; userE
           <div className="flex items-center gap-3 rounded-md bg-muted/45 px-3 py-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background text-sm font-semibold text-foreground">
               {userImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={userImage} alt="" className="h-full w-full object-cover" />
+                <Image src={userImage} alt="" width={40} height={40} className="h-full w-full object-cover" />
               ) : initial}
             </div>
             <div className="min-w-0">
