@@ -68,7 +68,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID | Agent | Description |
 |----|-------|-------------|
-| —  | —     | —           |
+| T-001 | Claude (session 2026-05-03) | Mock interview: fix 1-problem bug |
 
 ---
 

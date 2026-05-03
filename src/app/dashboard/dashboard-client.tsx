@@ -287,8 +287,23 @@ const DIFF_ORDER: Record<string, number> = { Hard: 0, Medium: 1, Easy: 2 };
 function pickMockProblems(candidates: MockCandidate[]): MockCandidate[] {
   const mediums = candidates.filter((p) => p.difficulty === "Medium");
   const hards = candidates.filter((p) => p.difficulty === "Hard");
-  const pick = (arr: MockCandidate[]) => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
-  return [pick(mediums), pick(hards)].filter(Boolean) as MockCandidate[];
+
+  const pickRandom = (arr: MockCandidate[]) => arr[Math.floor(Math.random() * arr.length)];
+
+  // Pick two distinct items from a pool (returns 1 if pool has only 1, 0 if empty)
+  const pickTwo = (pool: MockCandidate[]): MockCandidate[] => {
+    if (pool.length === 0) return [];
+    if (pool.length === 1) return [pool[0]];
+    const i = Math.floor(Math.random() * pool.length);
+    let j = Math.floor(Math.random() * (pool.length - 1));
+    if (j >= i) j++;
+    return [pool[i], pool[j]];
+  };
+
+  // Ideal: 1 medium + 1 hard
+  if (mediums.length > 0 && hards.length > 0) return [pickRandom(mediums), pickRandom(hards)];
+  // Fallback: 2 from whichever pool exists
+  return pickTwo(hards.length > 0 ? hards : mediums);
 }
 
 /* ── Default target: September 1 of current year (or next year if past) ── */
