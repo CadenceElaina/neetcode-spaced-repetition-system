@@ -44,7 +44,12 @@ const BASE_MULTIPLIERS: Record<string, number> = {
   "PARTIAL:SUBOPTIMAL": 1.1,
   "PARTIAL:BRUTE_FORCE": 1.1,
   "PARTIAL:NONE": 1.1,
-  // solved=NO
+  // solved=NO — all failed outcomes reduce stability
+  // NO:OPTIMAL and NO:SUBOPTIMAL are UI-unreachable (the attempt form hardcodes
+  // solutionQuality=NONE for NO_SOLUTION), but are handled defensively here so
+  // a direct API call never accidentally benefits from the ?? 1.0 fallback.
+  "NO:OPTIMAL": 0.8,
+  "NO:SUBOPTIMAL": 0.8,
   "NO:BRUTE_FORCE": 0.8,
   "NO:NONE": 0.5,
 };

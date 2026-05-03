@@ -68,7 +68,7 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID | Agent | Description |
 |----|-------|-------------|
-| T-002 | Claude (session 2026-05-03) | PARTIAL:NONE multiplier fix + unit tests |
+| T-003 | Claude (session 2026-05-03) | NO:OPTIMAL / NO:SUBOPTIMAL missing multipliers |
 
 ---
 
@@ -76,7 +76,9 @@ Last updated: 2026-05-03 — merged root + docs queues after multi-agent audit
 
 | ID    | Completed  | Description |
 |-------|------------|-------------|
-| T-001 | 2026-05-03 | `fix(dashboard)`: pickMockProblems always returns 2; Medium+Medium fallback when no hards |
+| T-001 | 2026-05-03 | `fix(dashboard)`: `pickMockProblems` always returns 2; Medium+Medium fallback when no Hards; `pickTwo` deduplication via index-swap |
+| T-002 | 2026-05-03 | `fix(srs)`: `PARTIAL:NONE` multiplier corrected 1.0→1.1; unit tests covering all four PARTIAL combos |
+| T-003 | 2026-05-03 | `fix(srs)`: explicit `NO:OPTIMAL`=0.8 and `NO:SUBOPTIMAL`=0.8 entries (defensive against direct API calls); 2 new unit tests (55 total) |
 | —     | 2026-04-22 | `fix(readiness)`: sample weight scales score with data volume |
 | —     | 2026-04-22 | `fix(readiness)`: show tier from day one, D is honest starting grade |
 | —     | 2026-04-22 | `feat(hosting)`: user cap, Supabase keep-alive cron, waitlist page |

@@ -142,12 +142,20 @@ describe("computeNewStability", () => {
     expect(s).toBe(0.5);
   });
 
-  it("unknown combo (NO+OPTIMAL) falls back to multiplier 1.0", () => {
+  it("NO+OPTIMAL → 0.8 (explicit entry; UI-unreachable but handled defensively)", () => {
     const s = computeNewStability(
       OLD,
       signals({ solvedIndependently: "NO", solutionQuality: "OPTIMAL" }),
     );
-    expect(s).toBeCloseTo(OLD * 1.0, 5);
+    expect(s).toBeCloseTo(OLD * 0.8, 5);
+  });
+
+  it("NO+SUBOPTIMAL → 0.8 (explicit entry; UI-unreachable but handled defensively)", () => {
+    const s = computeNewStability(
+      OLD,
+      signals({ solvedIndependently: "NO", solutionQuality: "SUBOPTIMAL" }),
+    );
+    expect(s).toBeCloseTo(OLD * 0.8, 5);
   });
 
   it("fast solve bonus applies for Medium < 10 min", () => {
