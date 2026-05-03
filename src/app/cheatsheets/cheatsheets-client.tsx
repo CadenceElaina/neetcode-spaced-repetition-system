@@ -13,52 +13,54 @@ function CodeBlock({ code }: { code: string }) {
 
 export function CheatsheetExpanded({ sheet }: { sheet: Cheatsheet }) {
   const [showTemplate, setShowTemplate] = useState(false);
+  const [showSecondary, setShowSecondary] = useState(false);
+
   return (
-    <div className="space-y-5 px-5 pb-5 pt-1">
-      {/* Triggers */}
-      <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Recognition triggers</p>
-        <ul className="space-y-1">
-          {sheet.triggers.map((t, i) => (
-            <li key={i} className="font-mono text-xs text-foreground/70">{t}</li>
-          ))}
-        </ul>
+    <div className="space-y-4 px-4 pb-5 pt-3">
+      {/* Key idea — most important, shown first */}
+      <div className="rounded-md border border-accent/20 bg-accent/8 px-4 py-3">
+        <p className="text-sm leading-relaxed text-foreground">{sheet.keyIdea}</p>
       </div>
 
-      {/* Variants */}
+      {/* Recognize it when */}
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Variants</p>
-        <ul className="space-y-1">
-          {sheet.variants.map((v, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/80">
-              <span className="mt-0.5 shrink-0 text-accent">·</span>
-              {v}
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Recognize it when</p>
+        <ul className="space-y-1.5">
+          {sheet.triggers.map((t, i) => (
+            <li key={i} className="flex gap-2.5 text-sm text-foreground/85">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent/70" />
+              {t}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Key idea */}
-      <div>
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Key idea</p>
-        <p className="text-sm leading-relaxed text-foreground/90">{sheet.keyIdea}</p>
+      {/* Watch out — elevated above template */}
+      <div className="rounded-md border border-amber-500/20 bg-amber-500/8 px-4 py-3">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-amber-400">Watch out</p>
+        <ul className="space-y-1.5">
+          {sheet.watchOut.map((w, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/80">
+              <span className="mt-0.5 shrink-0 text-amber-400">⚠</span>
+              {w}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Templates */}
+      {/* Template — hidden by default; reveal after recall attempt */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {sheet.templates.length > 1 ? "Templates" : "Template"}
-          </p>
-          <button
-            onClick={() => setShowTemplate((v) => !v)}
-            className="text-[10px] text-accent hover:underline"
-          >
-            {showTemplate ? "Hide" : "Show template"}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowTemplate((v) => !v)}
+          className="flex items-center gap-1.5 text-xs text-accent hover:underline"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className={`transition-transform ${showTemplate ? "rotate-90" : ""}`}>
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          {showTemplate ? "Hide template" : "Show template"}
+        </button>
         {showTemplate && (
-          <div className="space-y-3">
+          <div className="mt-2 space-y-3">
             {sheet.templates.map((t, i) => (
               <div key={i}>
                 {sheet.templates.length > 1 && (
@@ -71,36 +73,49 @@ export function CheatsheetExpanded({ sheet }: { sheet: Cheatsheet }) {
         )}
       </div>
 
-      {/* Canonical problems + complexity on one row */}
-      <div className="flex flex-wrap gap-6">
-        <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Complexity</p>
-          <p className="font-mono text-sm text-foreground">{sheet.complexity}</p>
-        </div>
-        <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Canonical problems</p>
-          <ul className="space-y-0.5">
-            {sheet.canonicalProblems.map((p, i) => (
-              <li key={i} className="text-sm text-foreground/80">
-                <span className="font-medium">{p.name}</span>
-                <span className="ml-1 text-muted-foreground">— {p.note}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Watch out */}
-      <div className="rounded-md border border-amber-500/20 bg-amber-500/8 px-4 py-3">
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-amber-400">Watch out</p>
-        <ul className="space-y-1">
-          {sheet.watchOut.map((w, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/80">
-              <span className="mt-0.5 shrink-0 text-amber-400">⚠</span>
-              {w}
-            </li>
-          ))}
-        </ul>
+      {/* Secondary — variants, complexity, canonical; collapsed by default */}
+      <div>
+        <button
+          onClick={() => setShowSecondary((v) => !v)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className={`transition-transform ${showSecondary ? "rotate-90" : ""}`}>
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          {showSecondary ? "Less detail" : "Variants · Complexity · Examples"}
+        </button>
+        {showSecondary && (
+          <div className="mt-3 space-y-4">
+            <div>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Variants</p>
+              <ul className="space-y-1">
+                {sheet.variants.map((v, i) => (
+                  <li key={i} className="flex gap-2 text-xs text-foreground/80">
+                    <span className="mt-0.5 shrink-0 text-accent">·</span>
+                    {v}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex flex-wrap gap-6">
+              <div>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Complexity</p>
+                <p className="font-mono text-xs text-foreground">{sheet.complexity}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Canonical</p>
+                <ul className="space-y-0.5">
+                  {sheet.canonicalProblems.map((p, i) => (
+                    <li key={i} className="text-xs text-foreground/80">
+                      <span className="font-medium">{p.name}</span>
+                      <span className="ml-1 text-muted-foreground">— {p.note}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

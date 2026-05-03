@@ -10,8 +10,8 @@ import { ImportClient } from "@/app/import/import-client";
 import { LogAttemptModal, type LogModalProblem, type LogModalResult } from "@/components/log-attempt-modal";
 import { Onboarding } from "@/components/onboarding";
 import { SkyCanvas } from "@/components/sky-canvas";
-import { CheatsheetDrawer } from "./cheatsheet-drawer";
-import { CHEATSHEET_MAP } from "@/lib/cheatsheets";
+import { InlinePatternPanel } from "./cheatsheet-drawer";
+import { CHEATSHEET_MAP, type Cheatsheet } from "@/lib/cheatsheets";
 
 /* ── Types ── */
 
@@ -842,6 +842,14 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     };
   }, [reviewItems, forecastReviewPerDay, forecastNewPerDay]);
 
+  const todaySheets = useMemo(
+    () =>
+      [...new Set(reviewItems.map((r) => r.category))]
+        .map((cat) => CHEATSHEET_MAP.get(cat))
+        .filter((s): s is Cheatsheet => s !== undefined),
+    [reviewItems],
+  );
+
   const practiceRecommendation = useMemo(() => computePracticeRecommendation({
     data,
     countdown,
@@ -1150,15 +1158,6 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
         onLogged={handleLoggedFromModal}
       />
     )}
-    {/* Cheatsheet drawer */}
-    {sheetDrawerOpen && (() => {
-      const todaySheets = [...new Set(reviewItems.map((r) => r.category))]
-        .map((cat) => CHEATSHEET_MAP.get(cat))
-        .filter(Boolean) as import("@/lib/cheatsheets").Cheatsheet[];
-      return todaySheets.length > 0
-        ? <CheatsheetDrawer sheets={todaySheets} onClose={() => setSheetDrawerOpen(false)} />
-        : null;
-    })()}
     {/* SRS Feedback Banner */}
     {srsBanner && <SrsFeedbackBanner {...srsBanner} onDismiss={() => setSrsBanner(null)} onUndo={async () => {
       if (!srsBanner.attemptId) return;
@@ -1344,26 +1343,20 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   ↑ Hint
                 </button>
               )}
-              {/* Cheatsheets button — only when review queue has items */}
-              {(() => {
-                const todaySheets = [...new Set(reviewItems.map((r) => r.category))]
-                  .map((cat) => CHEATSHEET_MAP.get(cat))
-                  .filter(Boolean) as import("@/lib/cheatsheets").Cheatsheet[];
-                if (todaySheets.length === 0) return null;
-                return (
-                  <button
-                    onClick={() => setSheetDrawerOpen((o) => !o)}
-                    title="Pattern cheatsheets for today's review categories"
-                    className={`h-8 shrink-0 rounded border px-2.5 text-xs transition-colors ${
-                      sheetDrawerOpen
-                        ? "border-accent bg-accent/10 text-accent"
-                        : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    Patterns ({todaySheets.length})
-                  </button>
-                );
-              })()}
+              {/* Patterns button — switches right column to pattern view */}
+              {todaySheets.length > 0 && (
+                <button
+                  onClick={() => setSheetDrawerOpen((o) => !o)}
+                  title="Pattern cheatsheets for today's review categories"
+                  className={`h-8 shrink-0 rounded border px-2.5 text-xs transition-colors ${
+                    sheetDrawerOpen
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  Patterns ({todaySheets.length})
+                </button>
+              )}
             </div>
           </div>
 
@@ -1726,7 +1719,10 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
 
       {/* ── Right Column ── */}
       <div className="flex flex-col md:col-span-5 md:min-h-0 md:h-full lg:col-span-6 overflow-hidden" data-onboarding="stats">
-        <div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
+        {sheetDrawerOpen && todaySheets.length > 0 ? (
+          <InlinePatternPanel sheets={todaySheets} onClose={() => setSheetDrawerOpen(false)} />
+        ) : null}
+        <div className={`flex flex-col gap-3 overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${sheetDrawerOpen && todaySheets.length > 0 ? "hidden" : ""}`}>
         {!showStatsDetail && (<>
         {/* First-login getting-started card */}
         {isFirstLogin && (
