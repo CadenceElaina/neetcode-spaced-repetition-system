@@ -201,9 +201,14 @@ export default async function AdminPage() {
     }))
     .sort((a, b) => b.noOutcomeRate - a.noOutcomeRate);
 
+  const newThisWeek  = realUsers.filter((u) => u.createdAt >= ago7).length;
+  const newThisMonth = realUsers.filter((u) => u.createdAt >= ago30).length;
+
   const data: AdminData = {
     overview: {
       totalUsers:          realUsers.length,
+      newThisWeek,
+      newThisMonth,
       activeUsers7d,
       activeUsers30d,
       totalAttempts:       allRealAttempts.length,

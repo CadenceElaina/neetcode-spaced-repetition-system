@@ -6,6 +6,8 @@ import type { CategoryStat, ProblemCohortStat } from "@/lib/analytics";
 export interface AdminData {
   overview: {
     totalUsers:        number;
+    newThisWeek:       number;
+    newThisMonth:      number;
     activeUsers7d:     number;
     activeUsers30d:    number;
     totalAttempts:     number;
@@ -69,13 +71,22 @@ export function AdminClient({ data }: { data: AdminData }) {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Admin</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Site analytics — demo seed users excluded
+          Site analytics
+          {overview.demoUsersExcluded > 0 && (
+            <span className="ml-1 text-muted-foreground/60">
+              — {overview.demoUsersExcluded} demo seed users excluded
+            </span>
+          )}
         </p>
       </div>
 
       {/* Overview cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Total Users"    value={overview.totalUsers}    sub="all time" />
+        <StatCard
+          label="Total Users"
+          value={overview.totalUsers}
+          sub={overview.newThisWeek > 0 ? `+${overview.newThisWeek} this week` : "all time"}
+        />
         <StatCard label="Active 7d"      value={overview.activeUsers7d}  sub="unique users with attempts" />
         <StatCard label="Active 30d"     value={overview.activeUsers30d} sub="unique users with attempts" />
         <StatCard label="Total Attempts" value={overview.totalAttempts.toLocaleString()} sub="all time" />
