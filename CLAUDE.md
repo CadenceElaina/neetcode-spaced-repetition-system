@@ -97,6 +97,22 @@ All mutations go through `/api/*` routes:
 - `docs/ARCHITECTURE.md` — detailed system design and algorithm math
 - `docs/decisions/` — ADRs explaining major design choices
 
+## Task Queue
+
+See `TASKS.md` for the prioritized task queue.
+- **Session start:** `npx tsc --noEmit && npm test` — must be clean before touching anything
+- **Claim a task** before editing files (add your name to In Progress in TASKS.md)
+- **Commit format:** `feat(scope): description` / `fix(scope): description` — one logical change per commit
+- **Scope tokens:** `srs` · `dashboard` · `nav` · `api` · `db` · `ui` · `test` · `docs`
+
+## Key invariants — never break these
+
+- `src/lib/srs.ts` is **pure computation only** — no DB calls, no fetch, no side effects
+- All DB mutations go through `/api/*` routes, not Server Components
+- Demo mode (`isDemo = !isAuthenticated`) must keep working — every feature has a demo fallback
+- `npm test` (52 SRS unit tests) must pass after every change to `src/lib/srs.ts`
+- Never commit `DATABASE_URL`, `AUTH_SECRET`, or OAuth credentials
+
 # Project instructions
 
 ## Interaction modes
