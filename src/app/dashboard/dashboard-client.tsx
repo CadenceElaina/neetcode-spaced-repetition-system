@@ -514,7 +514,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
   const [showStatsDetail, setShowStatsDetail] = useState(false);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>(data.pendingSubmissions);
   const [logModalProblem, setLogModalProblem] = useState<LogModalProblem | null>(null);
-  const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({ mastery: true, activity: isFirstLogin });
+  const [collapsedWidgets, setCollapsedWidgets] = useState<Record<string, boolean>>({ activity: isFirstLogin });
   const [activityViewMode, setActivityViewMode] = useState<"14d" | "monthly" | "heatmap">("14d");
   const [activityPage, setActivityPage] = useState(0);
   const [deferredItems, setDeferredItems] = useState(data.deferredProblems);
@@ -1330,6 +1330,19 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   aria-label="Filter queue"
                   className="h-8 flex-1 min-w-0 rounded border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none"
                 />
+              )}
+              {/* Re-show strategy hint — only when banner was dismissed */}
+              {!showPracticeRecommendation && !isDemo && (
+                <button
+                  onClick={() => {
+                    setShowPracticeRecommendation(true);
+                    localStorage.setItem("aurora_show_practice_recommendation", "1");
+                  }}
+                  title="Show strategy recommendation"
+                  className="h-8 shrink-0 rounded border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  ↑ Hint
+                </button>
               )}
               {/* Cheatsheets button — only when review queue has items */}
               {(() => {
