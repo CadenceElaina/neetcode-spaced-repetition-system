@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { CHEATSHEET_MAP } from "@/lib/cheatsheets";
@@ -42,6 +42,7 @@ type Props = {
 };
 
 export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [outcome, setOutcome] = useState<Outcome>("SOLVED");
   const [quality, setQuality] = useState<"OPTIMAL" | "BRUTE_FORCE">("OPTIMAL");
   const [confidence, setConfidence] = useState(3);
@@ -70,6 +71,27 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  // Focus trap
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const items = () => Array.from(el.querySelectorAll<HTMLElement>(selector));
+    items()[0]?.focus();
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const els = items();
+      if (!els.length) return;
+      if (e.shiftKey) {
+        if (document.activeElement === els[0]) { e.preventDefault(); els[els.length - 1].focus(); }
+      } else {
+        if (document.activeElement === els[els.length - 1]) { e.preventDefault(); els[0].focus(); }
+      }
+    }
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
   }, []);
 
   const buildBody = useCallback((force = false) => {
@@ -161,21 +183,21 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="Log attempt"
+      aria-labelledby="log-modal-title"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 rounded-lg border border-border bg-background shadow-2xl max-h-[90dvh] flex flex-col">
+      <div ref={modalRef} className="relative w-full max-w-md mx-4 rounded-lg border border-border bg-background shadow-2xl max-h-[90dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2 min-w-0">
             {problem.leetcodeNumber && (
               <span className="text-xs text-muted-foreground tabular-nums shrink-0">{problem.leetcodeNumber}.</span>
             )}
-            <span className="text-sm font-medium truncate">{problem.title}</span>
+            <span id="log-modal-title" className="text-sm font-medium truncate">{problem.title}</span>
             <DifficultyBadge difficulty={problem.difficulty} />
             {problem.isReview && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-500 font-medium shrink-0">Review</span>
@@ -193,7 +215,9 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
                 Refresh pattern →
               </a>
             )}
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm" aria-label="Close">✕</button>
+            <button onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
           </div>
         </div>
 
@@ -275,17 +299,19 @@ export function LogAttemptModal({ problem, onClose, onLogged }: Props) {
                 onChange={(e) => setSolveTime(Number(e.target.value))}
                 className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground tabular-nums focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               />
-              {problem.isReview && outcome === "SOLVED" && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">Rewrote?</p>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => setRewrote(false)} className={`${btnBase} px-2 h-6 text-[10px] ${!rewrote ? btnActive : btnInactive}`}>No</button>
-                    <button type="button" onClick={() => setRewrote(true)} className={`${btnBase} px-2 h-6 text-[10px] ${rewrote ? btnActive : btnInactive}`}>Yes</button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Rewrote — own row, only for solved reviews */}
+          {problem.isReview && outcome === "SOLVED" && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Rewrote?</p>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => setRewrote(false)} className={`${btnBase} flex-1 ${!rewrote ? btnActive : btnInactive}`}>No</button>
+                <button type="button" onClick={() => setRewrote(true)} className={`${btnBase} flex-1 ${rewrote ? btnActive : btnInactive}`}>Yes</button>
+              </div>
+            </div>
+          )}
 
           {/* Date */}
           <div className="space-y-1.5">

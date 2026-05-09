@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 
 const GITHUB_README = "https://github.com/CadenceElaina/aurora#getting-started";
@@ -472,12 +472,16 @@ function PanelHeader({ onClose, onPopOut, onPopIn, onDragStart }: PanelHeaderPro
 
 /* ── Main component ── */
 
+export interface SetupGuideHandle {
+  open: () => void;
+}
+
 interface SetupGuideProps {
   /** Override the default trigger. Receives an onClick handler. */
   trigger?: (props: { onClick: () => void }) => React.ReactNode;
 }
 
-export function SetupGuide({ trigger }: SetupGuideProps = {}) {
+export const SetupGuide = forwardRef<SetupGuideHandle, SetupGuideProps>(function SetupGuide({ trigger } = {}, ref) {
   const [mode, setMode] = useState<Mode>("closed");
   const [activeIdx, setActiveIdx] = useState(0);
   const [pos, setPos] = useState({ x: 24, y: 80 });
@@ -523,6 +527,8 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
     setMode(isDesktop ? "float" : "modal");
   }, [isDesktop]);
   const close = useCallback(() => setMode("closed"), []);
+
+  useImperativeHandle(ref, () => ({ open }), [open]);
 
   useEffect(() => {
     if (mode === "closed") return;
@@ -639,4 +645,4 @@ export function SetupGuide({ trigger }: SetupGuideProps = {}) {
       )}
     </>
   );
-}
+});

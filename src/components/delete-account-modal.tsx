@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { signOut } from "next-auth/react";
 
 export function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,28 @@ export function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: 
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [open, handleClose]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!open) return;
+    const el = modalRef.current;
+    if (!el) return;
+    const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const items = () => Array.from(el.querySelectorAll<HTMLElement>(selector));
+    items()[0]?.focus();
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const els = items();
+      if (!els.length) return;
+      if (e.shiftKey) {
+        if (document.activeElement === els[0]) { e.preventDefault(); els[els.length - 1].focus(); }
+      } else {
+        if (document.activeElement === els[els.length - 1]) { e.preventDefault(); els[0].focus(); }
+      }
+    }
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
+  }, [open]);
 
   async function handleDelete() {
     if (!matches || loading) return;
@@ -67,12 +90,12 @@ export function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: 
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label="Delete account"
+      aria-labelledby="delete-modal-title"
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
-      <div className="relative w-full max-w-md rounded-xl border border-destructive/30 bg-muted shadow-2xl">
+      <div ref={modalRef} className="relative w-full max-w-md rounded-xl border border-destructive/30 bg-muted shadow-2xl max-h-[90dvh] overflow-y-auto">
         <div className="px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold text-destructive flex items-center gap-2">
+          <h2 id="delete-modal-title" className="text-lg font-semibold text-destructive flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>

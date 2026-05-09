@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { ChevronRight, Download, Github, LogOut, Moon, Settings, Sun, Trash2 } from "lucide-react";
-import { SetupGuide } from "@/components/setup-guide";
+import { SetupGuide, type SetupGuideHandle } from "@/components/setup-guide";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
 import { useTheme } from "@/components/theme";
 
@@ -263,6 +263,7 @@ function UserMenu({ userName, userEmail, userImage, analyticsOptOut: initialOptO
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [optOut, setOptOut] = useState(initialOptOut ?? false);
   const ref = useRef<HTMLDivElement>(null);
+  const setupGuideRef = useRef<SetupGuideHandle>(null);
 
   async function toggleOptOut() {
     const next = !optOut;
@@ -340,18 +341,14 @@ function UserMenu({ userName, userEmail, userImage, analyticsOptOut: initialOptO
           <div className="my-1.5 h-px bg-border/60" />
           <GitHubSyncDropdown menuItem />
           <div className="my-1.5 h-px bg-border/60" />
-          <SetupGuide
-            trigger={({ onClick }) => (
-              <button
-                role="menuitem"
-                onClick={() => { setOpen(false); onClick(); }}
-                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-              >
-                <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                <span>Setup Guide</span>
-              </button>
-            )}
-          />
+          <button
+            role="menuitem"
+            onClick={() => { setOpen(false); setupGuideRef.current?.open(); }}
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <span>Setup Guide</span>
+          </button>
           <a
             role="menuitem"
             href="/api/export"
@@ -404,6 +401,7 @@ function UserMenu({ userName, userEmail, userImage, analyticsOptOut: initialOptO
       )}
 
       <DeleteAccountModal open={deleteOpen} onClose={() => setDeleteOpen(false)} />
+      <SetupGuide ref={setupGuideRef} trigger={() => null} />
     </div>
   );
 }
@@ -426,10 +424,33 @@ function GitHubSyncDropdown({ menuItem = false }: { menuItem?: boolean }) {
   const [showSetup, setShowSetup] = useState(false);
   const [repo, setRepo] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [result, setResult] = useState<{ secret: string; webhookUrl: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  /** Parse a full GitHub URL or bare owner/repo into "owner/repo", or return null if not parseable. */
+  function parseGitHubRepo(input: string): string | null {
+    const trimmed = input.trim().replace(/\.git$/, "").replace(/\/$/, "");
+    // Full URL: https://github.com/owner/repo
+    const urlMatch = trimmed.match(/^(?:https?:\/\/)?github\.com\/([^/]+\/[^/]+)$/);
+    if (urlMatch) return urlMatch[1];
+    // Bare owner/repo
+    if (/^[^/]+\/[^/]+$/.test(trimmed)) return trimmed;
+    return null;
+  }
+
+  function handleRepoInput(raw: string) {
+    setConnectError(null);
+    const parsed = parseGitHubRepo(raw);
+    // If it looks like a GitHub URL (has github.com), auto-rewrite immediately
+    if (raw.includes("github.com") && parsed) {
+      setRepo(parsed);
+    } else {
+      setRepo(raw);
+    }
+  }
 
   useEffect(() => {
     // Background refresh — updates cache silently; only re-renders if value changed
@@ -474,16 +495,24 @@ function GitHubSyncDropdown({ menuItem = false }: { menuItem?: boolean }) {
   }
 
   async function handleConnect() {
-    if (!repo.trim()) return;
+    const normalized = parseGitHubRepo(repo);
+    if (!normalized) {
+      setConnectError(
+        `Expected "owner/repo" — e.g. peithopeitho/myneetcode-submissions. Full GitHub URLs also work.`
+      );
+      return;
+    }
+    setConnectError(null);
     setConnecting(true);
     try {
       const res = await fetch("/api/github-sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo: repo.trim() }),
+        body: JSON.stringify({ repo: normalized }),
       });
       if (res.ok) {
         const data = await res.json();
+        setRepo(normalized);
         setResult({ secret: data.secret, webhookUrl: data.webhookUrl });
       }
     } finally {
@@ -609,23 +638,36 @@ function GitHubSyncDropdown({ menuItem = false }: { menuItem?: boolean }) {
                 <div className="space-y-3">
                   <div className="space-y-2 text-xs text-muted-foreground">
                     <p><span className="font-medium text-foreground">1.</span> Go to <a href="https://neetcode.io/profile/github" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">neetcode.io/profile/github</a> and connect your GitHub account</p>
-                    <p><span className="font-medium text-foreground">2.</span> Enter your NeetCode submissions repo:</p>
+                    <div>
+                      <p><span className="font-medium text-foreground">2.</span> Enter your NeetCode submissions repo:</p>
+                      <p className={`mt-1 text-[11px] ${connectError ? "text-amber-400 font-medium" : "text-muted-foreground/70"}`}>
+                        e.g.{" "}
+                        <span className={`font-mono ${connectError ? "rounded px-0.5 ring-1 ring-amber-400/60 bg-amber-400/10 text-amber-300" : "text-muted-foreground"}`}>
+                          peithopeitho/myneetcode-submissions
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={repo}
-                      onChange={(e) => setRepo(e.target.value)}
-                      placeholder="owner/repo-name"
-                      className="h-7 flex-1 rounded-md border border-border bg-muted px-2 text-xs placeholder:text-muted-foreground focus:outline-none"
-                    />
-                    <button
-                      onClick={handleConnect}
-                      disabled={connecting || !repo.trim()}
-                      className="inline-flex h-7 items-center rounded-md bg-accent px-2.5 text-xs text-accent-foreground hover:opacity-90 disabled:opacity-50"
-                    >
-                      {connecting ? "..." : "Connect"}
-                    </button>
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={repo}
+                        onChange={(e) => handleRepoInput(e.target.value)}
+                        placeholder="owner/repo-name"
+                        className={`h-7 flex-1 rounded-md border bg-muted px-2 text-xs placeholder:text-muted-foreground focus:outline-none ${connectError ? "border-amber-500/60 focus:ring-1 focus:ring-amber-500/40" : "border-border"}`}
+                      />
+                      <button
+                        onClick={handleConnect}
+                        disabled={connecting || !repo.trim()}
+                        className="inline-flex h-7 items-center rounded-md bg-accent px-2.5 text-xs text-accent-foreground hover:opacity-90 disabled:opacity-50"
+                      >
+                        {connecting ? "..." : "Connect"}
+                      </button>
+                    </div>
+                    {connectError && (
+                      <p className="text-[11px] text-amber-400 leading-snug">{connectError}</p>
+                    )}
                   </div>
                 </div>
               ) : (
