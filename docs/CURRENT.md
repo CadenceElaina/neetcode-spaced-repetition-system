@@ -1,6 +1,6 @@
 # Current Implementation State — Aurora Ascent
 
-**Last updated: 2026-05-10 — pacing Phases 2–4 complete; pacing test suite (207 tests); task queue empty**
+**Last updated: 2026-05-10 — predictedR logging live; ADAPTIVE_SRS Phase 1 complete; task queue empty**
 
 Read this before every work session. Update it after every session.
 
@@ -24,6 +24,7 @@ _None — clean slate._
 
 | Date | Change |
 |---|---|
+| 2026-05-10 | `feat(srs)`: `predictedR` column on `attempt` table; logged on every review; Insights calibration card (MAE, n); ADAPTIVE_SRS Phase 1 complete |
 | 2026-05-10 | `feat(pacing)`: Phase 3 — budget mismatch detection banner; 14-day dismiss cooldown; `AVG_PROBLEM_SESSION_MINUTES=30` |
 | 2026-05-10 | `feat(pacing)`: Phase 4 — zone-colored forecast bars; capacity reference line (`~N/d cap`) |
 | 2026-05-10 | `feat(pacing)`: `src/lib/pacing.ts` — `classifyLoadZone` + `deriveCapacity`; 20 new unit tests (207 total) |
