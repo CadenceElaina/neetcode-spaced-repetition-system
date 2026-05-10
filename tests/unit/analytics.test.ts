@@ -91,7 +91,9 @@ describe("computeLearningVelocity", () => {
 
   it("trend is declining when recent window has significantly fewer new problems", () => {
     const prior = [1, 2, 3, 4, 5, 6].map((id) => attempt(id, daysAgo(20)));
-    const recent = [7].map((id) => attempt(id, daysAgo(3)));
+    // Use 3 recent problems so the small-N guard (< 3) does not suppress the signal.
+    // 3 vs 6: 3 < 6 * 0.85 = 5.1 and diff = 3 ≥ 1 → declining.
+    const recent = [7, 8, 9].map((id) => attempt(id, daysAgo(3)));
     const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
     expect(r.trend).toBe("declining");
   });
@@ -115,6 +117,49 @@ describe("computeLearningVelocity", () => {
     const attempts = [1, 2, 3, 4].map((id) => attempt(id, daysAgo(5)));
     const r = computeLearningVelocity(attempts, 14, NOW);
     expect(r.newProblemsPerDay).toBeCloseTo(4 / 14, 5);
+  });
+
+  // small-N guard
+  it("small-N guard: 1 vs 1 → stable regardless of relative change", () => {
+    const prior = [attempt(1, daysAgo(20))];
+    const recent = [attempt(2, daysAgo(3))];
+    const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
+    expect(r.recentUniqueNew).toBe(1);
+    expect(r.priorUniqueNew).toBe(1);
+    expect(r.trend).toBe("stable");
+  });
+
+  it("small-N guard: 2 vs 2 → stable", () => {
+    const prior = [1, 2].map((id) => attempt(id, daysAgo(20)));
+    const recent = [3, 4].map((id) => attempt(id, daysAgo(3)));
+    const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
+    expect(r.trend).toBe("stable");
+  });
+
+  it("small-N guard: 3 vs 3 with < 15% difference → stable", () => {
+    const prior = [1, 2, 3].map((id) => attempt(id, daysAgo(20)));
+    const recent = [4, 5, 6].map((id) => attempt(id, daysAgo(3)));
+    const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
+    // 3 vs 3: 0% difference, well within ±15%
+    expect(r.trend).toBe("stable");
+  });
+
+  it("5 vs 8 (≥ 15% difference, ≥ 3 each) → improving", () => {
+    const prior = [1, 2, 3, 4, 5].map((id) => attempt(id, daysAgo(20)));
+    const recent = [6, 7, 8, 9, 10, 11, 12, 13].map((id) => attempt(id, daysAgo(3)));
+    const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
+    expect(r.priorUniqueNew).toBe(5);
+    expect(r.recentUniqueNew).toBe(8);
+    expect(r.trend).toBe("improving");
+  });
+
+  it("8 vs 5 (≥ 15% difference, ≥ 3 each) → declining", () => {
+    const prior = [1, 2, 3, 4, 5, 6, 7, 8].map((id) => attempt(id, daysAgo(20)));
+    const recent = [9, 10, 11, 12, 13].map((id) => attempt(id, daysAgo(3)));
+    const r = computeLearningVelocity([...prior, ...recent], 14, NOW);
+    expect(r.priorUniqueNew).toBe(8);
+    expect(r.recentUniqueNew).toBe(5);
+    expect(r.trend).toBe("declining");
   });
 });
 
@@ -262,6 +307,62 @@ describe("computeReviewCompliance", () => {
     ];
     const r = computeReviewCompliance(states, 14, NOW);
     expect(r.complianceRate).toBe(0);
+  });
+
+  // denominator fix: scheduled-in-window replaces reviewed+overdue
+  it("returning user: large backlog from before the window, nothing scheduled in window → 1.0", () => {
+    // All reviews were due 20+ days ago — before the 14-day window started.
+    // With the old denominator this would appear near-zero; correct answer is 1.0.
+    const states = [
+      state(1, { lastReviewedAt: daysAgo(50), nextReviewAt: daysAgo(30) }),
+      state(2, { lastReviewedAt: daysAgo(45), nextReviewAt: daysAgo(25) }),
+      state(3, { lastReviewedAt: daysAgo(40), nextReviewAt: daysAgo(20) }),
+    ];
+    const r = computeReviewCompliance(states, 14, NOW);
+    expect(r.reviewedInWindow).toBe(0);
+    expect(r.currentlyOverdue).toBe(3);
+    expect(r.reviewsScheduledInWindow).toBe(0);
+    expect(r.complianceRate).toBe(1);
+  });
+
+  it("active user: 5 scheduled in window, all 5 reviewed → 1.0", () => {
+    const states = [1, 2, 3, 4, 5].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(3), nextReviewAt: daysFromNow(7) }),
+    );
+    const r = computeReviewCompliance(states, 14, NOW);
+    expect(r.reviewedInWindow).toBe(5);
+    expect(r.reviewsScheduledInWindow).toBe(5);
+    expect(r.complianceRate).toBe(1);
+  });
+
+  it("partial compliance: 5 scheduled in window, 3 reviewed → 0.6", () => {
+    const reviewed = [1, 2, 3].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(3), nextReviewAt: daysFromNow(7) }),
+    );
+    // These two were due in the window but were not reviewed
+    const missed = [4, 5].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(20), nextReviewAt: daysAgo(5) }),
+    );
+    const r = computeReviewCompliance([...reviewed, ...missed], 14, NOW);
+    expect(r.reviewedInWindow).toBe(3);
+    expect(r.reviewsScheduledInWindow).toBe(5);
+    expect(r.complianceRate).toBeCloseTo(0.6, 5);
+  });
+
+  it("overdue backlog before the window does not affect compliance rate", () => {
+    const reviewed = [1, 2, 3].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(3), nextReviewAt: daysFromNow(7) }),
+    );
+    const missed = [4, 5].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(20), nextReviewAt: daysAgo(5) }),
+    );
+    const oldBacklog = [6, 7, 8, 9, 10].map((id) =>
+      state(id, { lastReviewedAt: daysAgo(60), nextReviewAt: daysAgo(45) }),
+    );
+    const r = computeReviewCompliance([...reviewed, ...missed, ...oldBacklog], 14, NOW);
+    // Old backlog had nextReviewAt well before the window — should not inflate denominator
+    expect(r.reviewsScheduledInWindow).toBe(5);
+    expect(r.complianceRate).toBeCloseTo(0.6, 5);
   });
 });
 

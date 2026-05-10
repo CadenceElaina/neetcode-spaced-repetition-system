@@ -106,10 +106,20 @@ export function computeLearningVelocity(
   let trend: VelocityResult["trend"] = "insufficient_data";
   if (recentUniqueNew > 0 || priorUniqueNew > 0) {
     if (priorUniqueNew === 0) {
+      // First-ever activity: any improvement from zero is meaningful regardless of N
       trend = recentUniqueNew > 0 ? "improving" : "stable";
-    } else if (recentUniqueNew > priorUniqueNew * 1.15) {
+    } else if (recentUniqueNew < 3 || priorUniqueNew < 3) {
+      // Small-N guard: single-digit windows produce noisy, meaningless trend signals
+      trend = "stable";
+    } else if (
+      recentUniqueNew > priorUniqueNew * 1.15 &&
+      recentUniqueNew - priorUniqueNew >= 1
+    ) {
       trend = "improving";
-    } else if (recentUniqueNew < priorUniqueNew * 0.85) {
+    } else if (
+      recentUniqueNew < priorUniqueNew * 0.85 &&
+      priorUniqueNew - recentUniqueNew >= 1
+    ) {
       trend = "declining";
     } else {
       trend = "stable";
@@ -208,6 +218,7 @@ export function computeMetacognitionGap(
 export interface ComplianceResult {
   complianceRate: number;
   reviewedInWindow: number;
+  reviewsScheduledInWindow: number;
   currentlyOverdue: number;
   neverReviewed: number;
 }
@@ -225,22 +236,34 @@ export function computeReviewCompliance(
   const windowStart = new Date(asOf.getTime() - windowDays * MS_PER_DAY);
 
   let reviewedInWindow = 0;
+  let reviewsScheduledInWindow = 0;
   let currentlyOverdue = 0;
   let neverReviewed = 0;
 
   for (const s of states) {
     if (!s.lastReviewedAt) {
       neverReviewed++;
+      if (s.nextReviewAt && s.nextReviewAt >= windowStart && s.nextReviewAt < asOf) {
+        reviewsScheduledInWindow++;
+      }
       continue;
     }
-    if (s.lastReviewedAt >= windowStart) reviewedInWindow++;
+    if (s.lastReviewedAt >= windowStart) {
+      reviewedInWindow++;
+      reviewsScheduledInWindow++;
+    } else if (s.nextReviewAt && s.nextReviewAt >= windowStart && s.nextReviewAt < asOf) {
+      // Due during the window but not reviewed — missed opportunity, not old backlog
+      reviewsScheduledInWindow++;
+    }
     if (s.nextReviewAt && s.nextReviewAt < asOf) currentlyOverdue++;
   }
 
-  const denominator = reviewedInWindow + currentlyOverdue;
-  const complianceRate = denominator > 0 ? reviewedInWindow / denominator : 1;
+  const complianceRate =
+    reviewsScheduledInWindow > 0
+      ? Math.min(1, reviewedInWindow / reviewsScheduledInWindow)
+      : 1;
 
-  return { complianceRate, reviewedInWindow, currentlyOverdue, neverReviewed };
+  return { complianceRate, reviewedInWindow, reviewsScheduledInWindow, currentlyOverdue, neverReviewed };
 }
 
 /* ── Category statistics ── */

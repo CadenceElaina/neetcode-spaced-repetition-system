@@ -34,6 +34,7 @@ export const DEMO_INSIGHTS_DATA: InsightsData = {
   compliance: {
     complianceRate: 0.83,
     reviewedInWindow: 19,
+    reviewsScheduledInWindow: 23,
     currentlyOverdue: 4,
     neverReviewed: 0,
   },
