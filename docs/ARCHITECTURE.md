@@ -339,22 +339,22 @@ Findings from a two-pass algorithm audit (2026-05-10). Each entry notes what was
 | Fast-solve bonus | Applied only to Medium problems with a fixed 10-min threshold | Extended to all difficulties: Easy < 5 min, Medium < 10 min, Hard < 15 min |
 | Queue forecast trend metric | Reported "days until queue reaches zero" — queue zero is not the SRS goal and the 30th day carries heavy scheduling noise | Replaced with front-half / back-half average comparison; status shows trend direction and back-half average rate |
 
-### Deferred — Planned Fixes (tracked, queued for agent execution)
+### Deferred — Planned Fixes (resolved)
 
-These are confirmed bugs with clear resolutions that haven't been implemented yet.
+All D1–D10 items have been fixed. Resolved in the T-019–T-022 sprint (2026-05-09) and T-023 (2026-05-10); confirmed clean by code audit 2026-05-10.
 
-| # | Area | Issue | Planned Resolution |
+| # | Area | Resolution | Commit |
 |---|---|---|---|
-| D1 | Review queue sort | `computeReviewPriority()` in `srs.ts` is dead code — queue sorts by raw stability ascending, ignoring Blind75, category weakness, and difficulty weighting | Wire `computeReviewPriority` into `sortedReviewQueue` urgency sort in `dashboard-client.tsx` |
-| D2 | Category balance | `categoryBalance` only averages R across *attempted* categories; unattempted categories are invisible, inflating the score for partial coverage | Include unattempted categories weighted as R = 0 so a user who has never touched Graphs sees a low category balance |
-| D3 | Queue forecast clustering | `Math.round(item.stability)` in the forecast simulation collapses fractional stabilities to the nearest integer, creating artificial spikes on round-number days | Use `item.stability` directly (fractional); distribute across the appropriate day via `Math.floor` |
-| D4 | `MASTERY_THRESHOLD` duplication | The constant 45 is hardcoded in four places: `srs.ts` (authoritative), `dashboard-client.tsx` ×2, `page.tsx` | Import `MASTERY_THRESHOLD` from `srs.ts` in both files; remove the local copies |
-| D5 | Demo data enum casing | `demo-data.ts` uses `"optimal"` / `"brute_force"` (lowercase) for `bestQuality`; the DB enum and TypeScript types use uppercase `"OPTIMAL"` / `"BRUTE_FORCE"` | Fix casing in `demo-data.ts` to match enum values |
-| D6 | Review compliance denominator | `computeReviewCompliance()` in `analytics.ts` uses `reviewedInWindow + currentlyOverdue` as denominator — same flaw as the old consistency formula; overdue backlog inflates the denominator and punishes returning users | Use `reviewsScheduledInWindow` (look back at what was actually due each day) as denominator |
-| D7 | Velocity trend small-N | `computeLearningVelocity()` fires the ±15% trend signal on windows as small as 1 vs 1 problem; single-problem windows produce noisy, meaningless trends | Require ≥ 3 problems in each window before emitting a trend; return `"stable"` when either window is under-populated |
-| D8 | Coverage projection growth constant | Daily stability growth uses `currentAvgStability * 0.15` — the 0.15 multiplier was never derived from FSRS; it is a fabricated constant | Replace with `(AVG_MULTIPLIER^(1/currentAvgStability)) - 1` so daily growth reflects the FSRS compounding rate |
-| D9 | Returning-user warm-up detection | After a practice break (e.g. finals), `computePracticeRecommendation` reads a high queue and low 7-day pace — correctly generating "review first" guidance — but the reason text uses generic phrasing rather than acknowledging the break context | Detect break ≥ 7 days and surface warm-up messaging: "You've been away X days — start with a lighter review session to rebuild momentum" |
-| D10 | `slope14` two-point fit | Queue stability `slope14` is computed from just two data points (day 1 and day 14 of the 30-day projection), making it highly sensitive to noise at either endpoint | Replace with front/back half averages: `slope = (backAvg - frontAvg) / 15`; this is already computed as `drainRate` — use it consistently |
+| D1 | Review queue sort | `computeReviewPriority` wired into `sortedReviewQueue` urgency sort with full `PriorityInput` (blind75, difficulty, categoryAvgR) | T-019/T-022 |
+| D2 | Category balance | `categoryMap` iterates all 150 problems; unattempted categories get `avgRetention = 0`, pulling `lowestCategoryAvgR` down correctly | T-019/T-022 |
+| D3 | Queue forecast clustering | Forecast uses `Math.floor(item.stability)` — no rounding to integers | T-019/T-022 |
+| D4 | `MASTERY_THRESHOLD` duplication | Both `dashboard-client.tsx` and `page.tsx` import from `@/lib/srs`; no hardcoded 45 | T-019/T-022 |
+| D5 | Demo data enum casing | `demo-data.ts` uses uppercase `"OPTIMAL"` / `"BRUTE_FORCE"` throughout | T-019/T-022 |
+| D6 | Review compliance denominator | `computeReviewCompliance` divides by `reviewsScheduledInWindow` (not `+ currentlyOverdue`) | T-019/T-022 |
+| D7 | Velocity trend small-N | `computeLearningVelocity` requires `recentUniqueNew >= 3 && priorUniqueNew >= 3` before emitting trend | T-019/T-022 |
+| D8 | Coverage projection growth constant | `dailyStabilityGrowth = (AVG_REVIEW_MULTIPLIER - 1) / currentAvgStability` — derived from FSRS compounding | T-019/T-022 |
+| D9 | Returning-user warm-up | `computePracticeRecommendation` detects `daysSinceLastAttempt >= 7` and shows "Welcome back — you've been away N days" | T-023 |
+| D10 | `slope14` two-point fit | `queueStability` uses dynamic front/back half averages (`Math.floor(days.length/2)` split); `drainRate` replaces the two-point slope | T-023 |
 
 ### Deferred — Low Priority / Design Decisions
 

@@ -1945,7 +1945,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       </div>
                     </div>
                   )}
-                  <span>{proj.reviewsPerDay} rev/d · {proj.newPerDay} new/d · <span className="text-muted-foreground/60">+30d</span></span>
+                  <span>{proj.reviewsPerDay} rev/d · {proj.newPerDay} new/d · <span className="text-muted-foreground/60">+{totalDays}d</span></span>
                 </div>
 
               </div>

@@ -1,6 +1,6 @@
 # Current Implementation State — Aurora Ascent
 
-**Last updated: 2026-05-10 — pacing system Phase 1 complete; doc audit + pre-Phase-2 hardening**
+**Last updated: 2026-05-10 — all deferred items resolved; pacing system Phase 2 complete; task queue empty**
 
 Read this before every work session. Update it after every session.
 
@@ -24,8 +24,10 @@ _None — clean slate._
 
 | Date | Change |
 |---|---|
-| 2026-05-10 | `fix(capacity)`: `reviewCapacity` floors at 1 (prevents Phase 2 division-by-zero); `timeBudget` state replaces stale `localStorage` read in `practiceRecommendation` memo; Intensive + zero-budget unit test cases added |
-| 2026-05-10 | `docs`: implementation status table updated to reflect Phase 1 complete; ADR status → "Phase 1 Implemented"; backAvg Phase 2 slice-index note added to CONSTANTS.md |
+| 2026-05-10 | `fix(ui)`: cheatsheet panel `z-10` prevents forecast bar bleed-through; second `+30d` label updated to `+{totalDays}d` |
+| 2026-05-10 | `docs`: ARCHITECTURE.md D1–D10 deferred list marked resolved with audit evidence |
+| 2026-05-10 | `feat(pacing)`: Phase 2 — 5-zone load ratio system; `MAX_DAYS` 30→60; `queueStability` dynamic split index |
+| 2026-05-10 | `fix(capacity)`: `reviewCapacity` floors at 1; `timeBudget` state replaces stale `localStorage` read in memo |
 
 ## Previously Completed (2026-05-03 polish sprint)
 
@@ -50,10 +52,7 @@ _None — clean slate._
 
 ## Open Tasks
 
-| Priority | Area | Task |
-|---|---|---|
-| P2 | pacing | T-023: Phase 2 load ratio zones — wire `queueLoadRatio` into `computePracticeRecommendation`; extend forecast 30→60 days; add overshoot tracking |
-| P2 | Bug | Fix cheatsheet panel z-index so Queue Forecast bars don't bleed through |
+_None — task queue empty. Next meaningful work: Pacing Phase 3 (goal adherence tracking, budget mismatch detection) or Aurora Research feature parity._
 
 ---
 

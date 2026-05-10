@@ -18,7 +18,7 @@ export function InlinePatternPanel({
   if (!active) return null;
 
   return (
-    <div className="flex flex-col h-full rounded-lg border border-border bg-muted overflow-hidden">
+    <div className="relative z-10 flex flex-col h-full rounded-lg border border-border bg-muted overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 shrink-0">
         <div>
