@@ -248,7 +248,7 @@ export function computeCapacity(
   newCapacity: number;
   canFitEasy: boolean;
 } {
-  const reviewCapacity = Math.floor(dailyTimeBudgetMinutes / AVG_REVIEW_SESSION_MINUTES);
+  const reviewCapacity = Math.max(1, Math.floor(dailyTimeBudgetMinutes / AVG_REVIEW_SESSION_MINUTES));
   const remainingMinutes = Math.max(0, dailyTimeBudgetMinutes - expectedDailyDue * AVG_REVIEW_SESSION_MINUTES);
   const newCapacity = Math.floor(remainingMinutes / AVG_NEW_SESSION_MINUTES);
   const canFitEasy = remainingMinutes >= AVG_EASY_NEW_SESSION_MINUTES;

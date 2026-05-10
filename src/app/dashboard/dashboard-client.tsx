@@ -545,8 +545,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     countdown,
     goalType,
     actualProjection: queueProjection,
-    dailyTimeBudgetMinutes: Number(localStorage.getItem("aurora_time_budget") ?? data.dailyTimeBudgetMinutes ?? 60),
-  }), [data, countdown, goalType, queueProjection]);
+    dailyTimeBudgetMinutes: timeBudget,
+  }), [data, countdown, goalType, queueProjection, timeBudget]);
 
   const weakCategories = useMemo(() =>
     [...data.categoryStats].sort((a, b) => {

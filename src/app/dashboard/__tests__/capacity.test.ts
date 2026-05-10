@@ -46,6 +46,22 @@ describe("computeCapacity", () => {
     expect(r.newCapacity).toBe(0);
     expect(r.canFitEasy).toBe(false);
   });
+
+  it("budget=120 due=2 → reviewCapacity=4 remainingMinutes=70 newCapacity=1 (Intensive preset)", () => {
+    const r = computeCapacity(120, 2);
+    expect(r.reviewCapacity).toBe(4);
+    expect(r.remainingMinutes).toBe(70);
+    expect(r.newCapacity).toBe(1);
+    expect(r.canFitEasy).toBe(true);
+  });
+
+  it("budget=0 due=0 → reviewCapacity floors at 1 (prevents division-by-zero in Phase 2 ratio)", () => {
+    const r = computeCapacity(0, 0);
+    expect(r.reviewCapacity).toBe(1);
+    expect(r.remainingMinutes).toBe(0);
+    expect(r.newCapacity).toBe(0);
+    expect(r.canFitEasy).toBe(false);
+  });
 });
 
 /* ── computePracticeRecommendation fixtures ── */
