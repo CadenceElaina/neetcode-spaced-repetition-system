@@ -12,7 +12,7 @@ import { Onboarding } from "@/components/onboarding";
 import { SkyCanvas } from "@/components/sky-canvas";
 import { InlinePatternPanel } from "./cheatsheet-drawer";
 import { CHEATSHEET_MAP, type Cheatsheet } from "@/lib/cheatsheets";
-import { MASTERY_THRESHOLD } from "@/lib/srs";
+import { MASTERY_THRESHOLD, computeReviewPriority, type PriorityInput } from "@/lib/srs";
 
 /* ── Types ── */
 
@@ -24,6 +24,7 @@ type ReviewItem = {
   neetcodeUrl: string | null;
   difficulty: "Easy" | "Medium" | "Hard";
   category: string;
+  blind75: boolean;
   totalAttempts: number;
   daysOverdue: number;
   retrievability: number;
@@ -189,7 +190,6 @@ type QueueStability = {
   max14: number;
   end14: number;
   growth14: number;
-  slope14: number;
   firstWeekSlope: number;
   secondWeekSlope: number;
   acceleration: number;
@@ -339,7 +339,6 @@ function queueStability(projection: QueueProjection): QueueStability {
   const end14 = first14[first14.length - 1] ?? start;
   const firstWeekSlope = firstWeek.length > 1 ? (firstWeek[firstWeek.length - 1] - firstWeek[0]) / (firstWeek.length - 1) : 0;
   const secondWeekSlope = secondWeek.length > 1 ? (secondWeek[secondWeek.length - 1] - secondWeek[0]) / (secondWeek.length - 1) : 0;
-  const slope14 = first14.length > 1 ? (end14 - start) / (first14.length - 1) : 0;
   const avg14 = avg(first14);
   const max14 = Math.max(...first14, 0);
   const reviewsPerDay = Math.max(1, projection.reviewsPerDay);
@@ -351,7 +350,6 @@ function queueStability(projection: QueueProjection): QueueStability {
     max14,
     end14,
     growth14: end14 - start,
-    slope14,
     firstWeekSlope,
     secondWeekSlope,
     acceleration: secondWeekSlope - firstWeekSlope,
@@ -453,9 +451,9 @@ function computePracticeRecommendation({
 
   const metrics = queueStability(actualProjection);
   const queueHeavy = metrics.peakLoadDays > 2.5;
-  const queueCritical = metrics.slope14 >= 2 || (metrics.peakLoadDays > 4 && metrics.slope14 > 0.25) || (metrics.acceleration >= 1.25 && metrics.secondWeekSlope > 1);
-  const queueGrowing = metrics.slope14 >= 0.75 || metrics.growth14 >= 8 || metrics.acceleration >= 0.75;
-  const queueStable = Math.abs(metrics.slope14) < 0.5 && metrics.peakLoadDays <= 2.5;
+  const queueCritical = metrics.drainRate < -0.5 || (metrics.peakLoadDays > 4 && metrics.drainRate < 0) || (metrics.acceleration >= 1.25 && metrics.secondWeekSlope > 1);
+  const queueGrowing = metrics.drainRate < -0.5 || metrics.growth14 >= 8 || metrics.acceleration >= 0.75;
+  const queueStable = Math.abs(metrics.drainRate) < 0.5 && metrics.peakLoadDays <= 2.5;
   const activeLoadHigh = data.learningCount / Math.max(1, actualProjection.reviewsPerDay) > 14;
   const avgQueueLabel = metrics.avg14.toFixed(metrics.avg14 >= 10 ? 0 : 1);
   const peakQueueLabel = metrics.max14.toFixed(0);
@@ -486,7 +484,7 @@ function computePracticeRecommendation({
   }
 
   if (queueGrowing || queueHeavy || activeLoadHigh || retentionRisk) {
-    const queueEasingButHeavy = queueHeavy && metrics.slope14 < 0.5;
+    const queueEasingButHeavy = queueHeavy && metrics.drainRate > -0.5;
     return {
       tone: "watch",
       title: "Review first",
@@ -501,7 +499,7 @@ function computePracticeRecommendation({
         ? `You have ${data.learningCount} active learning problems, which is a lot for ${actualProjection.reviewsPerDay.toFixed(1)} reviews/day.`
         : retentionRisk
           ? "Retention is below 50%, so adding coverage now may make the queue noisier before it gets useful."
-          : `The forecast is growing by about ${metrics.slope14.toFixed(1)} reviews/day over the next two weeks.`,
+          : `The forecast is growing — averaging ~${Math.round(metrics.backAvg)}/day by the end of the forecast.`,
       actionLabel: "Review queue",
       actionMode: "review",
       metrics,
@@ -932,8 +930,13 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
   const sortedReviewQueue = useMemo(() => {
     const q = [...reviewItems];
     if (reviewSort === "urgency") {
-      // Lowest stability first (most fragile), then most overdue as tiebreaker
-      q.sort((a, b) => a.stability - b.stability || b.daysOverdue - a.daysOverdue);
+      q.sort((a, b) => {
+        const catAvgRA = categoryStatsMap.get(a.category)?.avgRetention ?? 0;
+        const catAvgRB = categoryStatsMap.get(b.category)?.avgRetention ?? 0;
+        const priA = computeReviewPriority({ retrievability: a.retrievability, blind75: a.blind75, difficulty: a.difficulty, categoryAvgR: catAvgRA } satisfies PriorityInput);
+        const priB = computeReviewPriority({ retrievability: b.retrievability, blind75: b.blind75, difficulty: b.difficulty, categoryAvgR: catAvgRB } satisfies PriorityInput);
+        return priB - priA || b.daysOverdue - a.daysOverdue;
+      });
     } else if (reviewSort === "overdue") {
       q.sort((a, b) => b.daysOverdue - a.daysOverdue || DIFF_ORDER[a.difficulty] - DIFF_ORDER[b.difficulty]);
     } else if (reviewSort === "difficulty") {
@@ -942,7 +945,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       q.sort((a, b) => a.category.localeCompare(b.category) || b.daysOverdue - a.daysOverdue);
     }
     return q;
-  }, [reviewItems, reviewSort]);
+  }, [reviewItems, reviewSort, categoryStatsMap]);
 
   const sortedNewProblems = useMemo(() => {
     let q = goalType === "blind75" ? newItems.filter(p => p.blind75) : [...newItems];

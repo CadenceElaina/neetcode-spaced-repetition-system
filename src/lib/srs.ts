@@ -64,7 +64,8 @@ function computeModifier(signals: AttemptSignals): number {
   // Rewrote from scratch = YES → +0.5 (only meaningful if solved independently)
   if (solvedAlone && signals.rewroteFromScratch === "YES") mod += 0.5;
 
-  // Confidence — stronger impact
+  // Confidence penalty applies even on YES solves: low confidence after a correct solve signals shallow
+  // learning (lucky, not fluent). Removing it for YES would corrupt honest-reporting signal.
   if (signals.confidence >= 5) mod += 0.3;
   else if (signals.confidence >= 4) mod += 0.1;
   else if (signals.confidence <= 1) mod -= 0.4;
