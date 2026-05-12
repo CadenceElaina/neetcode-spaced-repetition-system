@@ -245,6 +245,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     if (!ts) return false;
     return Date.now() - parseInt(ts) < 14 * 24 * 60 * 60 * 1000;
   });
+  const [sessionViewMode, setSessionViewMode] = useState<"session" | "queue">("session");
+  const [sessionActedOn, setSessionActedOn] = useState(0);
 
 
   const activityData = useMemo(() => {
@@ -318,12 +320,26 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     }
     const savedRecommendation = localStorage.getItem("aurora_show_practice_recommendation");
     if (savedRecommendation === "0") setShowPracticeRecommendation(false);
+    const savedQueueView = localStorage.getItem("aurora_queue_view_mode");
+    if (savedQueueView === "session" || savedQueueView === "queue") setSessionViewMode(savedQueueView);
+    const savedSessionProgress = localStorage.getItem("aurora_session_progress");
+    if (savedSessionProgress) {
+      try {
+        const prog = JSON.parse(savedSessionProgress);
+        const today = new Date().toISOString().slice(0, 10);
+        if (prog.date === today) setSessionActedOn(prog.actedOn ?? 0);
+      } catch { /* ignore */ }
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist active tab (don't persist mock — always start fresh on load)
   useEffect(() => {
     if (!isDemo && listMode !== "mock") localStorage.setItem("aurora_tab_mode", listMode);
   }, [listMode, isDemo]);
+
+  useEffect(() => {
+    if (!isDemo) localStorage.setItem("aurora_queue_view_mode", sessionViewMode);
+  }, [sessionViewMode, isDemo]);
 
   // Mock interview timer
   useEffect(() => {
@@ -639,6 +655,14 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     );
   }, [sortedReviewQueue, queueSearch]);
 
+  const sessionSize = useMemo(() => Math.max(5, Math.floor(timeBudget / 20)), [timeBudget]);
+
+  const sessionQueue = useMemo(() => {
+    if (sessionViewMode !== "session") return filteredReviewQueue;
+    if (sessionActedOn >= sessionSize) return filteredReviewQueue;
+    return filteredReviewQueue.slice(0, Math.max(0, sessionSize - sessionActedOn));
+  }, [sessionViewMode, filteredReviewQueue, sessionActedOn, sessionSize]);
+
   const filteredNewProblems = useMemo(() => {
     if (!queueSearch.trim()) return sortedNewProblems;
     const s = queueSearch.toLowerCase();
@@ -680,10 +704,10 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       pNum: String(problem?.leetcodeNumber ?? ""),
       cat: problem?.category ?? "",
     });
-    // Remove from pending if applicable
     if (problem?.pendingId) {
       setPendingItems((prev) => prev.filter((p) => p.id !== problem.pendingId));
     }
+    if (problem?.isReview) recordSessionAction();
     router.refresh();
   }
 
@@ -763,6 +787,16 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     setDemoSessionChanged(true);
   }
 
+  function recordSessionAction() {
+    if (isDemo) return;
+    setSessionActedOn((prev) => {
+      const next = prev + 1;
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem("aurora_session_progress", JSON.stringify({ date: today, actedOn: next }));
+      return next;
+    });
+  }
+
   async function handleDefer(problemId: number, until?: string) {
     const res = await fetch("/api/review", {
       method: "POST",
@@ -787,6 +821,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
         deferredUntil: data_resp.deferredUntil,
         isAutoDeferred: false,
       }]);
+      recordSessionAction();
     }
   }
 
@@ -989,33 +1024,33 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
             <div className="flex gap-0.5 rounded-md border border-border p-0.5 w-full">
                 <button
                   onClick={() => setListMode("review")}
-                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-xs sm:text-sm px-2 py-1.5 rounded transition-colors ${listMode === "review" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Review
                   {reviewItems.length > 0 && (
-                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "review" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                    <span className={`hidden sm:inline ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "review" ? "bg-accent-foreground/20" : "bg-muted"}`}>
                       {reviewItems.length}
                     </span>
                   )}
                 </button>
                 <button
                   onClick={() => setListMode("new")}
-                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "new" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-xs sm:text-sm px-2 py-1.5 rounded transition-colors ${listMode === "new" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   New
                   {sortedNewProblems.length > 0 && (
-                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "new" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                    <span className={`hidden sm:inline ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "new" ? "bg-accent-foreground/20" : "bg-muted"}`}>
                       {sortedNewProblems.length}
                     </span>
                   )}
                 </button>
                 <button
                   onClick={() => setListMode("completed")}
-                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${listMode === "completed" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex-1 text-center text-xs sm:text-sm px-2 py-1.5 rounded transition-colors ${listMode === "completed" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Completed
                   {completedItems.length > 0 && (
-                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "completed" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                    <span className={`hidden sm:inline ml-1 text-xs px-1.5 py-0.5 rounded-full ${listMode === "completed" ? "bg-accent-foreground/20" : "bg-muted"}`}>
                       {completedItems.length}
                     </span>
                   )}
@@ -1024,7 +1059,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 <span className="w-px bg-border my-0.5 shrink-0" />
                 <button
                   onClick={() => setListMode("import")}
-                  className={`text-sm px-2.5 py-1.5 rounded transition-colors ${listMode === "import" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`text-xs sm:text-sm px-2 sm:px-2.5 py-1.5 rounded transition-colors ${listMode === "import" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Import
                 </button>
@@ -1036,7 +1071,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                     }
                     setListMode("mock");
                   }}
-                  className={`relative text-sm px-2.5 py-1.5 rounded transition-colors ${listMode === "mock" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`relative text-xs sm:text-sm px-2 sm:px-2.5 py-1.5 rounded transition-colors ${listMode === "mock" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Mock
                   {mockPhase === "active" && listMode !== "mock" && (
@@ -1125,6 +1160,41 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
           {/* Review list */}
           {listMode === "review" && (
             <div className="flex flex-col flex-1 min-h-0 gap-2">
+            {/* Session / Queue inner tab bar — only when items exist */}
+            {reviewItems.length > 0 && (
+              <div className="flex gap-0.5 rounded-md border border-border p-0.5 w-full shrink-0">
+                <button
+                  onClick={() => setSessionViewMode("session")}
+                  className={`flex-1 text-center text-xs px-2 py-1 rounded transition-colors ${sessionViewMode === "session" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Today&apos;s Session
+                  <span className={`ml-1 text-[10px] px-1 py-0.5 rounded-full ${sessionViewMode === "session" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                    {Math.max(0, sessionSize - sessionActedOn)} left
+                  </span>
+                </button>
+                <button
+                  onClick={() => setSessionViewMode("queue")}
+                  className={`flex-1 text-center text-xs px-2 py-1 rounded transition-colors ${sessionViewMode === "queue" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Full Queue
+                  <span className={`ml-1 text-[10px] px-1 py-0.5 rounded-full ${sessionViewMode === "queue" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                    {reviewItems.length}
+                  </span>
+                </button>
+              </div>
+            )}
+            {/* Session complete banner */}
+            {sessionViewMode === "session" && sessionActedOn >= sessionSize && reviewItems.length > 0 && (
+              <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 shrink-0">
+                <div>
+                  <p className="text-xs font-medium text-emerald-400">Session complete — {sessionActedOn} reviewed</p>
+                  <p className="text-[10px] text-muted-foreground">{reviewItems.length} more in queue</p>
+                </div>
+                <button onClick={() => setSessionViewMode("queue")} className="text-[10px] text-accent hover:underline shrink-0">
+                  Continue →
+                </button>
+              </div>
+            )}
             {reviewItems.length === 0 ? (
               <div className="rounded-lg border border-border bg-muted p-6 text-center">
                 {isFirstLogin ? (
@@ -1149,7 +1219,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
             ) : (
               <div className="rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="overflow-y-auto flex-1 min-h-0">
-                  {filteredReviewQueue.map((item) => {
+                  {sessionQueue.map((item) => {
                     const prio = priorityLevel(item);
                     const catStat = categoryStatsMap.get(item.category);
                     const isWeakCategory = catStat && catStat.avgRetention < 0.6;
@@ -1616,6 +1686,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   }).catch(() => {});
                 }
               }}
+              queueViewDefault={sessionViewMode}
+              onQueueViewDefaultChange={setSessionViewMode}
             />
           )}
         </section>
@@ -2490,6 +2562,8 @@ function SettingsPanel({
   onTogglePracticeRecommendation,
   dailyTimeBudgetMinutes,
   onTimeBudgetChange,
+  queueViewDefault,
+  onQueueViewDefaultChange,
 }: {
   date: string;
   count: number;
@@ -2502,6 +2576,8 @@ function SettingsPanel({
   onTogglePracticeRecommendation: (enabled: boolean) => void;
   dailyTimeBudgetMinutes: number;
   onTimeBudgetChange: (minutes: number) => void;
+  queueViewDefault: "session" | "queue";
+  onQueueViewDefaultChange: (v: "session" | "queue") => void;
 }) {
   const [d, setD] = useState(date);
   const [c, setC] = useState(count);
@@ -2574,6 +2650,23 @@ function SettingsPanel({
               <span className="block text-[10px] opacity-70">{p.desc}</span>
             </button>
           ))}
+        </div>
+      </div>
+      <div className="pt-1 border-t border-border">
+        <p className="text-xs text-muted-foreground mb-1.5">Default review view</p>
+        <div className="flex gap-1">
+          <button
+            onClick={() => onQueueViewDefaultChange("session")}
+            className={`flex-1 text-[11px] py-1.5 rounded border transition-colors ${queueViewDefault === "session" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            Today&apos;s Session
+          </button>
+          <button
+            onClick={() => onQueueViewDefaultChange("queue")}
+            className={`flex-1 text-[11px] py-1.5 rounded border transition-colors ${queueViewDefault === "queue" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            Full Queue
+          </button>
         </div>
       </div>
       <div className="pt-1 border-t border-border">

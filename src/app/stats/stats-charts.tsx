@@ -141,7 +141,7 @@ export function StatsCharts({
       {/* Difficulty breakdown */}
       <section>
         <h2 className="mb-4 text-lg font-semibold">Difficulty Progress</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {difficultyBreakdown.map((d) => {
             const pct = d.count > 0 ? Math.round((d.attempted / d.count) * 100) : 0;
             return (

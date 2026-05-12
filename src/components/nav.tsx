@@ -295,7 +295,7 @@ function UserMenu({ userName, userEmail, userImage, analyticsOptOut: initialOptO
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted text-xs font-semibold text-foreground transition-colors hover:border-accent/60 hover:bg-accent/10 hover:text-accent"
+        className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted text-xs font-semibold text-foreground transition-all hover:border-accent/60 hover:bg-accent/10 hover:text-accent hover:ring-2 hover:ring-accent/30 hover:ring-offset-1 hover:ring-offset-background"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -372,7 +372,7 @@ function UserMenu({ userName, userEmail, userImage, analyticsOptOut: initialOptO
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/60">
                 <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
               </svg>
-              <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 w-52 rounded-md border border-border bg-popover px-2.5 py-2 text-[11px] text-muted-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 w-52 rounded-md bg-foreground px-2.5 py-2 text-[11px] text-background shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 Aurora logs aggregate usage (page views, feature clicks). No attempt content or personal data is shared. Opting out stops all event tracking.
               </span>
             </span>
