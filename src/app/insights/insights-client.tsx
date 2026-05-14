@@ -328,9 +328,18 @@ function CalibrationChart({ buckets }: { buckets: CalibrationBucket[] }) {
   const barWidth = 32;
 
   return (
+    <div className="flex items-stretch gap-2">
+    <div className="flex items-center justify-center w-4 shrink-0">
+      <span
+        className="text-[9px] text-muted-foreground/40 select-none whitespace-nowrap"
+        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+      >
+        Actual solve rate
+      </span>
+    </div>
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="w-full text-muted-foreground"
+      className="flex-1 min-w-0 text-muted-foreground"
       aria-label="Calibration curve: predicted R vs actual solve rate"
     >
       {/* Y-axis gridlines + labels */}
@@ -397,7 +406,7 @@ function CalibrationChart({ buckets }: { buckets: CalibrationBucket[] }) {
         );
       })}
 
-      {/* Axis titles */}
+      {/* X-axis title */}
       <text
         x={pl + pw / 2} y={H - 2}
         fontSize={9} textAnchor="middle"
@@ -405,14 +414,7 @@ function CalibrationChart({ buckets }: { buckets: CalibrationBucket[] }) {
       >
         Predicted R at review time
       </text>
-      <text
-        x={10} y={pt + ph / 2}
-        fontSize={9} textAnchor="middle"
-        fill="currentColor" fillOpacity={0.4}
-        transform={`rotate(-90, 10, ${pt + ph / 2})`}
-      >
-        Actual solve rate
-      </text>
     </svg>
+    </div>
   );
 }

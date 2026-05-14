@@ -1261,9 +1261,11 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                               {item.title}
                             </Link>
                           )}
-                          <span className="text-xs text-muted-foreground">
-                            {item.category} · {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""} · Last: {daysAgoLabel(item.lastReviewedAt)}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs text-muted-foreground">{item.category}</span>
+                            <DifficultyBadge difficulty={item.difficulty} />
+                            <span className="text-xs text-muted-foreground">· {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""} · Last: {daysAgoLabel(item.lastReviewedAt)}</span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <Link
@@ -1276,7 +1278,6 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                           <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none ${PRIORITY_BG[prio]}`}>
                             {item.daysOverdue > 0 ? `${item.daysOverdue}d overdue` : "Due today"}
                           </span>
-                          <DifficultyBadge difficulty={item.difficulty} />
                           <button
                             onClick={() => openLog({
                               problemId: item.problemId,
@@ -1403,13 +1404,13 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                             {p.title}
                           </Link>
                         )}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs text-muted-foreground">{p.category}</span>
+                          <DifficultyBadge difficulty={p.difficulty} />
                           {p.blind75 && <span className="text-xs font-medium text-violet-500">B75</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <DifficultyBadge difficulty={p.difficulty} />
                         <button
                           onClick={() => openLog({
                             problemId: p.id,
@@ -1451,15 +1452,16 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                         <Link href={`/problems/${item.problemId}`} className="text-sm font-medium text-foreground hover:text-accent truncate block">
                           {item.title}
                         </Link>
-                        <span className="text-xs text-muted-foreground">
-                          {item.category} · {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""} · Last: {daysAgoLabel(item.lastReviewedAt)}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-muted-foreground">{item.category}</span>
+                          <DifficultyBadge difficulty={item.difficulty} />
+                          <span className="text-xs text-muted-foreground">· {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""} · Last: {daysAgoLabel(item.lastReviewedAt)}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className={`text-xs font-medium tabular-nums ${retentionColor(item.bestQuality === "NONE" ? 0 : item.retrievability)}`}>
                           {retentionLabel(item.retrievability, item.bestQuality)}
                         </span>
-                        <DifficultyBadge difficulty={item.difficulty} />
                         {item.isDue ? (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500 font-medium">
                             Due
@@ -1642,9 +1644,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
               <div className="flex items-center gap-3 text-xs">
                 <span className="flex items-center gap-1">
                   <span className="text-muted-foreground">Streak</span>
-                  <span className="font-semibold tabular-nums">
-                    {data.currentStreak === 0 ? <>{data.currentStreak}<span className="ml-0.5">❄️</span></> : <>{data.currentStreak}<span className="ml-0.5">🔥</span></>}
-                  </span>
+                  <span className="font-semibold tabular-nums">{data.currentStreak}</span>
+                  <span className="text-sm leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
                 </span>
                 <span className="text-border">·</span>
                 <span className="flex items-center gap-1">
@@ -2061,10 +2062,13 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                     );
                   })}
                 </div>
-                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span><span className="font-medium text-foreground">{proj.currentSize}</span> due now</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span><span className="font-medium text-foreground">{proj.currentSize}</span> due now</span>
+                    <span>{proj.reviewsPerDay} rev/d · {proj.newPerDay} new/d · <span className="text-muted-foreground/60">+{totalDays}d</span></span>
+                  </div>
                   {forecastMode === "goals" && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <span className="text-muted-foreground text-xs">Rev/d</span>
                         <button onClick={() => { const v = Math.max(1, forecastReviewPerDay - 1); setForecastReviewPerDay(v); localStorage.setItem("aurora_forecast_review_per_day", String(v)); }} className="w-5 h-5 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-foreground text-xs leading-none">−</button>
@@ -2079,7 +2083,6 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       </div>
                     </div>
                   )}
-                  <span>{proj.reviewsPerDay} rev/d · {proj.newPerDay} new/d · <span className="text-muted-foreground/60">+{totalDays}d</span></span>
                 </div>
 
               </div>
@@ -2426,7 +2429,10 @@ function StatusDot({
   const updatePos = useCallback(() => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 6, left: rect.left + rect.width / 2 });
+      const tooltipW = 176; // w-44
+      const rawLeft = rect.left + rect.width / 2;
+      const left = Math.min(Math.max(rawLeft, tooltipW / 2 + 8), window.innerWidth - tooltipW / 2 - 8);
+      setPos({ top: rect.bottom + 6, left });
     }
   }, []);
 
@@ -2788,7 +2794,10 @@ function InfoTooltip({ content }: { content: React.ReactNode }) {
   const updatePos = useCallback(() => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 6, left: rect.left + rect.width / 2 });
+      const tooltipW = 256; // w-64
+      const rawLeft = rect.left + rect.width / 2;
+      const left = Math.min(Math.max(rawLeft, tooltipW / 2 + 8), window.innerWidth - tooltipW / 2 - 8);
+      setPos({ top: rect.bottom + 6, left });
     }
   }, []);
 
