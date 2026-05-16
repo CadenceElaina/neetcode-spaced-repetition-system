@@ -114,13 +114,6 @@ function priorityLevel(item: ReviewItem): "critical" | "high" | "medium" | "due"
   return "due";
 }
 
-const PRIORITY_BG: Record<string, string> = {
-  critical: "bg-red-500 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-amber-400 text-black",
-  due: "bg-sky-500 text-white",
-};
-
 const PRIORITY_DOT: Record<string, string> = {
   critical: "bg-red-500",
   high: "bg-orange-500",
@@ -1277,34 +1270,31 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                           priority={prio}
                           whyReasons={reasons}
                         />
-                        <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{item.leetcodeNumber}</span>
                         <div className="min-w-0 flex-1">
                           {item.neetcodeUrl ? (
                             <a href={item.neetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-foreground hover:text-accent truncate block">
-                              {item.title}
+                              {item.title}{item.leetcodeNumber ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">#{item.leetcodeNumber}</span> : null}
                             </a>
                           ) : (
                             <Link href={`/problems/${item.problemId}`} className="text-sm font-medium text-foreground hover:text-accent truncate block">
-                              {item.title}
+                              {item.title}{item.leetcodeNumber ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">#{item.leetcodeNumber}</span> : null}
                             </Link>
                           )}
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs text-muted-foreground">{item.category}</span>
                             <DifficultyBadge difficulty={item.difficulty} />
-                            <span className="text-xs text-muted-foreground">· {item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""} · Last: {daysAgoLabel(item.lastReviewedAt)}</span>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <Link
+                              href={`/problems/${item.problemId}`}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                              title="View problem activity"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            </Link>
+                            <span className="text-xs text-muted-foreground">{item.totalAttempts} attempt{item.totalAttempts !== 1 ? "s" : ""}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <Link
-                            href={`/problems/${item.problemId}`}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                            title="View problem activity"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                          </Link>
-                          <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none ${PRIORITY_BG[prio]}`}>
-                            {item.daysOverdue > 0 ? `${item.daysOverdue}d overdue` : "Due today"}
-                          </span>
                           <button
                             onClick={() => openLog({
                               problemId: item.problemId,
