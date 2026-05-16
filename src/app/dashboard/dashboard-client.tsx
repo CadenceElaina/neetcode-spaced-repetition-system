@@ -1712,7 +1712,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       </div>
 
       {/* ── Right Column ── */}
-      <div className="flex-none w-full md:w-[260px] flex flex-col gap-3 md:min-h-0 md:h-full overflow-y-auto overflow-x-hidden" data-onboarding="stats">
+      <div className="flex-none w-full md:w-[280px] flex flex-col gap-3 md:min-h-0 md:h-full overflow-y-auto overflow-x-hidden" data-onboarding="stats">
         {sheetDrawerOpen && todaySheets.length > 0 ? (
           <InlinePatternPanel sheets={todaySheets} onClose={() => setSheetDrawerOpen(false)} reviewCount={reviewItems.length} />
         ) : (
@@ -1763,11 +1763,11 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 <div className="flex gap-0.5 rounded-md border border-border p-0.5">
                   <button
                     onClick={() => { setGoalType("neetcode150"); setTargetCount(150); localStorage.setItem("srs_goal_type", "neetcode150"); localStorage.setItem("srs_target", JSON.stringify({ date: targetDate, count: 150 })); }}
-                    className={`text-[11px] px-2.5 py-1 rounded transition-colors ${goalType !== "blind75" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`text-xs px-2.5 py-1 rounded transition-colors ${goalType !== "blind75" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   >NeetCode 150</button>
                   <button
                     onClick={() => { setGoalType("blind75"); setTargetCount(75); localStorage.setItem("srs_goal_type", "blind75"); localStorage.setItem("srs_target", JSON.stringify({ date: targetDate, count: 75 })); }}
-                    className={`text-[11px] px-2.5 py-1 rounded transition-colors ${goalType === "blind75" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`text-xs px-2.5 py-1 rounded transition-colors ${goalType === "blind75" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   >Blind 75</button>
                 </div>
                 <button
@@ -1863,7 +1863,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 <span className={`inline-flex h-10 w-10 items-center justify-center rounded-lg text-xl font-black shrink-0 ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold tabular-nums">{data.readiness.score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
+                    <span className="text-base font-bold tabular-nums">{data.readiness.score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
                     <InfoTooltip content={
                       <div className="space-y-1 max-w-[220px]">
                         <p className="font-medium">Readiness Score</p>
@@ -1871,7 +1871,7 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       </div>
                     } />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">Readiness</p>
+                  <p className="text-xs text-muted-foreground">Readiness</p>
                 </div>
               </div>
               {data.attemptedCount < 5 && (
@@ -1885,98 +1885,78 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   { label: "Consistency", value: data.readinessBreakdown.consistency, tooltip: `10% of score. Active ${data.consistencyReviewed} of the last 14 days.` },
                 ].map(({ label, value, tooltip }) => (
                   <div key={label}>
-                    <div className="flex items-center justify-between text-[11px] mb-0.5">
+                    <div className="flex items-center justify-between text-xs mb-0.5">
                       <span className="flex items-center gap-1 text-muted-foreground">
                         {label}
                         <InfoTooltip content={<p className="max-w-[200px]">{tooltip}</p>} />
                       </span>
                       <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                    <div className="h-2 rounded-full bg-background overflow-hidden">
                       <div className={`h-full rounded-full transition-[width] duration-500 ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.round(value * 100)}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
             </section>
-          </>
-        )}
-      </div>
-    </div>
-    </div>
-    </div>
-    <>
-          {/* ── Below-fold: scrollable content below fixed viewport ── */}
-          <div className="relative z-[1] w-full px-4 md:px-6 pb-8 mt-4 space-y-4 max-w-5xl mx-auto">
-            {/* Activity chart with pace controls */}
+
+            {/* Activity */}
             <section className="rounded-lg border border-border bg-muted p-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-foreground">Activity</p>
-                <div className="flex items-center gap-1.5">
-                  <div className="flex rounded-md border border-border p-0.5 gap-0.5">
-                    {(["14d", "monthly", "heatmap"] as const).map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => { setActivityViewMode(m); setActivityPage(0); }}
-                        className={`text-[11px] px-2 py-0.5 rounded transition-colors ${activityViewMode === m ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-                      >{m === "14d" ? "14d" : m === "monthly" ? "Monthly" : "Heatmap"}</button>
-                    ))}
-                  </div>
+                <div className="flex rounded-md border border-border p-0.5 gap-0.5">
+                  {(["14d", "monthly", "heatmap"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => { setActivityViewMode(m); setActivityPage(0); }}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${activityViewMode === m ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+                    >{m === "14d" ? "14d" : m === "monthly" ? "Monthly" : "Heatmap"}</button>
+                  ))}
                 </div>
               </div>
-              <div className="flex items-start gap-4">
-                {/* Pace controls — left of chart */}
-                <div className="shrink-0 w-24 space-y-2 text-xs pt-1">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">New/day</p>
-                    <div className="flex items-center gap-1">
-                      <span className={`font-semibold tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
-                      <span className="text-muted-foreground">/</span>
-                      <input
-                        type="number" min="0" step="0.5" value={plannedNewPerDay}
-                        onChange={(e) => { const v = parseFloat(e.target.value) || 0; setPlannedNewPerDay(v); localStorage.setItem("aurora_planned_new_per_day", String(v)); }}
-                        aria-label="New problems per day goal"
-                        className="w-9 rounded border border-border bg-background px-1 py-0.5 text-[11px] tabular-nums text-center focus:outline-none focus:ring-1 focus:ring-accent"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">Review/day</p>
-                    <div className="flex items-center gap-1">
-                      <span className={`font-semibold tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
-                      <span className="text-muted-foreground">/</span>
-                      <input
-                        type="number" min="0" step="0.5" value={plannedReviewPerDay}
-                        onChange={(e) => { const v = parseFloat(e.target.value) || 0; setPlannedReviewPerDay(v); localStorage.setItem("aurora_planned_review_per_day", String(v)); }}
-                        aria-label="Reviews per day goal"
-                        className="w-9 rounded border border-border bg-background px-1 py-0.5 text-[11px] tabular-nums text-center focus:outline-none focus:ring-1 focus:ring-accent"
-                      />
-                    </div>
-                  </div>
+              <div className="flex items-center gap-4 mb-2 text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">New/d</span>
+                  <span className={`font-semibold tabular-nums ${data.avgNewPerDay >= plannedNewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgNewPerDay.toFixed(1)}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <input
+                    type="number" min="0" step="0.5" value={plannedNewPerDay}
+                    onChange={(e) => { const v = parseFloat(e.target.value) || 0; setPlannedNewPerDay(v); localStorage.setItem("aurora_planned_new_per_day", String(v)); }}
+                    aria-label="New problems per day goal"
+                    className="w-9 rounded border border-border bg-background px-1 py-0.5 text-xs tabular-nums text-center focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
                 </div>
-                {/* Chart */}
-                <div className="flex-1 min-w-0">
-                  {activityViewMode === "heatmap"
-                    ? <ActivityHeatmap history={data.fullAttemptHistory} />
-                    : <ActivityChart
-                        history={activityData}
-                        mode={activityViewMode === "monthly" ? "monthly" : "auto"}
-                        onPrev={activityViewMode === "14d" ? () => setActivityPage((p) => p + 1) : undefined}
-                        onNext={activityViewMode === "14d" ? () => setActivityPage((p) => Math.max(0, p - 1)) : undefined}
-                        canGoBack={activityViewMode === "14d" ? canGoBack : undefined}
-                        canGoForward={activityViewMode === "14d" ? canGoForward : undefined}
-                      />
-                  }
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Rev/d</span>
+                  <span className={`font-semibold tabular-nums ${data.avgReviewPerDay >= plannedReviewPerDay ? "text-green-500" : "text-orange-500"}`}>{data.avgReviewPerDay.toFixed(1)}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <input
+                    type="number" min="0" step="0.5" value={plannedReviewPerDay}
+                    onChange={(e) => { const v = parseFloat(e.target.value) || 0; setPlannedReviewPerDay(v); localStorage.setItem("aurora_planned_review_per_day", String(v)); }}
+                    aria-label="Reviews per day goal"
+                    className="w-9 rounded border border-border bg-background px-1 py-0.5 text-xs tabular-nums text-center focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
                 </div>
               </div>
+              {activityViewMode === "heatmap"
+                ? <ActivityHeatmap history={data.fullAttemptHistory} />
+                : <ActivityChart
+                    history={activityData}
+                    mode={activityViewMode === "monthly" ? "monthly" : "auto"}
+                    onPrev={activityViewMode === "14d" ? () => setActivityPage((p) => p + 1) : undefined}
+                    onNext={activityViewMode === "14d" ? () => setActivityPage((p) => Math.max(0, p - 1)) : undefined}
+                    canGoBack={activityViewMode === "14d" ? canGoBack : undefined}
+                    canGoForward={activityViewMode === "14d" ? canGoForward : undefined}
+                  />
+              }
             </section>
 
-            {/* Queue Forecast / Mastery Progress toggle */}
+            {/* Queue Forecast / Mastery Progress */}
             <section className="rounded-lg border border-border bg-muted p-3">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex gap-0.5 rounded-md border border-border p-0.5">
-                  <button onClick={() => setForecastOrMastery("forecast")} className={`text-[11px] px-2.5 py-1 rounded transition-colors ${forecastOrMastery === "forecast" ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>Queue Forecast</button>
-                  <button onClick={() => setForecastOrMastery("mastery")} className={`text-[11px] px-2.5 py-1 rounded transition-colors ${forecastOrMastery === "mastery" ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>Mastery Progress</button>
+                  <button onClick={() => setForecastOrMastery("forecast")} className={`text-xs px-2.5 py-1 rounded transition-colors ${forecastOrMastery === "forecast" ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>Queue Forecast</button>
+                  <button onClick={() => setForecastOrMastery("mastery")} className={`text-xs px-2.5 py-1 rounded transition-colors ${forecastOrMastery === "mastery" ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>Mastery Progress</button>
                 </div>
                 {forecastOrMastery === "forecast" && (
                   <div className="flex items-center gap-2">
@@ -1984,11 +1964,11 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       const hProj = forecastMode === "actual" ? queueProjection : queueProjectionGoals;
                       if (!hProj) return null;
                       const status = queueForecastStatus(hProj);
-                      return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${status.className} ${status.bgClassName}`}>{status.label}</span>;
+                      return <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${status.className} ${status.bgClassName}`}>{status.label}</span>;
                     })()}
                     <div className="flex rounded-md border border-border p-0.5 gap-0.5">
                       {(["actual", "goals"] as const).map((m) => (
-                        <button key={m} onClick={() => { setForecastMode(m); localStorage.setItem("aurora_forecast_mode", m); }} className={`text-[11px] px-2 py-0.5 rounded transition-colors ${forecastMode === m ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
+                        <button key={m} onClick={() => { setForecastMode(m); localStorage.setItem("aurora_forecast_mode", m); }} className={`text-xs px-2 py-0.5 rounded transition-colors ${forecastMode === m ? "bg-accent/20 text-accent font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
                           {m === "actual" ? "Actual" : "Goals"}
                         </button>
                       ))}
@@ -2092,8 +2072,12 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 );
               })()}
             </section>
-          </div>
-        </>
+          </>
+        )}
+      </div>
+    </div>
+    </div>
+    </div>
     </>
   );
 }
