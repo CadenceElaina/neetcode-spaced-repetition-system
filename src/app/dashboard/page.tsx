@@ -298,8 +298,9 @@ export default async function DashboardPage() {
     .sort((a, b) => a.category.localeCompare(b.category));
 
   // Readiness score
-  const lowestCategoryAvgR = categoryStats.length > 0
-    ? Math.min(...categoryStats.map((c) => c.avgRetention))
+  const attemptedCategories = categoryStats.filter((c) => c.attempted > 0);
+  const lowestCategoryAvgR = attemptedCategories.length > 0
+    ? Math.min(...attemptedCategories.map((c) => c.avgRetention))
     : 0;
 
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
