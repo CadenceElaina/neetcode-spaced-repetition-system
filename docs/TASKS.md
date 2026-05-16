@@ -3,7 +3,7 @@
 Agents and sessions pull from this file. Claim a task by adding your session ID to the Agent column.
 **Canonical task file** — root `TASKS.md` is a mirror. Edit only this one.
 
-Last updated: 2026-05-16 — T-025/T-026 planned
+Last updated: 2026-05-16 — T-025/T-026 complete
 
 ---
 
@@ -22,8 +22,6 @@ Last updated: 2026-05-16 — T-025/T-026 planned
 
 | ID    | Tier | Description |
 | ----- | ---- | ----------- |
-| T-025 | 🟠 P1 | `feat(dashboard)`: Dashboard UI redesign — 3-column layout (spacer · queue · right panel), compact centered queue, new right panel (CompletionWidget with E/M/H bars + needed/day + projection, compact Readiness, goal toggle 150/Blind75), session size into settings form, new/review goals left of activity chart, activity + forecast/mastery moved below-fold. Remove categories/difficulty from dashboard. See UI redesign plan in conversation 2026-05-16. |
-| T-026 | 🟠 P1 | `feat(srs)`: Curriculum recommendation engine — `src/lib/curriculum.ts`, `computeNextRecommendation()`. NeetCode roadmap dependency DAG, fork-by-attempt-count logic, localStorage fork persistence, "Recommended next" card in Session view + New tab. Decision record: `docs/decisions/2026-05-16-curriculum-recommendation.md`. |
 
 ---
 
@@ -38,6 +36,8 @@ Last updated: 2026-05-16 — T-025/T-026 planned
 
 | ID    | Completed  | Description                                                                                                                             |
 | ----- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| T-026 | 2026-05-16 | `feat(srs)`: Curriculum recommendation engine — `src/lib/curriculum.ts`, `computeNextRecommendation()`, NeetCode 150 DAG (layers 0–5), subtree-aware L4 tracking, localStorage fork persistence, "Recommended next" card (New tab) + "Capacity available" card (Session view) |
+| T-025 | 2026-05-16 | `feat(dashboard)`: 3-col flex layout (spacer · queue 560px · right panel 260px), CompletionWidget (goal toggle, SolvedDonut, E/M/H bars, needed/day, projection), session size stepper in SettingsPanel, compact Readiness, below-fold pace controls + activity chart + forecast/mastery toggle |
 | T-024 | 2026-05-10 | `feat(srs)`: Calibration tooling — SVG chart on Insights; Multipliers + Backtest tabs on Admin; `srs-simulator.ts` backtest engine; `computeMultiplierOutcomes`; `GET /api/admin/backtest`; 26 new tests (233 total) |
 | T-023 | 2026-05-10 | `feat(pacing)`: Phase 2 — 5-zone load ratio system in `computePracticeRecommendation`; `queueStability` dynamic split index; `MAX_DAYS` 30→60; chart back-half split + horizon label updated |
 | T-020 | 2026-05-09 | `perf(dashboard)`: problems cache TTL → 3600s; `unstable_cache` on webhook slug-map; `computeRetrievability` deduplicated to single Map; `useMemo` on top dashboard-client derived computations |
