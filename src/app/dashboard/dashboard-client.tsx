@@ -1762,10 +1762,9 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
               const bar = (a: number, t: number) => Math.min(100, t > 0 ? Math.round((a / t) * 100) : 0);
               return (
             <section className="rounded-lg border border-border bg-muted p-3">
-              {/* Title row: name · target date · gear */}
-              <div className="flex items-center gap-2 mb-3">
+              {/* Title row: name · gear (date removed — shown in stats row) */}
+              <div className="flex items-center gap-2 mb-2">
                 <p className="text-sm font-semibold text-foreground flex-1 min-w-0 truncate">{countdownTitle}</p>
-                <span className="text-xs text-muted-foreground shrink-0">{new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
@@ -1776,31 +1775,28 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 </button>
               </div>
 
-              {/* Days left — below title, above 3-col body */}
-              <div className="mb-2.5">
-                <p className="text-2xl font-bold tabular-nums leading-none">
-                  {countdown.daysLeft}
-                  <span className="text-sm font-normal text-muted-foreground ml-1.5">
-                    days left until {new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {/* Stats row: days left · pace · streak — all readable, full width */}
+              <div className="flex items-end gap-4 mb-3 flex-wrap">
+                <div>
+                  <span className="text-2xl font-bold tabular-nums leading-none">{countdown.daysLeft}</span>
+                  <span className="text-xs text-muted-foreground ml-1">days left until {new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                </div>
+                <div>
+                  <span className={`text-xl font-bold tabular-nums leading-none ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
+                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}
                   </span>
-                </p>
+                  <span className="text-xs text-muted-foreground ml-1">new/day needed</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm">
+                  <span className="text-muted-foreground text-xs">streak</span>
+                  <span className="font-bold tabular-nums">{data.currentStreak}</span>
+                  <span className="text-sm leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
+                </div>
               </div>
 
-              {/* 3-column body: [stats left] · [ring center] · [bars right] */}
+              {/* 2-column body: [ring] · [bars] */}
               <div className="flex items-center gap-3">
-                {/* Left: pace + streak */}
-                <div className="flex flex-col shrink-0 gap-0.5 w-[82px]">
-                  <p className={`text-base font-bold tabular-nums leading-none ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
-                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground leading-none mb-2">new/day needed</p>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    streak <span className="font-semibold text-foreground tabular-nums">{data.currentStreak}</span>
-                    <span className="leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
-                  </p>
-                </div>
-
-                {/* Center: readiness ring (fills flex-1, tier letter inside, hover tooltip) */}
+                {/* Ring: fills flex-1, tier letter inside, hover tooltip */}
                 <div className="flex-1 min-w-0">
                   <ReadinessRing
                     breakdown={bd}
