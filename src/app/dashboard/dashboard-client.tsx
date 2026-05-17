@@ -1787,17 +1787,17 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   </span>
                   <span className="text-xs text-muted-foreground ml-1">new/day needed</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm">
-                  <span className="text-muted-foreground text-xs">streak</span>
-                  <span className="font-bold tabular-nums">{data.currentStreak}</span>
-                  <span className="text-sm leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
+                <div>
+                  <span className="text-xl font-bold tabular-nums leading-none">{data.currentStreak}</span>
+                  <span className="text-sm leading-none ml-1">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
+                  <span className="text-xs text-muted-foreground ml-1">streak</span>
                 </div>
               </div>
 
-              {/* 2-column body: [ring] · [bars] */}
-              <div className="flex items-center gap-3">
-                {/* Ring: fills flex-1, tier letter inside, hover tooltip */}
-                <div className="flex-1 min-w-0">
+              {/* 2-column body: [ring compact] · [bars] */}
+              <div className="flex items-center gap-4">
+                {/* Ring: fixed compact size */}
+                <div className="w-[96px] shrink-0">
                   <ReadinessRing
                     breakdown={bd}
                     totalTarget={targetCount}
@@ -1807,31 +1807,27 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   />
                 </div>
 
-                {/* Right: E/M/H bars + Total */}
-                <div className="flex flex-col gap-2 shrink-0 w-[140px]">
+                {/* Right: Easy/Medium/Hard bars + Total — each row: [label] [bar] [count] */}
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
                   {[
-                    { label: "E", pct: bar(easy?.attempted ?? 0, easy?.count ?? 0),   color: "bg-green-500", labelColor: "text-green-500", valText: `${easy?.attempted ?? 0}/${easy?.count ?? 0}` },
-                    { label: "M", pct: bar(medium?.attempted ?? 0, medium?.count ?? 0), color: "bg-amber-500", labelColor: "text-amber-500", valText: `${medium?.attempted ?? 0}/${medium?.count ?? 0}` },
-                    { label: "H", pct: bar(hard?.attempted ?? 0, hard?.count ?? 0),   color: "bg-red-500",   labelColor: "text-red-500",   valText: `${hard?.attempted ?? 0}/${hard?.count ?? 0}` },
+                    { label: "Easy",   pct: bar(easy?.attempted ?? 0, easy?.count ?? 0),     color: "bg-green-500", labelColor: "text-green-500", valText: `${easy?.attempted ?? 0}/${easy?.count ?? 0}` },
+                    { label: "Medium", pct: bar(medium?.attempted ?? 0, medium?.count ?? 0), color: "bg-amber-500", labelColor: "text-amber-500", valText: `${medium?.attempted ?? 0}/${medium?.count ?? 0}` },
+                    { label: "Hard",   pct: bar(hard?.attempted ?? 0, hard?.count ?? 0),     color: "bg-red-500",   labelColor: "text-red-500",   valText: `${hard?.attempted ?? 0}/${hard?.count ?? 0}` },
                   ].map(({ label, pct: p, color, labelColor, valText }) => (
-                    <div key={label}>
-                      <div className="flex items-center justify-between text-xs mb-0.5">
-                        <span className={`font-medium ${labelColor}`}>{label}</span>
-                        <span className="tabular-nums text-muted-foreground">{valText}</span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                    <div key={label} className="flex items-center gap-2 text-xs">
+                      <span className={`font-medium w-12 shrink-0 ${labelColor}`}>{label}</span>
+                      <div className="flex-1 h-2 rounded-full bg-background overflow-hidden">
                         <div className={`h-full rounded-full ${color}`} style={{ width: `${p}%` }} />
                       </div>
+                      <span className="tabular-nums text-muted-foreground w-10 text-right shrink-0">{valText}</span>
                     </div>
                   ))}
-                  <div className="border-t border-border/40 pt-1.5">
-                    <div className="flex items-center justify-between text-xs mb-0.5">
-                      <span className="font-medium text-muted-foreground">Total</span>
-                      <span className="tabular-nums text-muted-foreground">{totalSolved}/{targetCount}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                  <div className="border-t border-border/40 pt-1.5 flex items-center gap-2 text-xs">
+                    <span className="font-medium text-muted-foreground w-12 shrink-0">Total</span>
+                    <div className="flex-1 h-2 rounded-full bg-background overflow-hidden">
                       <div className="h-full rounded-full bg-accent" style={{ width: `${bar(totalSolved, targetCount)}%` }} />
                     </div>
+                    <span className="tabular-nums text-muted-foreground w-10 text-right shrink-0">{totalSolved}/{targetCount}</span>
                   </div>
                 </div>
               </div>
