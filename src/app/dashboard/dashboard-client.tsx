@@ -1760,7 +1760,6 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
               const medium = bd.find(b => b.difficulty === "Medium");
               const hard   = bd.find(b => b.difficulty === "Hard");
               const bar = (a: number, t: number) => Math.min(100, t > 0 ? Math.round((a / t) * 100) : 0);
-              const projPct = data.attemptedCount < 5 ? 0 : bar(countdown.projectedRaw, targetCount);
               return (
             <section className="rounded-lg border border-border bg-muted p-3">
               {/* Title row: name · target date · gear */}
@@ -1779,43 +1778,37 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
 
               {/* 3-column body: [stats left] · [ring center] · [bars right] */}
               <div className="flex items-center gap-3">
-                {/* Left: readiness badge + countdown stats */}
-                <div className="flex flex-col shrink-0 gap-0.5">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-base font-black shrink-0 ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
-                    <div className="leading-none">
-                      <p className="text-sm font-bold tabular-nums">{data.readiness.score}<span className="text-[10px] font-normal text-muted-foreground">/100</span></p>
-                      <p className="text-[10px] text-muted-foreground">Readiness</p>
-                    </div>
-                  </div>
+                {/* Left: countdown stats */}
+                <div className="flex flex-col shrink-0 gap-0.5 w-[82px]">
                   <p className="text-3xl font-bold tabular-nums leading-none">{countdown.daysLeft}</p>
-                  <p className="text-[11px] text-muted-foreground leading-none">days left</p>
-                  <p className={`text-base font-bold tabular-nums mt-1 leading-none ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
-                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}<span className="text-[11px] font-normal text-muted-foreground"> /day</span>
+                  <p className="text-[11px] text-muted-foreground leading-none mb-1">days left</p>
+                  <p className={`text-base font-bold tabular-nums leading-none ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
+                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                  <p className="text-[10px] text-muted-foreground leading-none mb-1">new/day needed</p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                     streak <span className="font-semibold text-foreground tabular-nums">{data.currentStreak}</span>
-                    <span className="text-xs leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
+                    <span className="leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
                   </p>
                 </div>
 
-                {/* Center: ring only */}
-                <div className="flex-1 flex justify-center shrink-0">
-                  <SolvedDonut
+                {/* Center: readiness ring (fills flex-1, tier letter inside, hover tooltip) */}
+                <div className="flex-1 min-w-0">
+                  <ReadinessRing
                     breakdown={bd}
-                    totalSolved={totalSolved}
                     totalTarget={targetCount}
-                    compact
+                    tier={data.readiness.tier}
+                    score={data.readiness.score}
+                    readinessBreakdown={data.readinessBreakdown}
                   />
                 </div>
 
-                {/* Right: Proj + E/M/H progress bars */}
+                {/* Right: E/M/H bars + Total */}
                 <div className="flex flex-col gap-2 shrink-0 w-[140px]">
                   {[
-                    { label: "Proj", a: data.attemptedCount < 5 ? 0 : countdown.projectedRaw, t: targetCount, pct: projPct, color: "bg-accent", labelColor: "text-muted-foreground", valText: data.attemptedCount < 5 ? "—" : `${countdown.projectedRaw}/${targetCount}` },
-                    { label: "E",    a: easy?.attempted ?? 0,   t: easy?.count ?? 0,   pct: bar(easy?.attempted ?? 0, easy?.count ?? 0),   color: "bg-green-500", labelColor: "text-green-500", valText: `${easy?.attempted ?? 0}/${easy?.count ?? 0}` },
-                    { label: "M",    a: medium?.attempted ?? 0, t: medium?.count ?? 0, pct: bar(medium?.attempted ?? 0, medium?.count ?? 0), color: "bg-amber-500", labelColor: "text-amber-500", valText: `${medium?.attempted ?? 0}/${medium?.count ?? 0}` },
-                    { label: "H",    a: hard?.attempted ?? 0,   t: hard?.count ?? 0,   pct: bar(hard?.attempted ?? 0, hard?.count ?? 0),   color: "bg-red-500",   labelColor: "text-red-500",   valText: `${hard?.attempted ?? 0}/${hard?.count ?? 0}` },
+                    { label: "E", pct: bar(easy?.attempted ?? 0, easy?.count ?? 0),   color: "bg-green-500", labelColor: "text-green-500", valText: `${easy?.attempted ?? 0}/${easy?.count ?? 0}` },
+                    { label: "M", pct: bar(medium?.attempted ?? 0, medium?.count ?? 0), color: "bg-amber-500", labelColor: "text-amber-500", valText: `${medium?.attempted ?? 0}/${medium?.count ?? 0}` },
+                    { label: "H", pct: bar(hard?.attempted ?? 0, hard?.count ?? 0),   color: "bg-red-500",   labelColor: "text-red-500",   valText: `${hard?.attempted ?? 0}/${hard?.count ?? 0}` },
                   ].map(({ label, pct: p, color, labelColor, valText }) => (
                     <div key={label}>
                       <div className="flex items-center justify-between text-xs mb-0.5">
@@ -1827,6 +1820,15 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       </div>
                     </div>
                   ))}
+                  <div className="border-t border-border/40 pt-1.5">
+                    <div className="flex items-center justify-between text-xs mb-0.5">
+                      <span className="font-medium text-muted-foreground">Total</span>
+                      <span className="tabular-nums text-muted-foreground">{totalSolved}/{targetCount}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${bar(totalSolved, targetCount)}%` }} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2756,6 +2758,109 @@ function SolvedDonut({ breakdown, totalSolved, totalTarget, compact }: { breakdo
           <span className="text-muted-foreground">/{hC}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReadinessRing({
+  breakdown, totalTarget, tier, score, readinessBreakdown,
+}: {
+  breakdown: DifficultyBreakdown[];
+  totalTarget: number;
+  tier: "S" | "A" | "B" | "C" | "D";
+  score: number;
+  readinessBreakdown: { coverage: number; retention: number; categoryBalance: number; consistency: number };
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const updatePos = useCallback(() => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const tooltipW = 220;
+      const rawLeft = rect.left + rect.width / 2;
+      const left = Math.min(Math.max(rawLeft, tooltipW / 2 + 8), window.innerWidth - tooltipW / 2 - 8);
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow > 216 ? rect.bottom + 8 : rect.top - 216 - 8;
+      setPos({ top, left });
+    }
+  }, []);
+
+  const r = 42;
+  const C = 2 * Math.PI * r;
+  const denom = Math.max(1, totalTarget);
+  const easy   = breakdown.find(d => d.difficulty === "Easy");
+  const medium = breakdown.find(d => d.difficulty === "Medium");
+  const hard   = breakdown.find(d => d.difficulty === "Hard");
+  const eA = easy?.attempted ?? 0;
+  const mA = medium?.attempted ?? 0;
+  const hA = hard?.attempted ?? 0;
+  const segs = [
+    { color: "#22c55e", len: (eA / denom) * C, start: 0 },
+    { color: "#f59e0b", len: (mA / denom) * C, start: (eA / denom) * C },
+    { color: "#ef4444", len: (hA / denom) * C, start: ((eA + mA) / denom) * C },
+  ].filter(s => s.len > 0);
+
+  const TIER_TEXT: Record<string, string> = {
+    S: "#a78bfa", A: "#4ade80", B: "#60a5fa", C: "#fbbf24", D: "#f87171",
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="w-full cursor-pointer"
+      onMouseEnter={() => { updatePos(); setHovered(true); }}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <svg viewBox="0 0 100 100" className="w-full h-auto">
+        <circle cx={50} cy={50} r={r} fill="none" strokeWidth={8} style={{ stroke: "var(--border)" }} />
+        {segs.map(({ color, len, start }) => (
+          <circle
+            key={color} cx={50} cy={50} r={r} fill="none"
+            stroke={color} strokeWidth={8}
+            strokeDasharray={`${len} ${C - len}`}
+            strokeDashoffset={0}
+            transform={`rotate(${-90 + (start / C) * 360} 50 50)`}
+          />
+        ))}
+        <text x={50} y={44} textAnchor="middle" dominantBaseline="central" fontSize="30" fontWeight="900" style={{ fill: TIER_TEXT[tier] ?? "var(--foreground)" }}>{tier}</text>
+        <text x={50} y={63} textAnchor="middle" dominantBaseline="central" fontSize="9" style={{ fill: "var(--muted-foreground)" }}>{score}/100</text>
+      </svg>
+      {hovered && pos && createPortal(
+        <div
+          className="fixed z-[9999] w-[220px] rounded-lg border border-border bg-popover p-3 shadow-lg text-xs"
+          style={{ top: pos.top, left: pos.left, transform: "translateX(-50%)" }}
+        >
+          <p className="font-semibold text-foreground mb-2">Readiness Breakdown</p>
+          <div className="space-y-1.5">
+            {([
+              { label: "Coverage",    value: readinessBreakdown.coverage,        weight: "30%" },
+              { label: "Retention",   value: readinessBreakdown.retention,       weight: "40%" },
+              { label: "Balance",     value: readinessBreakdown.categoryBalance, weight: "20%" },
+              { label: "Consistency", value: readinessBreakdown.consistency,     weight: "10%" },
+            ] as const).map(({ label, value, weight }) => (
+              <div key={label}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-muted-foreground">{label} <span className="opacity-50">{weight}</span></span>
+                  <span className="font-medium tabular-nums">{Math.round(value * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${value >= 0.7 ? "bg-green-500" : value >= 0.4 ? "bg-amber-500" : "bg-red-500"}`}
+                    style={{ width: `${Math.round(value * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-border flex items-center justify-between">
+            <span className="text-muted-foreground">Overall score</span>
+            <span className="font-bold tabular-nums">{score}/100</span>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
