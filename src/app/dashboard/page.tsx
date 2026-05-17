@@ -148,6 +148,7 @@ export default async function DashboardPage() {
         title: p.title,
         leetcodeNumber: p.leetcodeNumber,
         neetcodeUrl: p.neetcodeUrl,
+        leetcodeUrl: p.leetcodeUrl,
         difficulty: p.difficulty as "Easy" | "Medium" | "Hard",
         category: p.category,
         blind75: p.blind75,
@@ -164,6 +165,7 @@ export default async function DashboardPage() {
       title: string;
       leetcodeNumber: number | null;
       neetcodeUrl: string | null;
+      leetcodeUrl: string;
       difficulty: "Easy" | "Medium" | "Hard";
       category: string;
       blind75: boolean;

@@ -8,6 +8,7 @@ export type ReviewItem = {
   title: string;
   leetcodeNumber: number | null;
   neetcodeUrl: string | null;
+  leetcodeUrl: string;
   difficulty: "Easy" | "Medium" | "Hard";
   category: string;
   blind75: boolean;

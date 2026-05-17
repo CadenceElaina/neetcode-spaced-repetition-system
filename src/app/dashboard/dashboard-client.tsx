@@ -1468,6 +1468,10 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                          {item.neetcodeUrl && (
+                            <a href={item.neetcodeUrl} target="_blank" rel="noopener noreferrer" title="NeetCode walkthrough" className="inline-flex h-6 items-center gap-0.5 rounded border border-border px-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">NC <ExternalLink size={10} /></a>
+                          )}
+                          <a href={item.leetcodeUrl} target="_blank" rel="noopener noreferrer" title="LeetCode problem" className="inline-flex h-6 items-center gap-0.5 rounded border border-border px-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">LC <ExternalLink size={10} /></a>
                           <button
                             onClick={() => openLog({
                               problemId: item.problemId,
