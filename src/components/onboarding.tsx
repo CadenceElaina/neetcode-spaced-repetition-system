@@ -388,7 +388,7 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
         </div>
 
         {/* Title */}
-        <div className="px-5 pt-4 pb-1">
+        <div className={`px-5 pt-4 pb-1${step === 0 ? " text-center" : ""}`}>
           <h2 className="text-base font-semibold mb-1">{current.title}</h2>
           {current.body && (
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -401,10 +401,11 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
 
         {/* ── Step 0: Welcome ── */}
         {step === 0 && (
-          <div className="px-5 pb-2">
+          <div className="px-5 pb-2 text-center">
             <p className="text-xs text-muted-foreground mt-2">
-              Read more about the algorithm and this site on our{" "}
-              <a href="/info" className="text-accent hover:underline">info page →</a>
+              <a href="/info" className="text-accent hover:underline">Info &amp; algorithm →</a>
+              {" · "}
+              <a href="https://github.com/CadenceElaina/aurora" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">GitHub →</a>
             </p>
           </div>
         )}
@@ -530,7 +531,6 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                   style={{ colorScheme: "dark" }}
                   className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
-                <p className="text-[11px] text-muted-foreground mt-1">Default: Sep 1</p>
               </div>
               <div>
                 <label htmlFor="onboarding-countdown-name" className="block text-xs text-muted-foreground mb-1">Countdown name</label>
@@ -545,7 +545,6 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                   placeholder="September Countdown"
                   className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 placeholder:text-muted-foreground/40"
                 />
-                <p className="text-[11px] text-muted-foreground mt-1">Shown on your dashboard</p>
               </div>
             </div>
 
@@ -575,8 +574,8 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
               <p className="text-xs text-muted-foreground mb-1.5">Problem set</p>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  { id: "blind75" as const, label: "Blind 75", desc: "The essential 75 problems", count: 75 },
-                  { id: "neetcode150" as const, label: "NeetCode 150", desc: "Comprehensive coverage across all patterns", count: 150 },
+                  { id: "blind75" as const, label: "Blind 75", count: 75 },
+                  { id: "neetcode150" as const, label: "NeetCode 150", count: 150 },
                 ]).map((goal) => (
                   <button
                     key={goal.id}
@@ -591,7 +590,6 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                       <span className="text-sm font-medium">{goal.label}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">{goal.count}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{goal.desc}</p>
                   </button>
                 ))}
               </div>
@@ -620,24 +618,21 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
               const cap = Math.max(1, Math.floor(selectedTimeBudget / 25));
               const sessionSize = Math.min(Math.max(2, cap + 1), 8);
               const coverageNewCount = strategyToSettings("coverage", sessionSize).newPerSession;
-              const strategies: { id: Strategy; label: string; desc: string; detail: string }[] = [
+              const strategies: { id: Strategy; label: string; desc: string }[] = [
                 {
                   id: "steady",
                   label: "Steady Pace",
-                  desc: "1 new problem per session, reviews come first",
-                  detail: "Good for building a sustainable rhythm",
+                  desc: "Reviews first, 1 new problem/day — keeps your queue manageable as you build coverage.",
                 },
                 {
                   id: "coverage",
                   label: "Push Coverage",
-                  desc: `${coverageNewCount} new problem${coverageNewCount !== 1 ? "s" : ""} per session${coverageNewCount < 2 ? " (limited by your budget)" : ""}`,
-                  detail: "For tight deadlines with lots of ground to cover",
+                  desc: `${coverageNewCount} new problem${coverageNewCount !== 1 ? "s" : ""}/day — grow coverage fast${coverageNewCount < 2 ? " (budget limits new slots)" : ", review load grows over time"}.`,
                 },
                 {
                   id: "retention",
                   label: "Lock In Retention",
-                  desc: "Reviews only — strengthen what you know",
-                  detail: "Best for pre-interview polish when coverage is complete",
+                  desc: "Reviews only — reinforce everything you've seen before adding anything new.",
                 },
               ];
               return (
@@ -661,8 +656,7 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                           <span className="text-sm font-medium">{s.label}</span>
                           {s.id === "steady" && <span className="text-[10px] text-accent font-medium shrink-0">recommended</span>}
                         </div>
-                        <p className="text-xs text-muted-foreground">{s.desc}</p>
-                        <p className="text-[11px] text-muted-foreground/60 mb-1.5">{s.detail}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{s.desc}</p>
                         {/* Session bar visual */}
                         <div className="flex items-center gap-1">
                           {Array.from({ length: sessionSize }).map((_, i) => (
@@ -670,12 +664,12 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                               key={i}
                               className={`h-2 flex-1 rounded-sm ${
                                 i < reviewCount
-                                  ? "bg-accent/70"
-                                  : "bg-accent/30"
+                                  ? "bg-accent"
+                                  : "bg-accent/25"
                               }`}
                             />
                           ))}
-                          <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
+                          <span className="text-xs font-medium text-foreground/70 ml-1.5 shrink-0">
                             {reviewCount}r + {newCount}n
                           </span>
                         </div>
