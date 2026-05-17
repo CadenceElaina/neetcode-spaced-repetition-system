@@ -39,6 +39,7 @@ import {
   type QueueProjection,
   type QueueStability,
   type PracticeRecommendation,
+  type AdvisoryThreshold,
 } from "@/lib/capacity";
 
 /* ── Types ── */
@@ -238,7 +239,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
   const [sessionViewMode, setSessionViewMode] = useState<"session" | "queue">("session");
   const [sessionActedOn, setSessionActedOn] = useState(0);
   const [sessionNewActedOn, setSessionNewActedOn] = useState(0);
-  const [newPerSession, setNewPerSession] = useState(0);
+  const [newPerSession, setNewPerSession] = useState(data.newPerSession);
+  const [advisoryThreshold, setAdvisoryThreshold] = useState<AdvisoryThreshold>(data.advisoryThreshold);
   const [forkChoices, setForkChoices] = useState<ForkChoices>(() => {
     if (typeof window === "undefined") return {};
     try {
@@ -352,8 +354,9 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
         if (prog.date === today) setSessionNewActedOn(prog.newActedOn ?? 0);
       } catch { /* ignore */ }
     }
-    const savedNewPerSession = localStorage.getItem("aurora_new_per_session");
-    if (savedNewPerSession !== null) setNewPerSession(Number(savedNewPerSession));
+    // DB values win for newPerSession and advisoryThreshold — sync localStorage to match
+    localStorage.setItem("aurora_new_per_session", String(data.newPerSession));
+    localStorage.setItem("aurora_advisory_threshold", data.advisoryThreshold);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist active tab (don't persist mock — always start fresh on load)
@@ -594,7 +597,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     goalType,
     actualProjection: queueProjection,
     dailyTimeBudgetMinutes: timeBudget,
-  }), [data, countdown, goalType, queueProjection, timeBudget]);
+    advisoryThreshold,
+  }), [data, countdown, goalType, queueProjection, timeBudget, advisoryThreshold]);
 
   const budgetMismatch = useMemo(() => {
     if (isDemo || data.attemptedCount < 5) return null;
@@ -1011,6 +1015,10 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       }
       setTimeBudget(prefs.timeBudget);
       localStorage.setItem("aurora_time_budget", String(prefs.timeBudget));
+      setNewPerSession(prefs.newPerSession);
+      localStorage.setItem("aurora_new_per_session", String(prefs.newPerSession));
+      setAdvisoryThreshold(prefs.advisoryThreshold);
+      localStorage.setItem("aurora_advisory_threshold", prefs.advisoryThreshold);
     }} />
     <div className="relative md:h-[calc(100dvh-7.5rem)]">
     {/* Subtle ambient starfield — fixed, full-viewport, behind all content */}
@@ -1928,7 +1936,15 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                   onNewPerSessionChange={(v) => {
                     setNewPerSession(v);
                     localStorage.setItem("aurora_new_per_session", String(v));
+                    if (!isDemo) {
+                      fetch("/api/user/settings", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ newPerSession: v }),
+                      }).catch(() => {});
+                    }
                   }}
+                  advisoryThreshold={advisoryThreshold}
                   reviewQueueLength={reviewItems.length}
                   goalType={goalType}
                   onGoalTypeChange={(v) => {
@@ -2600,6 +2616,7 @@ function SettingsPanel({
   recommendedSessionSize,
   newPerSession,
   onNewPerSessionChange,
+  advisoryThreshold,
   reviewQueueLength,
   goalType,
   onGoalTypeChange,
@@ -2622,6 +2639,7 @@ function SettingsPanel({
   recommendedSessionSize: number;
   newPerSession: number;
   onNewPerSessionChange: (v: number) => void;
+  advisoryThreshold: AdvisoryThreshold;
   reviewQueueLength: number;
   goalType: "neetcode150" | "blind75" | "none";
   onGoalTypeChange: (v: "neetcode150" | "blind75") => void;
@@ -2772,14 +2790,19 @@ function SettingsPanel({
           const totalSize = sessionSizeOverride ?? recommendedSessionSize;
           const reviewCount = Math.max(0, totalSize - newPerSession);
           const newCount = Math.min(newPerSession, totalSize);
+          // Advisory suggestion uses threshold-aware cutoffs matching computePracticeRecommendation
+          const pullBackDays = advisoryThreshold === "relaxed" ? 11 : advisoryThreshold === "strict" ? 4 : 7;
+          const stopNewDays = advisoryThreshold === "relaxed" ? 19 : advisoryThreshold === "strict" ? 7 : 11;
           const clearDays = reviewQueueLength > 0 ? Math.ceil(reviewQueueLength / Math.max(1, reviewCount)) : 0;
-          let advisory: { text: string; color: string } | null = null;
-          if (newPerSession > 0 && reviewQueueLength > 0) {
-            if (clearDays <= 3) advisory = { text: `Queue clears in ~${clearDays}d at this pace`, color: "text-emerald-400" };
-            else if (clearDays <= 7) advisory = { text: `Queue clears in ~${clearDays}d — moderate backlog`, color: "text-yellow-400" };
-            else advisory = { text: `Queue grows at this pace — consider reducing new to ${Math.max(0, newPerSession - 1)}/session`, color: "text-orange-400" };
-          } else if (newPerSession > 0 && reviewQueueLength === 0) {
-            advisory = { text: "Queue is clear — good time for new problems", color: "text-emerald-400" };
+          let suggestion: { text: string; color: string } | null = null;
+          if (reviewQueueLength === 0) {
+            suggestion = { text: `Suggested: ${newPerSession} (queue is clear — great time for new problems)`, color: "text-emerald-400" };
+          } else if (clearDays <= pullBackDays) {
+            suggestion = { text: `Suggested: ${newPerSession} (queue is healthy)`, color: "text-muted-foreground/60" };
+          } else if (clearDays <= stopNewDays) {
+            suggestion = { text: `Suggested: 1 (queue near capacity — clears in ~${clearDays}d)`, color: "text-yellow-400" };
+          } else {
+            suggestion = { text: `Suggested: 0 (clear your queue first — ~${clearDays}d at this pace)`, color: "text-orange-400" };
           }
           return (
             <>
@@ -2801,8 +2824,8 @@ function SettingsPanel({
                   Session: {reviewCount} review{reviewCount !== 1 ? "s" : ""} + {newCount} new
                 </p>
               )}
-              {advisory && (
-                <p className={`text-[10px] mt-0.5 ${advisory.color}`}>{advisory.text}</p>
+              {suggestion && (
+                <p className={`text-[10px] mt-0.5 ${suggestion.color}`}>{suggestion.text}</p>
               )}
             </>
           );

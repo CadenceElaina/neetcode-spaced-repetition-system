@@ -50,7 +50,21 @@ const LOG_STEPS = [
 type Rect = { top: number; left: number; width: number; height: number };
 const DEMO_ONBOARDING_KEY = "aurora_demo_onboarding_complete";
 
-/* ── Step definitions (3 slides) ── */
+type Strategy = "steady" | "coverage" | "retention";
+
+function strategyToSettings(strategy: Strategy, sessionSize: number): { newPerSession: number; advisoryThreshold: "relaxed" | "moderate" | "strict" } {
+  switch (strategy) {
+    case "coverage":
+      return { newPerSession: sessionSize >= 7 ? 3 : 2, advisoryThreshold: "relaxed" };
+    case "retention":
+      return { newPerSession: 0, advisoryThreshold: "strict" };
+    case "steady":
+    default:
+      return { newPerSession: 1, advisoryThreshold: "moderate" };
+  }
+}
+
+/* ── Step definitions (4 slides) ── */
 const STEPS = [
   {
     title: "Welcome to Aurora",
@@ -70,6 +84,12 @@ const STEPS = [
     target: null as string | null,
     side: "center" as const,
   },
+  {
+    title: "Your Daily Plan",
+    body: "Each day, Aurora fills your session with a mix of reviews and new problems. Pick a strategy — you can change this anytime in settings.",
+    target: null as string | null,
+    side: "center" as const,
+  },
 ];
 
 const ONBOARDING_BUDGET_PRESETS = [
@@ -82,7 +102,7 @@ const ONBOARDING_BUDGET_PRESETS = [
 export function Onboarding({ isDemo = false, onboardingComplete = false, onPreferences }: {
   isDemo?: boolean;
   onboardingComplete?: boolean;
-  onPreferences?: (prefs: { targetCount: number; targetDate: string; autoDeferHards: boolean; goalType: "blind75" | "neetcode150" | "none"; timeBudget: number }) => void;
+  onPreferences?: (prefs: { targetCount: number; targetDate: string; autoDeferHards: boolean; goalType: "blind75" | "neetcode150" | "none"; timeBudget: number; newPerSession: number; advisoryThreshold: "relaxed" | "moderate" | "strict" }) => void;
 }) {
   const [show, setShow] = useState(false);
   const [step, setStep] = useState(0);
@@ -103,6 +123,7 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
   });
   const [deferHards, setDeferHards] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>("steady");
 
   const measure = useCallback(() => {
     const q = document.querySelector("[data-onboarding='queue']");
@@ -159,7 +180,12 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
 
   function finish() {
     const targetCount = selectedGoal === "blind75" ? 75 : selectedGoal === "neetcode150" ? 150 : 0;
+    const cap = Math.max(1, Math.floor(selectedTimeBudget / 25));
+    const sessionSize = Math.min(Math.max(2, cap + 1), 8);
+    const { newPerSession, advisoryThreshold } = strategyToSettings(selectedStrategy, sessionSize);
     localStorage.setItem("aurora_time_budget", String(selectedTimeBudget));
+    localStorage.setItem("aurora_new_per_session", String(newPerSession));
+    localStorage.setItem("aurora_advisory_threshold", advisoryThreshold);
     if (isDemo) {
       localStorage.setItem(DEMO_ONBOARDING_KEY, "1");
     } else {
@@ -176,13 +202,13 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
       fetch("/api/user/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyTimeBudgetMinutes: selectedTimeBudget }),
+        body: JSON.stringify({ dailyTimeBudgetMinutes: selectedTimeBudget, newPerSession, advisoryThreshold }),
       }).catch(() => {/* ignore */});
     }
     if (soundEnabled) {
       saveSoundSettings({ ...DEFAULT_SOUND_SETTINGS, sessionComplete: "wow", volume: 0.35 });
     }
-    onPreferences?.({ targetCount, targetDate: selectedDate, autoDeferHards: deferHards, goalType: selectedGoal, timeBudget: selectedTimeBudget });
+    onPreferences?.({ targetCount, targetDate: selectedDate, autoDeferHards: deferHards, goalType: selectedGoal, timeBudget: selectedTimeBudget, newPerSession, advisoryThreshold });
     setShow(false);
   }
 
@@ -511,8 +537,82 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                 <p className="text-xs text-muted-foreground">Focus on Easy &amp; Medium first (recommended)</p>
               </div>
             </label>
+          </div>
+        )}
 
-            {/* Sound opt-in */}
+        {/* ── Step 3: Your Daily Plan ── */}
+        {step === 3 && (
+          <div className="px-5 pb-2 space-y-2 overflow-y-auto flex-1">
+            {(() => {
+              const cap = Math.max(1, Math.floor(selectedTimeBudget / 25));
+              const sessionSize = Math.min(Math.max(2, cap + 1), 8);
+              const strategies: { id: Strategy; label: string; desc: string; detail: string }[] = [
+                {
+                  id: "steady",
+                  label: "Steady Pace",
+                  desc: "1 new problem per session, reviews come first",
+                  detail: "Good for building a sustainable rhythm",
+                },
+                {
+                  id: "coverage",
+                  label: "Push Coverage",
+                  desc: "2–3 new problems per session",
+                  detail: "For tight deadlines with lots of ground to cover",
+                },
+                {
+                  id: "retention",
+                  label: "Lock In Retention",
+                  desc: "Reviews only, new problems when queue is clear",
+                  detail: "Best for pre-interview polish",
+                },
+              ];
+              return (
+                <div className="space-y-2">
+                  {strategies.map((s) => {
+                    const settings = strategyToSettings(s.id, sessionSize);
+                    const reviewCount = sessionSize - settings.newPerSession;
+                    const newCount = settings.newPerSession;
+                    const isSelected = selectedStrategy === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedStrategy(s.id)}
+                        className={`w-full text-left rounded-lg border p-3 transition-all ${
+                          isSelected
+                            ? "border-accent bg-accent/10 ring-1 ring-accent/50"
+                            : "border-border hover:border-border/80 hover:bg-muted/50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <span className="text-sm font-medium">{s.label}</span>
+                          {s.id === "steady" && <span className="text-[10px] text-accent font-medium shrink-0">recommended</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{s.desc}</p>
+                        <p className="text-[11px] text-muted-foreground/60 mb-1.5">{s.detail}</p>
+                        {/* Session bar visual */}
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: sessionSize }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-2 flex-1 rounded-sm ${
+                                i < reviewCount
+                                  ? "bg-accent/70"
+                                  : "bg-accent/30"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
+                            {reviewCount}r + {newCount}n
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* Sound opt-in (moved here from step 2) */}
             <label className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors">
               <input
                 type="checkbox"

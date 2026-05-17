@@ -111,11 +111,15 @@ export type MockCandidate = {
   neetcodeUrl: string | null;
 };
 
+export type AdvisoryThreshold = "relaxed" | "moderate" | "strict";
+
 export type DashboardData = {
   reviewQueue: ReviewItem[];
   deferredProblems: DeferredItem[];
   autoDeferHards: boolean;
   dailyTimeBudgetMinutes: number;
+  newPerSession: number;
+  advisoryThreshold: AdvisoryThreshold;
   newProblems: NewProblem[];
   totalProblems: number;
   attemptedCount: number;
@@ -272,13 +276,24 @@ export function computePracticeRecommendation({
   goalType,
   actualProjection,
   dailyTimeBudgetMinutes,
+  advisoryThreshold = "moderate",
 }: {
   data: DashboardData;
   countdown: { daysLeft: number; remaining: number; onTrack: boolean; neededPerDay: number };
   goalType: "blind75" | "neetcode150" | "none";
   actualProjection: QueueProjection | null;
   dailyTimeBudgetMinutes: number;
+  advisoryThreshold?: AdvisoryThreshold;
 }): PracticeRecommendation {
+  // Map advisory threshold to effective zone cutoffs.
+  // relaxed: banner fires later (user tolerates higher load before warning)
+  // strict: banner fires earlier (user wants early warning to stay ahead)
+  const pullBackRatio = advisoryThreshold === "relaxed" ? QUEUE_AMBER_RATIO
+                      : advisoryThreshold === "strict"  ? QUEUE_GREEN_RATIO
+                      : QUEUE_YELLOW_RATIO;
+  const stopNewRatio  = advisoryThreshold === "relaxed" ? QUEUE_ORANGE_RATIO
+                      : advisoryThreshold === "strict"  ? QUEUE_YELLOW_RATIO
+                      : QUEUE_AMBER_RATIO;
   const targetLabel = goalType === "blind75" ? "Blind 75" : goalType === "neetcode150" ? "NeetCode 150" : "your log";
   const requiredNewPerDay = countdown.daysLeft > 0 ? countdown.remaining / countdown.daysLeft : countdown.remaining;
   const behindCoverage = goalType !== "none" && countdown.remaining > 0 && requiredNewPerDay > Math.max(0.1, data.avgNewPerDay) * 1.25;
@@ -351,7 +366,7 @@ export function computePracticeRecommendation({
     };
   }
 
-  // RED — queue exceeds capacity by 50%+
+  // Absolute ceiling — always danger regardless of advisory threshold
   if (queueLoadRatio > QUEUE_ORANGE_RATIO) {
     return {
       tone: "danger",
@@ -364,8 +379,8 @@ export function computePracticeRecommendation({
     };
   }
 
-  // ORANGE — queue heavy (1.1–1.5×)
-  if (queueLoadRatio > QUEUE_AMBER_RATIO) {
+  // Stop-new zone — threshold-adjusted via stopNewRatio
+  if (queueLoadRatio > stopNewRatio) {
     const clearTarget = Math.round(capacity.reviewCapacity * 0.85);
     return {
       tone: "danger",
@@ -378,8 +393,8 @@ export function computePracticeRecommendation({
     };
   }
 
-  // AMBER — near capacity (0.85–1.1×)
-  if (queueLoadRatio > QUEUE_YELLOW_RATIO) {
+  // Pull-back zone — threshold-adjusted via pullBackRatio
+  if (queueLoadRatio > pullBackRatio) {
     const growing = metrics.drainRate < 0;
     return {
       tone: "watch",
@@ -396,7 +411,7 @@ export function computePracticeRecommendation({
     };
   }
 
-  // YELLOW — healthy with headroom (0.6–0.85×)
+  // Healthy with headroom (fixed lower band)
   if (queueLoadRatio > QUEUE_GREEN_RATIO) {
     return {
       tone: "good",

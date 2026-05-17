@@ -75,6 +75,8 @@ export const users = pgTable("user", {
   githubWebhookSecret: varchar("github_webhook_secret", { length: 512 }),
   githubConnectedAt: timestamp("github_connected_at"),
   dailyTimeBudgetMinutes: integer("daily_time_budget_minutes").notNull().default(60),
+  newPerSession: smallint("new_per_session").notNull().default(1),
+  advisoryThreshold: varchar("advisory_threshold", { length: 10 }).notNull().default("moderate"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
