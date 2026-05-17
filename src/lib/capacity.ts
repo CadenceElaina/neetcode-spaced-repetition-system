@@ -307,7 +307,7 @@ export function computePracticeRecommendation({
   const daysSinceLastAttempt = lastAttemptEntry
     ? Math.floor((Date.now() - new Date(lastAttemptEntry.date).getTime()) / (1000 * 60 * 60 * 24))
     : null;
-  const onBreak = daysSinceLastAttempt !== null && daysSinceLastAttempt >= 7 && data.reviewQueue.length >= 1;
+  const onBreak = daysSinceLastAttempt !== null && daysSinceLastAttempt >= 3 && data.reviewQueue.length >= 1;
 
   if (goalType === "none") {
     return {
@@ -357,9 +357,11 @@ export function computePracticeRecommendation({
     const warmupTarget = Math.min(data.reviewQueue.length, 10);
     return {
       tone: "watch",
-      title: `Welcome back — you've been away ${daysSinceLastAttempt ?? 0} days`,
+      title: daysSinceLastAttempt !== null && daysSinceLastAttempt >= 7
+        ? `Welcome back — you've been away ${daysSinceLastAttempt} days`
+        : "A few days away — reviews have built up",
       body: "Review what's due before adding anything new.",
-      reason: `Your review queue has built up while you were away. Start with a lighter session to rebuild momentum — aim for ${warmupTarget} reviews today.`,
+      reason: `${daysSinceLastAttempt !== null && daysSinceLastAttempt >= 7 ? "Your review queue has built up while you were away." : "Your queue has grown since your last session."} Start with a lighter session to rebuild momentum — aim for ${warmupTarget} reviews today.`,
       actionLabel: "Review queue",
       actionMode: "review",
       metrics,

@@ -683,13 +683,27 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
 
   const sessionSize = useMemo(() => {
     const cap = computeCapacity(timeBudget, 0).reviewCapacity;
-    return Math.min(Math.max(2, cap + 1), Math.min(8, reviewItems.length || 2));
-  }, [timeBudget, reviewItems.length]);
+    return Math.min(Math.max(2, cap + 1), 8);
+  }, [timeBudget]);
 
   const sessionSizeEffective = sessionSizeOverride ?? sessionSize;
   // Split session budget between review slots and new-problem slots.
   const newSlots = Math.min(newPerSession, sessionSizeEffective);
   const reviewSlots = Math.max(0, sessionSizeEffective - newSlots);
+
+  // Cold-start: user has no attempted problems → fill all slots with new problems regardless of strategy.
+  // This fires on day 1 so even Lock In Retention users see something to do.
+  // Overflow: when the initial review queue is shorter than the reserved review slots and the user
+  // expects new problems (newPerSession > 0), the unused review slots become curriculum slots.
+  // Lock In Retention (newPerSession=0) stays reviews-only after cold start; short sessions are expected.
+  const coldStart = data.attemptedCount === 0;
+  const availableReviewCount = Math.min(data.reviewQueue.length, reviewSlots);
+  const unusedReviewSlots = Math.max(0, reviewSlots - availableReviewCount);
+  const overflowSlots = (coldStart || newPerSession > 0) ? unusedReviewSlots : 0;
+  const effectiveNewSlots = Math.min(newSlots + overflowSlots, sessionSizeEffective);
+  // effectiveSessionTarget: number of items that will actually appear in today's session.
+  // May be less than sessionSizeEffective for Lock In Retention users with a short queue.
+  const effectiveSessionTarget = availableReviewCount + effectiveNewSlots;
 
   const blind75DifficultyBreakdown = useMemo((): DifficultyBreakdown[] => {
     const b75 = data.importProblems.filter(p => p.blind75);
@@ -706,11 +720,12 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
     return data.importAttemptedIds.filter(id => b75ids.has(id)).length;
   }, [data.importProblems, data.importAttemptedIds]);
 
-  // Compute curriculum recommendations: at least 1 (for the New tab), up to newSlots (for session).
+  // Compute curriculum recommendations: at least 1 (for the New tab), up to effectiveNewSlots (for session).
+  // effectiveNewSlots >= newSlots when cold-start or overflow fills unused review slots with new problems.
   // Calls the engine N times, excluding each picked problem from the next call.
   const curriculumRecs = useMemo(() => {
     if (newItems.length === 0) return [];
-    const needed = Math.max(1, newSlots);
+    const needed = Math.max(1, effectiveNewSlots);
     const recs: CurriculumRecommendation[] = [];
     const excludeIds = new Set<number>();
     for (let i = 0; i < needed; i++) {
@@ -726,10 +741,10 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
       excludeIds.add(rec.problem.id);
     }
     return recs;
-  }, [data.categoryStats, newItems, autoDeferHards, goalType, forkChoices, newSlots]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.categoryStats, newItems, autoDeferHards, goalType, forkChoices, effectiveNewSlots]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Session-specific slice: only the slots the user reserved, minus already-acted slots.
-  const sessionCurriculumRecs = curriculumRecs.slice(0, newSlots).slice(sessionNewActedOn);
+  // Session-specific slice: effective new slots (may be > newPerSession when overflow kicks in).
+  const sessionCurriculumRecs = curriculumRecs.slice(0, effectiveNewSlots).slice(sessionNewActedOn);
 
   // Persist any new fork choices returned by the curriculum engine
   const prevNewForkKeysRef = useRef<Record<string, string>>({});
@@ -750,26 +765,26 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
   }, [curriculumRecs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect session-complete threshold crossing and fire celebration exactly once per crossing.
-  // Session is complete when total actions (reviews + new-problem slots) reach sessionSizeEffective.
+  // Uses effectiveSessionTarget so Lock In Retention users with short queues complete at the right count.
   const prevSessionTotalRef = useRef(0);
   useEffect(() => {
     const total = sessionActedOn + sessionNewActedOn;
-    const wasBelow = prevSessionTotalRef.current < sessionSizeEffective;
-    const isNowComplete = total >= sessionSizeEffective && total > 0;
+    const wasBelow = prevSessionTotalRef.current < effectiveSessionTarget;
+    const isNowComplete = total >= effectiveSessionTarget && total > 0;
     if (wasBelow && isNowComplete && !isDemo && sessionViewMode === "session") {
       playSessionComplete();
     }
     if (!isNowComplete) resetSessionFired();
     prevSessionTotalRef.current = total;
-  }, [sessionActedOn, sessionNewActedOn, sessionSizeEffective]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionActedOn, sessionNewActedOn, effectiveSessionTarget]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sessionQueue = useMemo(() => {
     if (sessionViewMode !== "session") return filteredReviewQueue;
     const total = sessionActedOn + sessionNewActedOn;
     // After session complete, show the full queue so user can continue.
-    if (total >= sessionSizeEffective) return filteredReviewQueue;
+    if (total >= effectiveSessionTarget) return filteredReviewQueue;
     return filteredReviewQueue.slice(0, Math.max(0, reviewSlots - sessionActedOn));
-  }, [sessionViewMode, filteredReviewQueue, sessionActedOn, sessionNewActedOn, sessionSizeEffective, reviewSlots]);
+  }, [sessionViewMode, filteredReviewQueue, sessionActedOn, sessionNewActedOn, effectiveSessionTarget, reviewSlots]);
 
   const filteredNewProblems = useMemo(() => {
     if (!queueSearch.trim()) return sortedNewProblems;
@@ -1296,8 +1311,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
           {/* Review list */}
           {listMode === "review" && (
             <div className="flex flex-col flex-1 min-h-0 gap-2">
-            {/* Session / Queue inner tab bar — only when items exist */}
-            {reviewItems.length > 0 && (
+            {/* Session / Queue inner tab bar — visible when reviews exist OR overflow created new-problem slots */}
+            {(reviewItems.length > 0 || effectiveNewSlots > 0) && (
               <div className="flex gap-0.5 rounded-md border border-border p-0.5 w-full shrink-0">
                 <button
                   onClick={() => setSessionViewMode("session")}
@@ -1305,27 +1320,29 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 >
                   Today&apos;s Session
                   <span className={`ml-1 text-xs px-1 py-0.5 rounded-full ${sessionViewMode === "session" ? "bg-accent-foreground/20" : "bg-muted"}`}>
-                    {Math.max(0, sessionSizeEffective - sessionActedOn - sessionNewActedOn)} left
+                    {Math.max(0, effectiveSessionTarget - sessionActedOn - sessionNewActedOn)} left
                   </span>
                 </button>
-                <button
-                  onClick={() => setSessionViewMode("queue")}
-                  className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${sessionViewMode === "queue" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  Full Queue
-                  <span className={`ml-1 text-xs px-1 py-0.5 rounded-full ${sessionViewMode === "queue" ? "bg-accent-foreground/20" : "bg-muted"}`}>
-                    {reviewItems.length}
-                  </span>
-                </button>
+                {reviewItems.length > 0 && (
+                  <button
+                    onClick={() => setSessionViewMode("queue")}
+                    className={`flex-1 text-center text-sm px-2 py-1.5 rounded transition-colors ${sessionViewMode === "queue" ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Full Queue
+                    <span className={`ml-1 text-xs px-1 py-0.5 rounded-full ${sessionViewMode === "queue" ? "bg-accent-foreground/20" : "bg-muted"}`}>
+                      {reviewItems.length}
+                    </span>
+                  </button>
+                )}
               </div>
             )}
             {/* Session complete banner */}
-            {sessionViewMode === "session" && (sessionActedOn + sessionNewActedOn) >= sessionSizeEffective && (sessionActedOn + sessionNewActedOn) > 0 && (
+            {sessionViewMode === "session" && (sessionActedOn + sessionNewActedOn) >= effectiveSessionTarget && (sessionActedOn + sessionNewActedOn) > 0 && (
               <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 shrink-0">
                 <div>
                   <p className="text-xs font-medium text-emerald-400">
                     Session complete —{" "}
-                    {newPerSession > 0
+                    {sessionNewActedOn > 0
                       ? `${sessionActedOn} reviewed, ${sessionNewActedOn} new`
                       : `${sessionActedOn} reviewed`}
                   </p>
@@ -1340,7 +1357,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 )}
               </div>
             )}
-            {reviewItems.length === 0 ? (
+            {/* Show empty state only when there are genuinely no items — no reviews AND no overflow new slots */}
+            {reviewItems.length === 0 && effectiveNewSlots === 0 ? (
               <div className="rounded-lg border border-border bg-muted p-6 text-center">
                 {isFirstLogin ? (
                   <>
@@ -1364,6 +1382,51 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
             ) : (
               <div className="rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="overflow-y-auto flex-1 min-h-0">
+                  {/* Curriculum slots — shown when user has reserved new-problem slots in settings */}
+                  {sessionViewMode === "session" && sessionCurriculumRecs.map((rec) => (
+                    <div key={rec.problem.id} className="flex items-center gap-3 px-3 py-2.5 border-b-2 border-accent/30 bg-accent/5">
+                      <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{rec.problem.leetcodeNumber}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-semibold text-accent uppercase tracking-wide">New problem</span>
+                          <span className="text-[10px] text-muted-foreground truncate">· {rec.reason}</span>
+                        </div>
+                        {rec.problem.neetcodeUrl ? (
+                          <a href={rec.problem.neetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-base font-medium text-foreground hover:text-accent truncate block">
+                            {rec.problem.title}
+                          </a>
+                        ) : (
+                          <Link href={`/problems/${rec.problem.id}`} className="text-base font-medium text-foreground hover:text-accent truncate block">
+                            {rec.problem.title}
+                          </Link>
+                        )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-muted-foreground">{rec.category}</span>
+                          <DifficultyBadge difficulty={rec.problem.difficulty} />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {rec.problem.neetcodeUrl && (
+                          <a href={rec.problem.neetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground underline">NC</a>
+                        )}
+                        <a href={rec.problem.leetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground underline">LC</a>
+                        <button
+                          onClick={() => openLog({
+                            problemId: rec.problem.id,
+                            title: rec.problem.title,
+                            leetcodeNumber: rec.problem.leetcodeNumber,
+                            difficulty: rec.problem.difficulty,
+                            category: rec.problem.category,
+                            isReview: false,
+                            isSessionNew: true,
+                          })}
+                          className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
+                        >
+                          Log
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                   {sessionQueue.map((item) => {
                     const prio = priorityLevel(item);
                     const catStat = categoryStatsMap.get(item.category);
@@ -1432,51 +1495,6 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                       </div>
                     );
                   })}
-                  {/* Curriculum slots — shown when user has reserved new-problem slots in settings */}
-                  {sessionViewMode === "session" && sessionCurriculumRecs.map((rec) => (
-                    <div key={rec.problem.id} className="flex items-center gap-3 px-3 py-2.5 border-t-2 border-accent/30 bg-accent/5">
-                      <span className="text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{rec.problem.leetcodeNumber}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-[10px] font-semibold text-accent uppercase tracking-wide">New problem</span>
-                          <span className="text-[10px] text-muted-foreground truncate">· {rec.reason}</span>
-                        </div>
-                        {rec.problem.neetcodeUrl ? (
-                          <a href={rec.problem.neetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-base font-medium text-foreground hover:text-accent truncate block">
-                            {rec.problem.title}
-                          </a>
-                        ) : (
-                          <Link href={`/problems/${rec.problem.id}`} className="text-base font-medium text-foreground hover:text-accent truncate block">
-                            {rec.problem.title}
-                          </Link>
-                        )}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs text-muted-foreground">{rec.category}</span>
-                          <DifficultyBadge difficulty={rec.problem.difficulty} />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {rec.problem.neetcodeUrl && (
-                          <a href={rec.problem.neetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground underline">NC</a>
-                        )}
-                        <a href={rec.problem.leetcodeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground underline">LC</a>
-                        <button
-                          onClick={() => openLog({
-                            problemId: rec.problem.id,
-                            title: rec.problem.title,
-                            leetcodeNumber: rec.problem.leetcodeNumber,
-                            difficulty: rec.problem.difficulty,
-                            category: rec.problem.category,
-                            isReview: false,
-                            isSessionNew: true,
-                          })}
-                          className="inline-flex h-7 items-center rounded-md bg-accent px-3 text-xs text-accent-foreground transition-colors hover:opacity-90"
-                        >
-                          Log
-                        </button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -2673,8 +2691,8 @@ function SettingsPanel({
         />
       </div>
       <div>
-        <label htmlFor="countdown-count" className="block text-xs text-muted-foreground mb-1">Target Problems</label>
-        <div className="flex gap-1.5 mb-1.5">
+        <p className="block text-xs text-muted-foreground mb-1">Target Problems</p>
+        <div className="flex gap-1.5">
           <button
             onClick={() => { setC(75); onGoalTypeChange("blind75"); }}
             className={`text-xs px-2.5 py-1 rounded border transition-colors ${
@@ -2688,15 +2706,6 @@ function SettingsPanel({
             }`}
           >NeetCode 150</button>
         </div>
-        <input
-          id="countdown-count"
-          type="number"
-          min={1}
-          max={500}
-          value={c}
-          onChange={(e) => setC(Number(e.target.value))}
-          className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
-        />
       </div>
       <div className="pt-1 border-t border-border">
         <p className="text-xs text-muted-foreground mb-1.5">Daily time budget</p>
@@ -2716,51 +2725,6 @@ function SettingsPanel({
             </button>
           ))}
         </div>
-      </div>
-      <div className="pt-1 border-t border-border">
-        <p className="text-xs text-muted-foreground mb-1.5">Default review view</p>
-        <div className="flex gap-1">
-          <button
-            onClick={() => onQueueViewDefaultChange("session")}
-            className={`flex-1 text-[11px] py-1.5 rounded border transition-colors ${queueViewDefault === "session" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
-          >
-            Today&apos;s Session
-          </button>
-          <button
-            onClick={() => onQueueViewDefaultChange("queue")}
-            className={`flex-1 text-[11px] py-1.5 rounded border transition-colors ${queueViewDefault === "queue" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
-          >
-            Full Queue
-          </button>
-        </div>
-      </div>
-      <div className="pt-1 border-t border-border">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            checked={autoDeferHards}
-            onChange={(e) => onToggleAutoDeferHards(e.target.checked)}
-            className="rounded border-border"
-          />
-          Auto-defer Hard problems from review queue
-        </label>
-        <p className="text-[10px] text-muted-foreground/60 mt-0.5 ml-5">
-          Hards are excluded from reviews until you master the easier problems in each category
-        </p>
-      </div>
-      <div className="pt-1 border-t border-border">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showPracticeRecommendation}
-            onChange={(e) => onTogglePracticeRecommendation(e.target.checked)}
-            className="rounded border-border"
-          />
-          Show strategy recommendation
-        </label>
-        <p className="text-[10px] text-muted-foreground/60 mt-0.5 ml-5">
-          Optional guidance based on goal pace, review load stability, and retention health
-        </p>
       </div>
       <div className="pt-1 border-t border-border">
         <p className="text-xs text-muted-foreground mb-1.5">Problems per session</p>
@@ -2830,6 +2794,34 @@ function SettingsPanel({
             </>
           );
         })()}
+      </div>
+      <div className="pt-1 border-t border-border">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={autoDeferHards}
+            onChange={(e) => onToggleAutoDeferHards(e.target.checked)}
+            className="rounded border-border"
+          />
+          Auto-defer Hard problems from review queue
+        </label>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5 ml-5">
+          Hards are excluded from reviews until you master the easier problems in each category
+        </p>
+      </div>
+      <div className="pt-1 border-t border-border">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showPracticeRecommendation}
+            onChange={(e) => onTogglePracticeRecommendation(e.target.checked)}
+            className="rounded border-border"
+          />
+          Show strategy recommendation
+        </label>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5 ml-5">
+          Optional guidance based on goal pace, review load stability, and retention health
+        </p>
       </div>
       <div className="flex justify-end gap-2 pt-1">
         <button

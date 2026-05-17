@@ -54,8 +54,12 @@ type Strategy = "steady" | "coverage" | "retention";
 
 function strategyToSettings(strategy: Strategy, sessionSize: number): { newPerSession: number; advisoryThreshold: "relaxed" | "moderate" | "strict" } {
   switch (strategy) {
-    case "coverage":
-      return { newPerSession: sessionSize >= 7 ? 3 : 2, advisoryThreshold: "relaxed" };
+    case "coverage": {
+      // Cap at sessionSize-1 so there is always at least 1 review slot.
+      // At Light budget (sessionSize=2) this limits coverage to 1 new/session.
+      const raw = sessionSize >= 7 ? 3 : 2;
+      return { newPerSession: Math.min(raw, sessionSize - 1), advisoryThreshold: "relaxed" };
+    }
     case "retention":
       return { newPerSession: 0, advisoryThreshold: "strict" };
     case "steady":
@@ -546,6 +550,7 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
             {(() => {
               const cap = Math.max(1, Math.floor(selectedTimeBudget / 25));
               const sessionSize = Math.min(Math.max(2, cap + 1), 8);
+              const coverageNewCount = strategyToSettings("coverage", sessionSize).newPerSession;
               const strategies: { id: Strategy; label: string; desc: string; detail: string }[] = [
                 {
                   id: "steady",
@@ -556,14 +561,14 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
                 {
                   id: "coverage",
                   label: "Push Coverage",
-                  desc: "2–3 new problems per session",
+                  desc: `${coverageNewCount} new problem${coverageNewCount !== 1 ? "s" : ""} per session${coverageNewCount < 2 ? " (limited by your budget)" : ""}`,
                   detail: "For tight deadlines with lots of ground to cover",
                 },
                 {
                   id: "retention",
                   label: "Lock In Retention",
-                  desc: "Reviews only, new problems when queue is clear",
-                  detail: "Best for pre-interview polish",
+                  desc: "Reviews only — strengthen what you know",
+                  detail: "Best for pre-interview polish when coverage is complete",
                 },
               ];
               return (
