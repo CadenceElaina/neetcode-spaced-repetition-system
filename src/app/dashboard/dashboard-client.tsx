@@ -1753,9 +1753,18 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
             )}
 
             {/* CompletionWidget */}
+            {(() => {
+              const bd = goalType === "blind75" ? blind75DifficultyBreakdown : data.difficultyBreakdown;
+              const totalSolved = goalType === "blind75" ? blind75AttemptedCount : data.attemptedCount;
+              const easy   = bd.find(b => b.difficulty === "Easy");
+              const medium = bd.find(b => b.difficulty === "Medium");
+              const hard   = bd.find(b => b.difficulty === "Hard");
+              const bar = (a: number, t: number) => Math.min(100, t > 0 ? Math.round((a / t) * 100) : 0);
+              const projPct = data.attemptedCount < 5 ? 0 : bar(countdown.projectedRaw, targetCount);
+              return (
             <section className="rounded-lg border border-border bg-muted p-3">
-              {/* Title row: name + target date + gear */}
-              <div className="flex items-center gap-2 mb-2.5">
+              {/* Title row: name · target date · gear */}
+              <div className="flex items-center gap-2 mb-3">
                 <p className="text-sm font-semibold text-foreground flex-1 min-w-0 truncate">{countdownTitle}</p>
                 <span className="text-xs text-muted-foreground shrink-0">{new Date(targetDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 <button
@@ -1768,47 +1777,56 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 </button>
               </div>
 
-              {/* Readiness score (left) + Donut (right) */}
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center text-center shrink-0">
-                  <span className={`inline-flex h-11 w-11 items-center justify-center rounded-lg text-2xl font-black ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
-                  <span className="text-base font-bold tabular-nums mt-1 leading-none">{data.readiness.score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
-                  <p className="text-xs text-muted-foreground mt-0.5">Readiness</p>
+              {/* 3-column body: [stats left] · [ring center] · [bars right] */}
+              <div className="flex items-center gap-3">
+                {/* Left: readiness badge + countdown stats */}
+                <div className="flex flex-col shrink-0 gap-0.5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-base font-black shrink-0 ${TIER_COLORS[data.readiness.tier]}`}>{data.readiness.tier}</span>
+                    <div className="leading-none">
+                      <p className="text-sm font-bold tabular-nums">{data.readiness.score}<span className="text-[10px] font-normal text-muted-foreground">/100</span></p>
+                      <p className="text-[10px] text-muted-foreground">Readiness</p>
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold tabular-nums leading-none">{countdown.daysLeft}</p>
+                  <p className="text-[11px] text-muted-foreground leading-none">days left</p>
+                  <p className={`text-base font-bold tabular-nums mt-1 leading-none ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
+                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}<span className="text-[11px] font-normal text-muted-foreground"> /day</span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                    streak <span className="font-semibold text-foreground tabular-nums">{data.currentStreak}</span>
+                    <span className="text-xs leading-none">{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
+
+                {/* Center: ring only */}
+                <div className="flex-1 flex justify-center shrink-0">
                   <SolvedDonut
-                    breakdown={goalType === "blind75" ? blind75DifficultyBreakdown : data.difficultyBreakdown}
-                    totalSolved={goalType === "blind75" ? blind75AttemptedCount : data.attemptedCount}
+                    breakdown={bd}
+                    totalSolved={totalSolved}
                     totalTarget={targetCount}
+                    compact
                   />
                 </div>
-              </div>
 
-              {/* Days left subheading + streak sub-subheading */}
-              <div className="mt-3">
-                <p className="text-2xl font-bold tabular-nums leading-none">
-                  {countdown.daysLeft}<span className="text-base font-normal text-muted-foreground ml-1">d left</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  Streak
-                  <span className="font-semibold text-foreground tabular-nums">{data.currentStreak}</span>
-                  <span>{data.currentStreak === 0 ? "❄️" : "🔥"}</span>
-                </p>
-              </div>
-
-              {/* Needed/day + projection rows */}
-              <div className="border-t border-border/40 mt-3 pt-2.5 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Needed/day</span>
-                  <span className={`font-semibold tabular-nums ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.onTrack ? "text-green-500" : "text-orange-500"}`}>
-                    {data.attemptedCount < 5 ? "—" : countdown.neededPerDay.toFixed(1)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Projection</span>
-                  <span className={`font-semibold tabular-nums ${data.attemptedCount < 5 ? "text-muted-foreground" : countdown.projectedRaw >= targetCount ? "text-green-500" : "text-orange-500"}`}>
-                    {data.attemptedCount < 5 ? "—" : `${countdown.projectedRaw}/${targetCount}`}
-                  </span>
+                {/* Right: Proj + E/M/H progress bars */}
+                <div className="flex flex-col gap-2 shrink-0 w-[140px]">
+                  {[
+                    { label: "Proj", a: data.attemptedCount < 5 ? 0 : countdown.projectedRaw, t: targetCount, pct: projPct, color: "bg-accent", labelColor: "text-muted-foreground", valText: data.attemptedCount < 5 ? "—" : `${countdown.projectedRaw}/${targetCount}` },
+                    { label: "E",    a: easy?.attempted ?? 0,   t: easy?.count ?? 0,   pct: bar(easy?.attempted ?? 0, easy?.count ?? 0),   color: "bg-green-500", labelColor: "text-green-500", valText: `${easy?.attempted ?? 0}/${easy?.count ?? 0}` },
+                    { label: "M",    a: medium?.attempted ?? 0, t: medium?.count ?? 0, pct: bar(medium?.attempted ?? 0, medium?.count ?? 0), color: "bg-amber-500", labelColor: "text-amber-500", valText: `${medium?.attempted ?? 0}/${medium?.count ?? 0}` },
+                    { label: "H",    a: hard?.attempted ?? 0,   t: hard?.count ?? 0,   pct: bar(hard?.attempted ?? 0, hard?.count ?? 0),   color: "bg-red-500",   labelColor: "text-red-500",   valText: `${hard?.attempted ?? 0}/${hard?.count ?? 0}` },
+                  ].map(({ label, pct: p, color, labelColor, valText }) => (
+                    <div key={label}>
+                      <div className="flex items-center justify-between text-xs mb-0.5">
+                        <span className={`font-medium ${labelColor}`}>{label}</span>
+                        <span className="tabular-nums text-muted-foreground">{valText}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${p}%` }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1855,6 +1873,8 @@ export function DashboardClient({ data, isDemo = false, userId, onboardingComple
                 />
               )}
             </section>
+              );
+            })()}
 
             {/* Activity */}
             <section className="rounded-lg border border-border bg-muted p-3">
@@ -2678,7 +2698,7 @@ function SettingsPanel({
 
 /* ── Info Tooltip ── */
 
-function SolvedDonut({ breakdown, totalSolved, totalTarget }: { breakdown: DifficultyBreakdown[]; totalSolved: number; totalTarget: number }) {
+function SolvedDonut({ breakdown, totalSolved, totalTarget, compact }: { breakdown: DifficultyBreakdown[]; totalSolved: number; totalTarget: number; compact?: boolean }) {
   const r = 27;
   const C = 2 * Math.PI * r;
   const denom = Math.max(1, totalTarget);
@@ -2696,22 +2716,26 @@ function SolvedDonut({ breakdown, totalSolved, totalTarget }: { breakdown: Diffi
     { color: "#f59e0b", len: (mA / denom) * C, start: (eA / denom) * C },
     { color: "#ef4444", len: (hA / denom) * C, start: ((eA + mA) / denom) * C },
   ].filter(s => s.len > 0);
+  const ring = (
+    <svg width="68" height="68" viewBox="0 0 68 68">
+      <circle cx={34} cy={34} r={r} fill="none" strokeWidth={6} style={{ stroke: "var(--border)" }} />
+      {segs.map(({ color, len, start }) => (
+        <circle
+          key={color} cx={34} cy={34} r={r} fill="none"
+          stroke={color} strokeWidth={6}
+          strokeDasharray={`${len} ${C - len}`}
+          strokeDashoffset={0}
+          transform={`rotate(${-90 + (start / C) * 360} 34 34)`}
+        />
+      ))}
+      <text x={34} y={34} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="700" style={{ fill: "var(--foreground)" }}>{totalSolved}</text>
+      <text x={34} y={47} textAnchor="middle" dominantBaseline="central" fontSize="9" style={{ fill: "var(--muted-foreground)" }}>/{totalTarget}</text>
+    </svg>
+  );
+  if (compact) return ring;
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <svg width="68" height="68" viewBox="0 0 68 68">
-        <circle cx={34} cy={34} r={r} fill="none" strokeWidth={6} style={{ stroke: "var(--border)" }} />
-        {segs.map(({ color, len, start }) => (
-          <circle
-            key={color} cx={34} cy={34} r={r} fill="none"
-            stroke={color} strokeWidth={6}
-            strokeDasharray={`${len} ${C - len}`}
-            strokeDashoffset={0}
-            transform={`rotate(${-90 + (start / C) * 360} 34 34)`}
-          />
-        ))}
-        <text x={34} y={34} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="700" style={{ fill: "var(--foreground)" }}>{totalSolved}</text>
-        <text x={34} y={47} textAnchor="middle" dominantBaseline="central" fontSize="9" style={{ fill: "var(--muted-foreground)" }}>/{totalTarget}</text>
-      </svg>
+      {ring}
       <div className="flex flex-col gap-1.5 text-xs">
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
