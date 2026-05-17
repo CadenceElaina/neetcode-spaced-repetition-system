@@ -37,15 +37,8 @@ const DIFF_BG: Record<string, string> = {
   Medium: "bg-yellow-500/15 text-yellow-400",
 };
 
-/* ── Animated log sequence ── */
-const LOG_STEPS = [
-  { section: "outcome", label: "How did it go?", options: ["Couldn\u2019t solve", "Partial / Hint", "Solved"], active: 2 },
-  { section: "quality", label: "Solution quality?", options: ["Optimal", "Suboptimal", "Brute Force"], active: 0 },
-  { section: "confidence", label: "Confidence", options: ["1", "2", "3", "4", "5"], active: 3 },
-  { section: "time", label: "Time spent", options: ["<5m", "5-15m", "15-30m", "30m+"], active: 1 },
-  { section: "saving", label: "Saving\u2026", options: [], active: -1 },
-  { section: "done", label: "Logged!", options: [], active: -1 },
-];
+/* ── Animated log sequence (6 frames: outcome→quality→confidence→time→saving→done) ── */
+const LOG_STEPS_COUNT = 6;
 
 type Rect = { top: number; left: number; width: number; height: number };
 const DEMO_ONBOARDING_KEY = "aurora_demo_onboarding_complete";
@@ -77,7 +70,7 @@ const STEPS = [
     side: "center" as const,
   },
   {
-    title: "Your Queue & Quick Log",
+    title: "Today's Session",
     body: "",
     target: "queue",
     side: "right" as const,
@@ -166,12 +159,12 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
 
   useEffect(() => { if (show) measure(); }, [step, show, measure]);
 
-  // Log animation (step 1 — "Your Queue & Quick Log")
+  // Log animation (step 1 — Today's Session)
   useEffect(() => {
     if (step === 1 && show) {
       setLogFrame(0);
       logIntervalRef.current = setInterval(() => {
-        setLogFrame((f) => (f + 1) % LOG_STEPS.length);
+        setLogFrame((f) => (f + 1) % LOG_STEPS_COUNT);
       }, 1400);
       return () => { if (logIntervalRef.current) clearInterval(logIntervalRef.current); };
     } else {
@@ -314,15 +307,13 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
           }}
         >
           {/* Tab bar */}
-          <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2">
             <div className="flex gap-0.5 rounded-md border border-border p-0.5 bg-background">
               <span className="text-sm px-2.5 py-1 rounded bg-accent text-accent-foreground font-medium">
-                Review <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-accent-foreground/20">{MOCK_REVIEW_ITEMS.length}</span>
+                Today&apos;s Session <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-accent-foreground/20">{MOCK_REVIEW_ITEMS.length}</span>
               </span>
               <span className="text-sm px-2.5 py-1 rounded text-muted-foreground">New <span className="ml-1 text-xs">43</span></span>
               <span className="text-sm px-2.5 py-1 rounded text-muted-foreground">Completed <span className="ml-1 text-xs">7</span></span>
-              <span className="text-sm px-2.5 py-1 rounded text-muted-foreground">Deferred</span>
-              <span className="text-sm px-2.5 py-1 rounded text-muted-foreground">Import</span>
             </div>
           </div>
           {/* Sort pills */}
@@ -363,54 +354,89 @@ export function Onboarding({ isDemo = false, onboardingComplete = false, onPrefe
           </div>
 
           {/* Simulated log modal centered on queue */}
-          <div className="absolute inset-0 flex items-start justify-center pt-12">
+          <div className="absolute inset-0 flex items-start justify-center pt-10">
             <div className="w-[90%] max-w-md rounded-lg border border-border bg-background shadow-2xl overflow-hidden">
               {/* Modal header */}
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                <span className="text-sm font-semibold">1. Two Sum</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">Easy</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/15 text-accent">Review</span>
-                <span className="ml-auto text-xs text-muted-foreground">Quick Log</span>
+                <span className="text-xs text-muted-foreground shrink-0">1.</span>
+                <span className="text-sm font-medium">Two Sum</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400 shrink-0">Easy</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-500 shrink-0">Review</span>
+                <span className="ml-auto text-[10px] text-accent shrink-0">Refresh pattern →</span>
               </div>
               {/* Modal body */}
               <div className="px-4 py-3 space-y-3">
-                {LOG_STEPS.slice(0, 4).map((logStep, li) => (
-                  <div key={logStep.section}>
-                    <p className={`text-[11px] mb-1.5 transition-colors duration-300 ${logFrame === li ? "text-foreground font-medium" : logFrame > li ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
-                      {logStep.label}
+                {/* How did it go? */}
+                <div>
+                  <p className={`text-[11px] mb-1.5 transition-colors duration-300 ${logFrame === 0 ? "text-foreground font-medium" : logFrame > 0 ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                    How did it go?
+                  </p>
+                  <div className="flex gap-1.5">
+                    {(["Couldn’t solve", "Partial / Hint", "Solved"] as const).map((opt, oi) => (
+                      <span key={oi} className={`flex-1 text-center text-[11px] py-1.5 rounded-md border transition-all duration-300 ${
+                        (logFrame === 0 && oi === 2) ? "border-accent bg-accent text-accent-foreground font-medium" :
+                        (logFrame > 0 && oi === 2) ? "border-accent/50 bg-accent/10 text-accent" :
+                        "border-border text-muted-foreground/50"
+                      }`}>{opt}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Solution quality */}
+                <div>
+                  <p className={`text-[11px] mb-1.5 transition-colors duration-300 ${logFrame === 1 ? "text-foreground font-medium" : logFrame > 1 ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                    Solution quality
+                  </p>
+                  <div className="flex gap-1.5">
+                    {(["Optimal", "Not Optimal"] as const).map((opt, oi) => (
+                      <span key={oi} className={`flex-1 text-center text-[11px] py-1.5 rounded-md border transition-all duration-300 ${
+                        (logFrame === 1 && oi === 0) ? "border-accent bg-accent text-accent-foreground font-medium" :
+                        (logFrame > 1 && oi === 0) ? "border-accent/50 bg-accent/10 text-accent" :
+                        "border-border text-muted-foreground/50"
+                      }`}>{opt}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Confidence + Time (min) side by side */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className={`text-[11px] mb-1.5 transition-colors duration-300 ${logFrame === 2 ? "text-foreground font-medium" : logFrame > 2 ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                      Confidence
                     </p>
-                    <div className="flex gap-1.5">
-                      {logStep.options.map((opt, oi) => (
-                        <span key={oi} className={`flex-1 text-center text-[11px] py-1.5 rounded-md border transition-all duration-300 ${
-                          (logFrame === li && oi === logStep.active) ? "border-accent bg-accent text-accent-foreground font-medium" :
-                          (logFrame > li && oi === logStep.active) ? "border-accent/50 bg-accent/10 text-accent" :
-                          "border-border text-muted-foreground/50"
-                        }`}>{opt}</span>
+                    <div className="flex gap-1">
+                      {(["1","2","3","4","5"] as const).map((n, ni) => (
+                        <span key={n} className={`flex h-6 w-full items-center justify-center rounded text-[11px] transition-all duration-300 ${
+                          (logFrame === 2 && ni === 3) ? "bg-accent text-accent-foreground font-medium" :
+                          (logFrame > 2 && ni === 3) ? "bg-accent/20 text-accent" :
+                          "border border-border text-muted-foreground/50"
+                        }`}>{n}</span>
                       ))}
                     </div>
                   </div>
-                ))}
+                  <div>
+                    <p className={`text-[11px] mb-1.5 transition-colors duration-300 ${logFrame === 3 ? "text-foreground font-medium" : logFrame > 3 ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                      Time (min)
+                    </p>
+                    <span className={`block h-7 w-full rounded-md border px-2 text-[11px] leading-7 transition-all duration-300 ${
+                      logFrame >= 3 ? "border-accent/60 text-foreground" : "border-border text-muted-foreground/30"
+                    }`}>20</span>
+                  </div>
+                </div>
                 {logFrame >= 4 && (
                   <div className="pt-2 border-t border-border/50 text-center">
                     {logFrame === 4 ? (
                       <p className="text-xs text-muted-foreground animate-pulse">Saving…</p>
                     ) : (
-                      <>
-                        <p className="text-xs text-green-400 font-medium">✓ Logged — next review in 4 days</p>
-                      </>
+                      <p className="text-xs text-green-400 font-medium">✓ Logged — next review in 4 days</p>
                     )}
                   </div>
                 )}
               </div>
               {/* Modal footer */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
-                <span className="text-[10px] text-muted-foreground">Full form →</span>
-                <div className="flex gap-2">
-                  <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-[11px] text-muted-foreground">Cancel</span>
-                  <span className={`inline-flex h-7 items-center rounded-md px-3 text-[11px] font-medium transition-all duration-300 ${
-                    logFrame >= 4 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-                  }`}>Save</span>
-                </div>
+              <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-border">
+                <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-[11px] text-muted-foreground">Cancel</span>
+                <span className={`inline-flex h-7 items-center rounded-md px-3 text-[11px] font-medium transition-all duration-300 ${
+                  logFrame >= 4 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                }`}>Save</span>
               </div>
             </div>
           </div>
